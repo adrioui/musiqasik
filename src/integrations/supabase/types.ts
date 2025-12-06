@@ -14,13 +14,94 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      artists: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          lastfm_mbid: string | null
+          lastfm_url: string | null
+          listeners: number | null
+          name: string
+          playcount: number | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lastfm_mbid?: string | null
+          lastfm_url?: string | null
+          listeners?: number | null
+          name: string
+          playcount?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          lastfm_mbid?: string | null
+          lastfm_url?: string | null
+          listeners?: number | null
+          name?: string
+          playcount?: number | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      similarity_edges: {
+        Row: {
+          created_at: string
+          depth: number
+          id: string
+          match_score: number
+          source_artist_id: string
+          target_artist_id: string
+        }
+        Insert: {
+          created_at?: string
+          depth?: number
+          id?: string
+          match_score?: number
+          source_artist_id: string
+          target_artist_id: string
+        }
+        Update: {
+          created_at?: string
+          depth?: number
+          id?: string
+          match_score?: number
+          source_artist_id?: string
+          target_artist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "similarity_edges_source_artist_id_fkey"
+            columns: ["source_artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "similarity_edges_target_artist_id_fkey"
+            columns: ["target_artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
