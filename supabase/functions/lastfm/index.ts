@@ -32,75 +32,27 @@ function isPlaceholderImage(url?: string): boolean {
          url.endsWith('/noimage/');
 }
 
-// Fetch artist image from MusicBrainz using MBID
-async function fetchMusicBrainzImage(mbid: string): Promise<string | undefined> {
-  if (!mbid) return undefined;
-  
+// Fetch artist image from Deezer API (no API key required)
+async function fetchDeezerImage(artistName: string): Promise<string | undefined> {
   try {
-    console.log(`Fetching MusicBrainz image for MBID: ${mbid}`);
-    
-    // First, get the artist relations from MusicBrainz
-    const mbResponse = await fetch(
-      `https://musicbrainz.org/ws/2/artist/${mbid}?inc=url-rels&fmt=json`,
-      {
-        headers: {
-          'User-Agent': 'MusiqasiQ/1.0 (https://lovable.dev)',
-        },
-      }
+    console.log(`Fetching Deezer image for: ${artistName}`);
+    const response = await fetch(
+      `https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName)}&limit=1`
     );
+
+    if (!response.ok) return undefined;
+
+    const data = await response.json();
     
-    if (!mbResponse.ok) {
-      console.log(`MusicBrainz API error: ${mbResponse.status}`);
-      return undefined;
+    if (data.data && data.data.length > 0) {
+      // Deezer returns picture, picture_small, picture_medium, picture_big, picture_xl
+      return data.data[0].picture_xl;
     }
-    
-    const mbData = await mbResponse.json();
-    const relations = mbData.relations || [];
-    
-    // Look for image URL in relations (Wikimedia Commons, etc.)
-    for (const rel of relations) {
-      if (rel.type === 'image' && rel.url?.resource) {
-        const imageUrl = rel.url.resource;
-        // Convert Wikimedia Commons URL to actual image URL
-        if (imageUrl.includes('commons.wikimedia.org')) {
-          const filename = imageUrl.split('/').pop();
-          if (filename) {
-            const md5 = await getMD5Hash(decodeURIComponent(filename));
-            return `https://upload.wikimedia.org/wikipedia/commons/thumb/${md5[0]}/${md5[0]}${md5[1]}/${filename}/500px-${filename}`;
-          }
-        }
-        return imageUrl;
-      }
-    }
-    
-    // Fallback: Try Cover Art Archive (for band logos/photos)
-    // This is less reliable for artists but worth trying
     return undefined;
   } catch (error) {
-    console.error('Error fetching MusicBrainz image:', error);
+    console.error('Error fetching Deezer image:', error);
     return undefined;
   }
-}
-
-// Simple MD5 hash for Wikimedia URL construction
-async function getMD5Hash(str: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('MD5', data).catch(() => null);
-  
-  if (!hashBuffer) {
-    // Fallback: simple hash if MD5 not available
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(16).padStart(2, '0');
-  }
-  
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function searchArtists(query: string): Promise<ArtistData[]> {
@@ -144,11 +96,11 @@ async function getArtistInfo(artistName: string): Promise<ArtistData | null> {
   const lastfmImage = artist.image?.find((img: any) => img.size === 'extralarge')?.['#text'];
   const mbid = artist.mbid || undefined;
   
-  // Try to get image from MusicBrainz if Last.fm returns placeholder
+  // Try to get image from Deezer if Last.fm returns placeholder
   let imageUrl: string | undefined;
-  if (isPlaceholderImage(lastfmImage) && mbid) {
-    imageUrl = await fetchMusicBrainzImage(mbid);
-  } else if (!isPlaceholderImage(lastfmImage)) {
+  if (isPlaceholderImage(lastfmImage)) {
+    imageUrl = await fetchDeezerImage(artist.name);
+  } else {
     imageUrl = lastfmImage;
   }
   
