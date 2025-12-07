@@ -36,16 +36,23 @@ export function ArtistPanel({ artist, similarArtists = [], onArtistClick, classN
       {/* Artist Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {artist.image_url ? (
+          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {artist.image_url && !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') ? (
               <img
                 src={artist.image_url}
                 alt={artist.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Hide broken images
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <Music2 className="h-10 w-10 text-muted-foreground" />
-            )}
+            ) : null}
+            <Music2 className={cn(
+              "h-10 w-10 text-primary/60 fallback-icon",
+              artist.image_url && !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') && "hidden"
+            )} />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-bold truncate">{artist.name}</h2>
