@@ -164,9 +164,14 @@ export function ForceGraph({
         d3.select(this).attr('fill', d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))');
       });
 
-    // Node images (optional)
+    // Node images (skip Last.fm placeholder images)
     node.each(function (d) {
-      if (d.image_url) {
+      const isPlaceholder = !d.image_url || 
+        d.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
+        d.image_url.includes('star') ||
+        d.image_url === '';
+      
+      if (!isPlaceholder && d.image_url) {
         const nodeG = d3.select(this);
         const radius = d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8;
         
