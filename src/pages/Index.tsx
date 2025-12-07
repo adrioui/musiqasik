@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { Music2, GitBranch, Zap, Database } from 'lucide-react';
-import { ArtistSearch } from '@/components/ArtistSearch';
-import { Artist } from '@/types/artist';
+import { useNavigate } from "react-router-dom";
+import { Music2, GitBranch, Zap, Database } from "lucide-react";
+import { ArtistSearch } from "@/components/ArtistSearch";
+import { Artist } from "@/types/artist";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function Index() {
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Music2 className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-xl">MusicGraph</span>
+          <span className="font-bold text-xl">MusiqasiQ</span>
         </div>
       </header>
 
@@ -30,7 +30,8 @@ export default function Index() {
             <span className="text-primary"> Connections</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-12 max-w-xl mx-auto">
-            Discover how your favorite artists are connected through an interactive similarity map powered by Last.fm
+            Discover how your favorite artists are connected through an
+            interactive similarity map powered by Last.fm
           </p>
 
           {/* Search */}
@@ -40,27 +41,38 @@ export default function Index() {
 
           {/* Features */}
           <div className="grid md:grid-cols-3 gap-6 text-left">
-            <div className="p-6 rounded-2xl bg-card border border-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div
+              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"
+              style={{ animationDelay: "0.1s" }}
+            >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <GitBranch className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">Visual Connections</h3>
               <p className="text-sm text-muted-foreground">
-                Explore artist relationships through an interactive force-directed graph
+                Explore artist relationships through an interactive
+                force-directed graph
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div
+              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"
+              style={{ animationDelay: "0.2s" }}
+            >
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                 <Zap className="h-6 w-6 text-accent" />
               </div>
               <h3 className="font-semibold mb-2">Configurable Depth</h3>
               <p className="text-sm text-muted-foreground">
-                Adjust the graph depth from 1-3 hops to discover more connections
+                Adjust the graph depth from 1-3 hops to discover more
+                connections
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div
+              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"
+              style={{ animationDelay: "0.3s" }}
+            >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Database className="h-6 w-6 text-primary" />
               </div>
@@ -76,7 +88,7 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-border">
         <div className="max-w-7xl mx-auto text-center text-sm text-muted-foreground">
-          Powered by Last.fm • Built with Lovable
+          Powered by Last.fm
         </div>
       </footer>
     </div>

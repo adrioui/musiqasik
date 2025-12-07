@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Music2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ForceGraph } from '@/components/ForceGraph';
-import { ArtistPanel } from '@/components/ArtistPanel';
-import { GraphControls } from '@/components/GraphControls';
-import { ArtistSearch } from '@/components/ArtistSearch';
-import { useLastFm } from '@/hooks/useLastFm';
-import { Artist, GraphData, SimilarityEdge } from '@/types/artist';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Loader2, Music2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ForceGraph } from "@/components/ForceGraph";
+import { ArtistPanel } from "@/components/ArtistPanel";
+import { GraphControls } from "@/components/GraphControls";
+import { ArtistSearch } from "@/components/ArtistSearch";
+import { useLastFm } from "@/hooks/useLastFm";
+import { Artist, GraphData, SimilarityEdge } from "@/types/artist";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MapView() {
   const { artistName } = useParams<{ artistName: string }>();
@@ -23,13 +23,16 @@ export default function MapView() {
   const [showLabels, setShowLabels] = useState(true);
 
   // Load graph data
-  const loadGraph = useCallback(async (name: string, graphDepth: number) => {
-    const data = await getGraph(name, graphDepth);
-    if (data) {
-      setGraphData(data);
-      setSelectedArtist(data.center);
-    }
-  }, [getGraph]);
+  const loadGraph = useCallback(
+    async (name: string, graphDepth: number) => {
+      const data = await getGraph(name, graphDepth);
+      if (data) {
+        setGraphData(data);
+        setSelectedArtist(data.center);
+      }
+    },
+    [getGraph],
+  );
 
   // Load initial data
   useEffect(() => {
@@ -42,9 +45,9 @@ export default function MapView() {
   useEffect(() => {
     if (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error,
-        variant: 'destructive',
+        variant: "destructive",
       });
     }
   }, [error, toast]);
@@ -68,18 +71,26 @@ export default function MapView() {
   // Get similar artists for the selected node
   const getSimilarArtists = (): { name: string; weight: number }[] => {
     if (!selectedArtist || !graphData) return [];
-    
+
     return graphData.edges
-      .filter((e) => 
-        e.source.toLowerCase() === selectedArtist.name.toLowerCase() ||
-        e.target.toLowerCase() === selectedArtist.name.toLowerCase()
+      .filter(
+        (e) =>
+          e.source.toLowerCase() === selectedArtist.name.toLowerCase() ||
+          e.target.toLowerCase() === selectedArtist.name.toLowerCase(),
       )
       .map((e) => ({
-        name: e.source.toLowerCase() === selectedArtist.name.toLowerCase() ? e.target : e.source,
+        name:
+          e.source.toLowerCase() === selectedArtist.name.toLowerCase()
+            ? e.target
+            : e.source,
         weight: e.weight,
       }))
-      .filter((item, index, self) => 
-        index === self.findIndex((t) => t.name.toLowerCase() === item.name.toLowerCase())
+      .filter(
+        (item, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.name.toLowerCase() === item.name.toLowerCase(),
+          ),
       )
       .sort((a, b) => b.weight - a.weight);
   };
@@ -100,12 +111,17 @@ export default function MapView() {
               <Music2 className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold text-lg leading-none">MusicGraph</h1>
-              <p className="text-xs text-muted-foreground">Artist Similarity Map</p>
+              <h1 className="font-bold text-lg leading-none">MusiqasiQ</h1>
+              <p className="text-xs text-muted-foreground">
+                Artist Similarity Map
+              </p>
             </div>
           </div>
           <div className="flex-1 max-w-md ml-auto">
-            <ArtistSearch onSelect={handleSearchSelect} placeholder="Search another artist..." />
+            <ArtistSearch
+              onSelect={handleSearchSelect}
+              placeholder="Search another artist..."
+            />
           </div>
         </header>
 
@@ -115,7 +131,9 @@ export default function MapView() {
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading similarity graph...</p>
+                <p className="text-muted-foreground">
+                  Loading similarity graph...
+                </p>
               </div>
             </div>
           ) : (

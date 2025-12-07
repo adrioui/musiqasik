@@ -71,3 +71,17 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Documentation
+
+This project uses progressive disclosure for documentation:
+
+- **`AGENTS.md`** - Concise onboarding for AI agents (64 lines)
+- **`docs/` directory** - Detailed documentation organized by topic:
+  - `development-workflow.md` - Setup, scripts, and development processes
+  - `architecture-patterns.md` - System design and data flow
+  - `code-conventions.md` - Coding patterns and conventions
+  - `common-tasks.md` - Step-by-step guides for common operations
+  - `troubleshooting.md` - Common issues and debugging approaches
+
+For AI agents working on this project, start with `AGENTS.md` and consult the `docs/` files as needed for specific topics.
