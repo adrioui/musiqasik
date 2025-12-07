@@ -11,6 +11,38 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+// Helper function for fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+// Helper function for fetch with retry logic
+async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries = 2): Promise<Response> {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await fetchWithTimeout(url, options, 5000);
+    } catch (error) {
+      if (i === maxRetries) throw error;
+      // Exponential backoff: 100ms, 200ms, 400ms...
+      await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, i)));
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 interface ArtistData {
   id?: string;
   name: string;
@@ -20,6 +52,58 @@ interface ArtistData {
   playcount?: number;
   tags?: string[];
   lastfm_url?: string;
+}
+
+interface EdgeInsertData {
+  source_artist_id: string;
+  target_artist_id: string;
+  match_score: number;
+  depth: number;
+}
+
+interface LastFmArtist {
+  name: string;
+  mbid?: string;
+  image?: Array<{ size: string; '#text': string }>;
+  listeners?: string;
+  url?: string;
+  stats?: {
+    listeners?: string;
+    playcount?: string;
+  };
+  tags?: {
+    tag?: Array<{ name: string }>;
+  };
+}
+
+interface LastFmSimilarArtist {
+  name: string;
+  match: string;
+}
+
+interface LastFmSearchResponse {
+  results?: {
+    artistmatches?: {
+      artist?: LastFmArtist[];
+    };
+  };
+}
+
+interface LastFmArtistInfoResponse {
+  error?: number;
+  artist?: LastFmArtist;
+}
+
+interface LastFmSimilarResponse {
+  similarartists?: {
+    artist?: LastFmSimilarArtist[];
+  };
+}
+
+interface DeezerArtistResponse {
+  data?: Array<{
+    picture_xl?: string;
+  }>;
 }
 
 // Check if image URL is the Last.fm placeholder (white star)
@@ -36,13 +120,13 @@ function isPlaceholderImage(url?: string): boolean {
 async function fetchDeezerImage(artistName: string): Promise<string | undefined> {
   try {
     console.log(`Fetching Deezer image for: ${artistName}`);
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName)}&limit=1`
     );
 
     if (!response.ok) return undefined;
 
-    const data = await response.json();
+    const data: DeezerArtistResponse = await response.json();
     
     if (data.data && data.data.length > 0) {
       // Deezer returns picture, picture_small, picture_medium, picture_big, picture_xl
@@ -58,17 +142,17 @@ async function fetchDeezerImage(artistName: string): Promise<string | undefined>
 async function searchArtists(query: string): Promise<ArtistData[]> {
   console.log(`Searching for artists with query: ${query}`);
   
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `https://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${encodeURIComponent(query)}&api_key=${LASTFM_API_KEY}&format=json&limit=10`
   );
   
   if (!response.ok) throw new Error(`Last.fm API error: ${response.status}`);
   
-  const data = await response.json();
+  const data: LastFmSearchResponse = await response.json();
   const artists = data.results?.artistmatches?.artist || [];
   
-  return artists.map((artist: any) => {
-    const lastfmImage = artist.image?.find((img: any) => img.size === 'large')?.['#text'];
+  return artists.map((artist: LastFmArtist) => {
+    const lastfmImage = artist.image?.find((img) => img.size === 'large')?.['#text'];
     return {
       name: artist.name,
       lastfm_mbid: artist.mbid || undefined,
@@ -83,17 +167,17 @@ async function searchArtists(query: string): Promise<ArtistData[]> {
 async function getArtistInfo(artistName: string): Promise<ArtistData | null> {
   console.log(`Getting info for artist: ${artistName}`);
   
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${LASTFM_API_KEY}&format=json`
   );
   
   if (!response.ok) throw new Error(`Last.fm API error: ${response.status}`);
   
-  const data = await response.json();
+  const data: LastFmArtistInfoResponse = await response.json();
   if (data.error || !data.artist) return null;
   
   const artist = data.artist;
-  const lastfmImage = artist.image?.find((img: any) => img.size === 'extralarge')?.['#text'];
+  const lastfmImage = artist.image?.find((img) => img.size === 'extralarge')?.['#text'];
   const mbid = artist.mbid || undefined;
   
   // Try to get image from Deezer if Last.fm returns placeholder
@@ -110,7 +194,7 @@ async function getArtistInfo(artistName: string): Promise<ArtistData | null> {
     image_url: imageUrl,
     listeners: artist.stats?.listeners ? parseInt(artist.stats.listeners) : undefined,
     playcount: artist.stats?.playcount ? parseInt(artist.stats.playcount) : undefined,
-    tags: artist.tags?.tag?.map((t: any) => t.name) || [],
+    tags: artist.tags?.tag?.map((t) => t.name) || [],
     lastfm_url: artist.url || undefined,
   };
 }
@@ -118,16 +202,16 @@ async function getArtistInfo(artistName: string): Promise<ArtistData | null> {
 async function getSimilarArtists(artistName: string): Promise<{ name: string; match: number }[]> {
   console.log(`Getting similar artists for: ${artistName}`);
   
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=${encodeURIComponent(artistName)}&api_key=${LASTFM_API_KEY}&format=json&limit=15`
   );
   
   if (!response.ok) throw new Error(`Last.fm API error: ${response.status}`);
   
-  const data = await response.json();
+  const data: LastFmSimilarResponse = await response.json();
   const similar = data.similarartists?.artist || [];
   
-  return similar.map((artist: any) => ({
+  return similar.map((artist: LastFmSimilarArtist) => ({
     name: artist.name,
     match: parseFloat(artist.match),
   }));
@@ -167,21 +251,65 @@ async function getOrCreateArtist(artistName: string): Promise<ArtistData | null>
   return inserted;
 }
 
+// Queue implementation for efficient BFS
+interface QueueItem { name: string; currentDepth: number }
+class Queue {
+  private items: QueueItem[] = [];
+  private head = 0;
+  
+  enqueue(item: QueueItem): void {
+    this.items.push(item);
+  }
+  
+  dequeue(): QueueItem | undefined {
+    if (this.head >= this.items.length) return undefined;
+    const item = this.items[this.head];
+    this.head++;
+    // Optional: clean up when head gets too large
+    if (this.head > 1000) {
+      this.items = this.items.slice(this.head);
+      this.head = 0;
+    }
+    return item;
+  }
+  
+  get length(): number {
+    return this.items.length - this.head;
+  }
+}
+
 async function getSimilarityGraph(artistName: string, depth: number = 1) {
   console.log(`Building similarity graph for ${artistName} with depth ${depth}`);
   
-  const centerArtist = await getOrCreateArtist(artistName);
+  // Per-request artist cache
+  const artistCache = new Map<string, Promise<ArtistData | null>>();
+  
+  async function getOrCreateArtistCached(artistName: string): Promise<ArtistData | null> {
+    const key = artistName.toLowerCase();
+    if (artistCache.has(key)) {
+      return artistCache.get(key)!;
+    }
+
+    const promise = getOrCreateArtist(artistName);
+    artistCache.set(key, promise);
+    return promise;
+  }
+  
+  const centerArtist = await getOrCreateArtistCached(artistName);
   if (!centerArtist) return { nodes: [], edges: [], center: null };
   
   const nodes: Map<string, ArtistData> = new Map();
   const edges: { source: string; target: string; weight: number }[] = [];
   const processed: Set<string> = new Set();
-  const queue: { name: string; currentDepth: number }[] = [{ name: centerArtist.name, currentDepth: 0 }];
+  const queue = new Queue();
+  queue.enqueue({ name: centerArtist.name, currentDepth: 0 });
   
   nodes.set(centerArtist.name.toLowerCase(), centerArtist);
   
   while (queue.length > 0) {
-    const { name, currentDepth } = queue.shift()!;
+    const item = queue.dequeue();
+    if (!item) break;
+    const { name, currentDepth } = item;
     const nameLower = name.toLowerCase();
     
     if (processed.has(nameLower) || currentDepth >= depth) continue;
@@ -202,31 +330,49 @@ async function getSimilarityGraph(artistName: string, depth: number = 1) {
           const targetNameLower = target.name.toLowerCase();
           if (!nodes.has(targetNameLower)) {
             nodes.set(targetNameLower, target);
-            if (currentDepth + 1 < depth) queue.push({ name: target.name, currentDepth: currentDepth + 1 });
+            if (currentDepth + 1 < depth) queue.enqueue({ name: target.name, currentDepth: currentDepth + 1 });
           }
           edges.push({ source: sourceArtist.name, target: target.name, weight: edge.match_score });
         }
       }
     } else {
       const similarArtists = await getSimilarArtists(name);
-      for (const similar of similarArtists.slice(0, 10)) {
-        const targetArtist = await getOrCreateArtist(similar.name);
+      
+      // Parallelize artist lookups
+      const artistLookups = similarArtists.slice(0, 10).map(similar =>
+        getOrCreateArtistCached(similar.name).then(targetArtist => ({
+          targetArtist,
+          match: similar.match
+        }))
+      );
+      
+      const results = await Promise.all(artistLookups);
+      const edgesToInsert: EdgeInsertData[] = [];
+      
+      for (const { targetArtist, match } of results) {
         if (!targetArtist?.id) continue;
         
         const targetNameLower = targetArtist.name.toLowerCase();
         if (!nodes.has(targetNameLower)) {
           nodes.set(targetNameLower, targetArtist);
-          if (currentDepth + 1 < depth) queue.push({ name: targetArtist.name, currentDepth: currentDepth + 1 });
+          if (currentDepth + 1 < depth) queue.enqueue({ name: targetArtist.name, currentDepth: currentDepth + 1 });
         }
         
-        await supabase.from('similarity_edges').upsert({
+        edgesToInsert.push({
           source_artist_id: sourceArtist.id,
           target_artist_id: targetArtist.id,
-          match_score: similar.match,
+          match_score: match,
           depth: currentDepth + 1,
-        }, { onConflict: 'source_artist_id,target_artist_id' });
+        });
         
-        edges.push({ source: sourceArtist.name, target: targetArtist.name, weight: similar.match });
+        edges.push({ source: sourceArtist.name, target: targetArtist.name, weight: match });
+      }
+      
+      // Batch insert edges
+      if (edgesToInsert.length > 0) {
+        await supabase.from('similarity_edges').upsert(edgesToInsert, {
+          onConflict: 'source_artist_id,target_artist_id',
+        });
       }
     }
   }

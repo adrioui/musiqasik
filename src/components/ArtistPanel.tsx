@@ -1,6 +1,5 @@
 import { ExternalLink, Music2, Users, Disc3, Tag } from 'lucide-react';
 import { Artist } from '@/types/artist';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
