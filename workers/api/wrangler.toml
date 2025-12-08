@@ -1,0 +1,13 @@
+name = "musiqasik-api"
+main = "index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+SURREALDB_NAMESPACE = "musiqasik"
+SURREALDB_DATABASE = "main"
+
+# Secrets (set via wrangler secret put):
+# SURREALDB_URL
+# SURREALDB_USER
+# SURREALDB_PASS
+# LASTFM_API_KEY

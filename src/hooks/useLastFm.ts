@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Artist, GraphData } from '@/types/artist';
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lastfm`;
+// Use new API endpoint if configured, otherwise fall back to Supabase
+const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lastfm`;
 
 export function useLastFm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +15,7 @@ export function useLastFm() {
     setError(null);
     
     try {
-      const response = await fetch(`${FUNCTION_URL}?action=search&q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_URL}?action=search&q=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
         throw new Error('Search failed');
@@ -40,7 +40,7 @@ export function useLastFm() {
     
     try {
       const response = await fetch(
-        `${FUNCTION_URL}?action=graph&artist=${encodeURIComponent(artistName)}&depth=${depth}`
+        `${API_URL}?action=graph&artist=${encodeURIComponent(artistName)}&depth=${depth}`
       );
       
       if (!response.ok) {
@@ -65,7 +65,7 @@ export function useLastFm() {
     setError(null);
     
     try {
-      const response = await fetch(`${FUNCTION_URL}?action=artist&name=${encodeURIComponent(name)}`);
+      const response = await fetch(`${API_URL}?action=artist&name=${encodeURIComponent(name)}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch artist');

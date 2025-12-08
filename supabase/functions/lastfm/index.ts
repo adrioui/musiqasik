@@ -251,33 +251,6 @@ async function getOrCreateArtist(artistName: string): Promise<ArtistData | null>
   return inserted;
 }
 
-// Queue implementation for efficient BFS
-interface QueueItem { name: string; currentDepth: number }
-class Queue {
-  private items: QueueItem[] = [];
-  private head = 0;
-  
-  enqueue(item: QueueItem): void {
-    this.items.push(item);
-  }
-  
-  dequeue(): QueueItem | undefined {
-    if (this.head >= this.items.length) return undefined;
-    const item = this.items[this.head];
-    this.head++;
-    // Optional: clean up when head gets too large
-    if (this.head > 1000) {
-      this.items = this.items.slice(this.head);
-      this.head = 0;
-    }
-    return item;
-  }
-  
-  get length(): number {
-    return this.items.length - this.head;
-  }
-}
-
 async function getSimilarityGraph(artistName: string, depth: number = 1) {
   console.log(`Building similarity graph for ${artistName} with depth ${depth}`);
   
@@ -301,80 +274,108 @@ async function getSimilarityGraph(artistName: string, depth: number = 1) {
   const nodes: Map<string, ArtistData> = new Map();
   const edges: { source: string; target: string; weight: number }[] = [];
   const processed: Set<string> = new Set();
-  const queue = new Queue();
-  queue.enqueue({ name: centerArtist.name, currentDepth: 0 });
   
   nodes.set(centerArtist.name.toLowerCase(), centerArtist);
   
-  while (queue.length > 0) {
-    const item = queue.dequeue();
-    if (!item) break;
-    const { name, currentDepth } = item;
-    const nameLower = name.toLowerCase();
+  // Level-based BFS: process all nodes at the same depth in parallel
+  let currentLevel: ArtistData[] = [centerArtist];
+  
+  for (let currentDepth = 0; currentDepth < depth && currentLevel.length > 0; currentDepth++) {
+    console.log(`Processing depth ${currentDepth}, ${currentLevel.length} nodes`);
     
-    if (processed.has(nameLower) || currentDepth >= depth) continue;
-    processed.add(nameLower);
+    // Filter out already processed nodes
+    const toProcess = currentLevel.filter(artist => {
+      const nameLower = artist.name.toLowerCase();
+      if (processed.has(nameLower) || !artist.id) return false;
+      processed.add(nameLower);
+      return true;
+    });
     
-    const sourceArtist = nodes.get(nameLower);
-    if (!sourceArtist?.id) continue;
+    if (toProcess.length === 0) break;
     
-    const { data: cachedEdges } = await supabase
-      .from('similarity_edges')
-      .select(`target_artist_id, match_score, target:artists!similarity_edges_target_artist_id_fkey(*)`)
-      .eq('source_artist_id', sourceArtist.id);
-    
-    if (cachedEdges && cachedEdges.length > 0) {
-      for (const edge of cachedEdges) {
-        const target = edge.target as unknown as ArtistData;
-        if (target) {
-          const targetNameLower = target.name.toLowerCase();
-          if (!nodes.has(targetNameLower)) {
-            nodes.set(targetNameLower, target);
-            if (currentDepth + 1 < depth) queue.enqueue({ name: target.name, currentDepth: currentDepth + 1 });
+    // Process all nodes at this level in parallel
+    const levelResults = await Promise.all(
+      toProcess.map(async (sourceArtist) => {
+        const localEdges: { source: string; target: string; weight: number }[] = [];
+        const localNodes: ArtistData[] = [];
+        const edgesToInsert: EdgeInsertData[] = [];
+        
+        // Check cache first
+        const { data: cachedEdges } = await supabase
+          .from('similarity_edges')
+          .select(`target_artist_id, match_score, target:artists!similarity_edges_target_artist_id_fkey(*)`)
+          .eq('source_artist_id', sourceArtist.id);
+        
+        if (cachedEdges && cachedEdges.length > 0) {
+          // Use cached edges
+          for (const edge of cachedEdges) {
+            const target = edge.target as unknown as ArtistData;
+            if (target) {
+              localNodes.push(target);
+              localEdges.push({ source: sourceArtist.name, target: target.name, weight: edge.match_score });
+            }
           }
-          edges.push({ source: sourceArtist.name, target: target.name, weight: edge.match_score });
+        } else {
+          // Fetch from Last.fm API
+          const similarArtists = await getSimilarArtists(sourceArtist.name);
+          
+          // Parallelize artist lookups
+          const artistLookups = similarArtists.slice(0, 10).map(similar =>
+            getOrCreateArtistCached(similar.name).then(targetArtist => ({
+              targetArtist,
+              match: similar.match
+            }))
+          );
+          
+          const results = await Promise.all(artistLookups);
+          
+          for (const { targetArtist, match } of results) {
+            if (!targetArtist?.id) continue;
+            
+            localNodes.push(targetArtist);
+            localEdges.push({ source: sourceArtist.name, target: targetArtist.name, weight: match });
+            
+            edgesToInsert.push({
+              source_artist_id: sourceArtist.id!,
+              target_artist_id: targetArtist.id,
+              match_score: match,
+              depth: currentDepth + 1,
+            });
+          }
+          
+          // Batch insert edges for this source
+          if (edgesToInsert.length > 0) {
+            await supabase.from('similarity_edges').upsert(edgesToInsert, {
+              onConflict: 'source_artist_id,target_artist_id',
+            });
+          }
         }
-      }
-    } else {
-      const similarArtists = await getSimilarArtists(name);
-      
-      // Parallelize artist lookups
-      const artistLookups = similarArtists.slice(0, 10).map(similar =>
-        getOrCreateArtistCached(similar.name).then(targetArtist => ({
-          targetArtist,
-          match: similar.match
-        }))
-      );
-      
-      const results = await Promise.all(artistLookups);
-      const edgesToInsert: EdgeInsertData[] = [];
-      
-      for (const { targetArtist, match } of results) {
-        if (!targetArtist?.id) continue;
         
-        const targetNameLower = targetArtist.name.toLowerCase();
-        if (!nodes.has(targetNameLower)) {
-          nodes.set(targetNameLower, targetArtist);
-          if (currentDepth + 1 < depth) queue.enqueue({ name: targetArtist.name, currentDepth: currentDepth + 1 });
+        return { localNodes, localEdges };
+      })
+    );
+    
+    // Collect results and prepare next level
+    const nextLevel: ArtistData[] = [];
+    
+    for (const { localNodes, localEdges } of levelResults) {
+      // Add edges
+      edges.push(...localEdges);
+      
+      // Add nodes and queue for next level
+      for (const node of localNodes) {
+        const nameLower = node.name.toLowerCase();
+        if (!nodes.has(nameLower)) {
+          nodes.set(nameLower, node);
+          // Only add to next level if we haven't processed it yet
+          if (!processed.has(nameLower)) {
+            nextLevel.push(node);
+          }
         }
-        
-        edgesToInsert.push({
-          source_artist_id: sourceArtist.id,
-          target_artist_id: targetArtist.id,
-          match_score: match,
-          depth: currentDepth + 1,
-        });
-        
-        edges.push({ source: sourceArtist.name, target: targetArtist.name, weight: match });
-      }
-      
-      // Batch insert edges
-      if (edgesToInsert.length > 0) {
-        await supabase.from('similarity_edges').upsert(edgesToInsert, {
-          onConflict: 'source_artist_id,target_artist_id',
-        });
       }
     }
+    
+    currentLevel = nextLevel;
   }
   
   return { nodes: Array.from(nodes.values()), edges, center: centerArtist };
