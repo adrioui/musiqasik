@@ -168,28 +168,28 @@ async function upsertArtist(db: Surreal, artist: Omit<Artist, "id">): Promise<Ar
     `INSERT INTO artists {
        name: $name,
        name_lower: string::lowercase($name),
-       lastfm_mbid: $mbid,
-       image_url: $image_url,
-       listeners: $listeners,
-       playcount: $playcount,
+       lastfm_mbid: IF $mbid THEN $mbid ELSE NONE END,
+       image_url: IF $image_url THEN $image_url ELSE NONE END,
+       listeners: IF $listeners THEN $listeners ELSE NONE END,
+       playcount: IF $playcount THEN $playcount ELSE NONE END,
        tags: $tags,
-       lastfm_url: $lastfm_url
+       lastfm_url: IF $lastfm_url THEN $lastfm_url ELSE NONE END
      } ON DUPLICATE KEY UPDATE
-       lastfm_mbid = $mbid,
-       image_url = $image_url,
-       listeners = $listeners,
-       playcount = $playcount,
+       lastfm_mbid = IF $mbid THEN $mbid ELSE NONE END,
+       image_url = IF $image_url THEN $image_url ELSE NONE END,
+       listeners = IF $listeners THEN $listeners ELSE NONE END,
+       playcount = IF $playcount THEN $playcount ELSE NONE END,
        tags = $tags,
-       lastfm_url = $lastfm_url,
+       lastfm_url = IF $lastfm_url THEN $lastfm_url ELSE NONE END,
        updated_at = time::now()`,
     {
       name: artist.name,
-      mbid: artist.lastfm_mbid || null,
-      image_url: artist.image_url || null,
-      listeners: artist.listeners || null,
-      playcount: artist.playcount || null,
+      mbid: artist.lastfm_mbid,
+      image_url: artist.image_url,
+      listeners: artist.listeners,
+      playcount: artist.playcount,
       tags: artist.tags || [],
-      lastfm_url: artist.lastfm_url || null,
+      lastfm_url: artist.lastfm_url,
     }
   );
   return result[0]?.[0] as Artist;

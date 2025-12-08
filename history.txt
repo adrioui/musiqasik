@@ -71,3 +71,30 @@ DEFINE INDEX edge_lookup ON TABLE similarity_edges FIELDS in, out UNIQUE;
 DEFINE INDEX edge_traversal ON TABLE similarity_edges FIELDS in, out, match_score, depth;
 DEFINE INDEX edge_depth ON TABLE similarity_edges FIELDS in, depth;
 DEFINE INDEX edge_target ON TABLE similarity_edges FIELDS out;
+-- Define artists table with schema validation
+DEFINE TABLE artists SCHEMAFULL;
+DEFINE FIELD name ON TABLE artists TYPE string;
+DEFINE FIELD name_lower ON TABLE artists TYPE string VALUE string::lowercase(name);
+DEFINE FIELD image_url ON TABLE artists TYPE option<string>;
+DEFINE FIELD lastfm_mbid ON TABLE artists TYPE option<string>;
+DEFINE FIELD listeners ON TABLE artists TYPE option<number>;
+DEFINE FIELD playcount ON TABLE artists TYPE option<number>;
+DEFINE FIELD tags ON TABLE artists TYPE option<array>;
+DEFINE FIELD lastfm_url ON TABLE artists TYPE option<string>;
+DEFINE FIELD created_at ON TABLE artists TYPE datetime VALUE time::now();
+DEFINE FIELD updated_at ON TABLE artists TYPE datetime VALUE time::now();
+-- Create unique index for artist name (case-insensitive)
+DEFINE INDEX artist_name_lower_unique ON TABLE artists COLUMNS name_lower UNIQUE;
+-- Create full-text search index for artist names
+DEFINE ANALYZER artist_analyzer TOKENIZERS blank, class FILTERS lowercase, ascii;
+DEFINE INDEX artist_name_search ON TABLE artists FIELDS name SEARCH ANALYZER artist_analyzer BM25 HIGHLIGHTS;
+-- Define similarity edges as graph relations
+DEFINE TABLE similarity_edges TYPE RELATION FROM artists TO artists SCHEMAFULL;
+DEFINE FIELD match_score ON TABLE similarity_edges TYPE number;
+DEFINE FIELD depth ON TABLE similarity_edges TYPE number;
+DEFINE FIELD created_at ON TABLE similarity_edges TYPE datetime VALUE time::now();
+-- Create composite index for edge lookups (includes depth for BFS)
+DEFINE INDEX edge_lookup ON TABLE similarity_edges FIELDS in, out UNIQUE;
+DEFINE INDEX edge_traversal ON TABLE similarity_edges FIELDS in, out, match_score, depth;
+DEFINE INDEX edge_depth ON TABLE similarity_edges FIELDS in, depth;
+DEFINE INDEX edge_target ON TABLE similarity_edges FIELDS out;
