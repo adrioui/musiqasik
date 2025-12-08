@@ -253,7 +253,7 @@ export function ForceGraph({
       simulation.stop();
       tooltip.remove();
     };
-  }, [filteredNodes, filteredEdges, centerArtist, threshold, dimensions, onNodeClick]);
+  }, [filteredNodes, filteredEdges, centerArtist, threshold, dimensions, onNodeClick, showLabels]);
 
   // Update labels visibility
   useEffect(() => {
@@ -293,9 +293,21 @@ export function ForceGraph({
 
   // Expose methods via ref
   useEffect(() => {
-    (window as any).__graphZoomIn = handleZoomIn;
-    (window as any).__graphZoomOut = handleZoomOut;
-    (window as any).__graphReset = handleReset;
+    (window as typeof window & {
+      __graphZoomIn?: () => void;
+      __graphZoomOut?: () => void;
+      __graphReset?: () => void;
+    }).__graphZoomIn = handleZoomIn;
+    (window as typeof window & {
+      __graphZoomIn?: () => void;
+      __graphZoomOut?: () => void;
+      __graphReset?: () => void;
+    }).__graphZoomOut = handleZoomOut;
+    (window as typeof window & {
+      __graphZoomIn?: () => void;
+      __graphZoomOut?: () => void;
+      __graphReset?: () => void;
+    }).__graphReset = handleReset;
   }, [handleZoomIn, handleZoomOut, handleReset]);
 
   if (filteredNodes.length === 0) {

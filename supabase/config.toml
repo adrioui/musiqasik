@@ -1,4 +1,0 @@
-project_id = "ezyakjubhutvczfqzwpq"
-
-[functions.lastfm]
-verify_jwt = false

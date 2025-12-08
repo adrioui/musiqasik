@@ -157,9 +157,9 @@ export default function MapView() {
             onThresholdChange={setThreshold}
             showLabels={showLabels}
             onShowLabelsChange={setShowLabels}
-            onZoomIn={() => (window as any).__graphZoomIn?.()}
-            onZoomOut={() => (window as any).__graphZoomOut?.()}
-            onReset={() => (window as any).__graphReset?.()}
+            onZoomIn={() => (window as typeof window & { __graphZoomIn?: () => void }).__graphZoomIn?.()}
+            onZoomOut={() => (window as typeof window & { __graphZoomOut?: () => void }).__graphZoomOut?.()}
+            onReset={() => (window as typeof window & { __graphReset?: () => void }).__graphReset?.()}
             isLoading={isLoading}
           />
         </div>
