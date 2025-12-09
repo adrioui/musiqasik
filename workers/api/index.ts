@@ -1,7 +1,7 @@
-import { Effect, Layer, pipe } from "effect";
-import { Surreal } from "surrealdb";
-import { LastFmApiError, NetworkError, DatabaseError } from "../../src/lib/errors";
-import type { Artist, GraphData } from "../../src/integrations/surrealdb/types";
+import { Effect, Layer, pipe } from 'effect';
+import { Surreal } from 'surrealdb';
+import { LastFmApiError, NetworkError, DatabaseError } from '../../src/lib/errors';
+import type { Artist, GraphData } from '../../src/integrations/surrealdb/types';
 
 interface Env {
   SURREALDB_URL: string;
@@ -18,10 +18,12 @@ const requestCache = new Map<string, Artist>();
 // Helper functions
 const isPlaceholderImage = (url?: string): boolean => {
   if (!url) return true;
-  return url.includes("2a96cbd8b46e442fc41c2b86b821562f") || 
-         url.includes("star") || 
-         url === "" || 
-         url.endsWith("/noimage/");
+  return (
+    url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
+    url.includes('star') ||
+    url === '' ||
+    url.endsWith('/noimage/')
+  );
 };
 
 const fetchDeezerImage = async (artistName: string): Promise<string | undefined> => {
@@ -29,7 +31,7 @@ const fetchDeezerImage = async (artistName: string): Promise<string | undefined>
     const response = await fetch(
       `https://api.deezer.com/search/artist?q=${encodeURIComponent(artistName)}&limit=1`
     );
-    const data = await response.json() as { data?: Array<{ picture_xl?: string }> };
+    const data = (await response.json()) as { data?: Array<{ picture_xl?: string }> };
     return data.data?.[0]?.picture_xl;
   } catch {
     return undefined;
@@ -46,13 +48,13 @@ async function searchArtists(query: string, apiKey: string): Promise<Artist[]> {
     throw new Error(`Last.fm API error: ${response.status}`);
   }
 
-  const data = await response.json() as {
+  const data = (await response.json()) as {
     results?: {
       artistmatches?: {
         artist?: Array<{
           name: string;
           mbid?: string;
-          image?: Array<{ size: string; "#text": string }>;
+          image?: Array<{ size: string; '#text': string }>;
           listeners?: string;
           url?: string;
         }>;
@@ -62,7 +64,7 @@ async function searchArtists(query: string, apiKey: string): Promise<Artist[]> {
 
   const artists = data.results?.artistmatches?.artist || [];
   return artists.map((artist) => {
-    const lastfmImage = artist.image?.find((img) => img.size === "large")?.["#text"];
+    const lastfmImage = artist.image?.find((img) => img.size === 'large')?.['#text'];
     return {
       name: artist.name,
       lastfm_mbid: artist.mbid || undefined,
@@ -82,12 +84,12 @@ async function getArtistInfo(artistName: string, apiKey: string): Promise<Artist
     throw new Error(`Last.fm API error: ${response.status}`);
   }
 
-  const data = await response.json() as {
+  const data = (await response.json()) as {
     error?: number;
     artist?: {
       name: string;
       mbid?: string;
-      image?: Array<{ size: string; "#text": string }>;
+      image?: Array<{ size: string; '#text': string }>;
       stats?: { listeners?: string; playcount?: string };
       tags?: { tag?: Array<{ name: string }> };
       url?: string;
@@ -99,7 +101,7 @@ async function getArtistInfo(artistName: string, apiKey: string): Promise<Artist
   }
 
   const artist = data.artist;
-  const lastfmImage = artist.image?.find((img) => img.size === "extralarge")?.["#text"];
+  const lastfmImage = artist.image?.find((img) => img.size === 'extralarge')?.['#text'];
 
   let imageUrl: string | undefined;
   if (isPlaceholderImage(lastfmImage)) {
@@ -119,7 +121,10 @@ async function getArtistInfo(artistName: string, apiKey: string): Promise<Artist
   };
 }
 
-async function getSimilarArtists(artistName: string, apiKey: string): Promise<Array<{ name: string; match: number }>> {
+async function getSimilarArtists(
+  artistName: string,
+  apiKey: string
+): Promise<Array<{ name: string; match: number }>> {
   const response = await fetch(
     `https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=${encodeURIComponent(artistName)}&api_key=${apiKey}&format=json&limit=15`
   );
@@ -128,7 +133,7 @@ async function getSimilarArtists(artistName: string, apiKey: string): Promise<Ar
     throw new Error(`Last.fm API error: ${response.status}`);
   }
 
-  const data = await response.json() as {
+  const data = (await response.json()) as {
     similarartists?: {
       artist?: Array<{ name: string; match: string }>;
     };
@@ -163,7 +168,7 @@ async function getArtistFromDb(db: Surreal, artistName: string): Promise<Artist 
   return result[0]?.[0] || null;
 }
 
-async function upsertArtist(db: Surreal, artist: Omit<Artist, "id">): Promise<Artist> {
+async function upsertArtist(db: Surreal, artist: Omit<Artist, 'id'>): Promise<Artist> {
   const result = await db.query<[Artist[]]>(
     `INSERT INTO artists {
        name: $name,
@@ -196,10 +201,10 @@ async function upsertArtist(db: Surreal, artist: Omit<Artist, "id">): Promise<Ar
 }
 
 async function upsertEdge(
-  db: Surreal, 
-  sourceId: string, 
-  targetId: string, 
-  matchScore: number, 
+  db: Surreal,
+  sourceId: string,
+  targetId: string,
+  matchScore: number,
   depth: number
 ): Promise<void> {
   await db.query(
@@ -208,13 +213,41 @@ async function upsertEdge(
   );
 }
 
+// Add concurrency limit to prevent overwhelming the API
+async function parallelMapWithLimit<T, U>(
+  items: T[],
+  mapper: (item: T) => Promise<U>,
+  concurrency: number
+): Promise<U[]> {
+  const results: U[] = [];
+  const executing: Promise<void>[] = [];
+
+  for (const item of items) {
+    const promise = mapper(item).then((result) => {
+      results.push(result);
+    });
+
+    executing.push(promise);
+
+    if (executing.length >= concurrency) {
+      await Promise.race(executing);
+      const index = executing.findIndex((p) => p === promise);
+      if (index > -1) executing.splice(index, 1);
+    }
+  }
+
+  await Promise.all(executing);
+  return results;
+}
+
 // BFS Graph Building (ported from Supabase Edge Function)
 async function buildGraph(
   db: Surreal,
   artistName: string,
   maxDepth: number,
   apiKey: string
-): Promise<GraphData> {
+): Promise<GraphData & { metrics?: { duration: number; nodeCount: number } }> {
+  const startTime = Date.now();
   const visited = new Set<string>();
   const queue: Array<{ name: string; depth: number }> = [{ name: artistName, depth: 0 }];
   const nodes: Artist[] = [];
@@ -229,7 +262,7 @@ async function buildGraph(
     visited.add(normalizedName);
 
     // Check cache first
-    let artist = requestCache.get(normalizedName) || await getArtistFromDb(db, current.name);
+    let artist = requestCache.get(normalizedName) || (await getArtistFromDb(db, current.name));
 
     if (!artist) {
       // Fetch from Last.fm
@@ -266,7 +299,7 @@ async function buildGraph(
                 target: edge.out.name,
                 weight: edge.match_score,
               });
-              
+
               if (!visited.has(edge.out.name.toLowerCase())) {
                 queue.push({ name: edge.out.name, depth: current.depth + 1 });
               }
@@ -276,78 +309,114 @@ async function buildGraph(
           // Fetch from Last.fm
           const similar = await getSimilarArtists(current.name, apiKey);
 
-          for (const sim of similar) {
-            // Get or create target artist
-            let targetArtist = requestCache.get(sim.name.toLowerCase()) || 
-                              await getArtistFromDb(db, sim.name);
+          // Process all similar artists in parallel with concurrency limit
+          const results = await parallelMapWithLimit(
+            similar,
+            async (sim) => {
+              try {
+                // Get or create target artist
+                let targetArtist =
+                  requestCache.get(sim.name.toLowerCase()) || (await getArtistFromDb(db, sim.name));
 
-            if (!targetArtist) {
-              const targetInfo = await getArtistInfo(sim.name, apiKey);
-              if (targetInfo) {
-                targetArtist = await upsertArtist(db, targetInfo);
+                if (!targetArtist) {
+                  const targetInfo = await getArtistInfo(sim.name, apiKey);
+                  if (targetInfo) {
+                    targetArtist = await upsertArtist(db, targetInfo);
+                  }
+                }
+
+                if (targetArtist) {
+                  requestCache.set(sim.name.toLowerCase(), targetArtist);
+
+                  // Create edge
+                  await upsertEdge(db, artist.id!, targetArtist.id!, sim.match, current.depth + 1);
+
+                  const edge = {
+                    source: artist.name,
+                    target: targetArtist.name,
+                    weight: sim.match,
+                  };
+
+                  const shouldQueue = !visited.has(sim.name.toLowerCase());
+
+                  return { edge, shouldQueue, name: sim.name, depth: current.depth + 1 };
+                }
+                return null;
+              } catch (error) {
+                console.error(`Error processing ${sim.name}:`, error);
+                return null;
+              }
+            },
+            5 // Limit to 5 concurrent requests to avoid rate limiting
+          );
+
+          // Process results sequentially (to maintain queue order)
+          results.forEach((result) => {
+            if (result) {
+              edges.push(result.edge);
+              if (result.shouldQueue) {
+                queue.push({ name: result.name, depth: result.depth });
               }
             }
-
-            if (targetArtist) {
-              requestCache.set(sim.name.toLowerCase(), targetArtist);
-
-              // Create edge
-              await upsertEdge(db, artist.id!, targetArtist.id!, sim.match, current.depth + 1);
-
-              edges.push({
-                source: artist.name,
-                target: targetArtist.name,
-                weight: sim.match,
-              });
-
-              if (!visited.has(sim.name.toLowerCase())) {
-                queue.push({ name: sim.name, depth: current.depth + 1 });
-              }
-            }
-          }
+          });
         }
       }
     }
   }
 
-  return { nodes, edges, center };
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+
+  console.log(
+    `Graph traversal completed in ${duration}ms for ${artistName} (depth: ${maxDepth}, nodes: ${nodes.length})`
+  );
+
+  return {
+    nodes,
+    edges,
+    center,
+    metrics: {
+      duration,
+      nodeCount: nodes.length,
+    },
+  };
 }
 
 // Request handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const action = url.searchParams.get("action");
+    const action = url.searchParams.get('action');
 
     // CORS headers
     const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
     };
 
-    if (request.method === "OPTIONS") {
+    if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
     }
 
     try {
       let result: unknown;
 
-      if (action === "search") {
-        const query = url.searchParams.get("q");
+      if (action === 'search') {
+        const query = url.searchParams.get('q');
         if (!query) {
-          return new Response(JSON.stringify({ error: "Query required" }), {
+          return new Response(JSON.stringify({ error: 'Query required' }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
         result = await searchArtists(query, env.LASTFM_API_KEY);
-      } else if (action === "artist") {
-        const name = url.searchParams.get("name");
+      } else if (action === 'artist') {
+        const name = url.searchParams.get('name');
         if (!name) {
-          return new Response(JSON.stringify({ error: "Artist name required" }), {
+          return new Response(JSON.stringify({ error: 'Artist name required' }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
@@ -364,14 +433,14 @@ export default {
         } finally {
           await db.close();
         }
-      } else if (action === "graph") {
-        const artistName = url.searchParams.get("artist");
-        const depth = Math.min(parseInt(url.searchParams.get("depth") || "1"), 3);
+      } else if (action === 'graph') {
+        const artistName = url.searchParams.get('artist');
+        const depth = Math.min(parseInt(url.searchParams.get('depth') || '1'), 3);
 
         if (!artistName) {
-          return new Response(JSON.stringify({ error: "Artist name required" }), {
+          return new Response(JSON.stringify({ error: 'Artist name required' }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
@@ -384,22 +453,22 @@ export default {
           await db.close();
         }
       } else {
-        return new Response(JSON.stringify({ error: "Invalid action" }), {
+        return new Response(JSON.stringify({ error: 'Invalid action' }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
       return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error("API Error:", error);
+      console.error('API Error:', error);
       return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : "Internal error" }),
+        JSON.stringify({ error: error instanceof Error ? error.message : 'Internal error' }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
