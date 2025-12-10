@@ -1,7 +1,7 @@
 ---
 description: Researches modern information discoverable on the web. Use when you need information that requires web research to find answers.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-V3.2
+model: chutes/deepseek-ai/DeepSeek-R1-0528
 tools:
   webfetch: true
   read: true

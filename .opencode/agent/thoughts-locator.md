@@ -1,7 +1,7 @@
 ---
 description: Discovers relevant documents in thoughts/ directory. Use when you need to figure out if we have random thoughts written down that are relevant to your current research task.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-V3.2
+model: chutes/deepseek-ai/DeepSeek-R1-0528
 tools:
   grep: true
   glob: true

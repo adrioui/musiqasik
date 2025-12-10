@@ -1,7 +1,7 @@
 ---
 description: Finds similar implementations, usage examples, or existing patterns that can be modeled after. It will give you concrete code examples based on what you're looking for.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-V3.2
+model: chutes/deepseek-ai/DeepSeek-R1-0528
 tools:
   grep: true
   glob: true

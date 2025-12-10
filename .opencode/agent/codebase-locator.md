@@ -1,7 +1,7 @@
 ---
 description: Locates files, directories, and components relevant to a feature or task. Call codebase-locator with human language prompt describing what you're looking for.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-V3.2
+model: chutes/deepseek-ai/DeepSeek-R1-0528
 tools:
   grep: true
   glob: true

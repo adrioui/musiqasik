@@ -1,7 +1,7 @@
 ---
 description: Analyzes codebase implementation details. Call the codebase-analyzer agent when you need to find detailed information about specific components.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-V3.2
+model: chutes/deepseek-ai/DeepSeek-R1-0528
 tools:
   read: true
   grep: true
