@@ -311,6 +311,5 @@ Run `npm run lint` to check code quality.
 
 - **TypeScript strict mode is disabled** (`tsconfig.app.json:18`)
 - **Path aliases**: `@/` maps to `./src/` (`vite.config.ts:13-17`)
-- **Component tagging**: `lovable-tagger` plugin active in dev mode
 - **No automated tests** - rely on manual testing and ESLint
 - **Follow existing patterns** rather than memorizing rules

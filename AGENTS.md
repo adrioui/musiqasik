@@ -55,7 +55,7 @@ Consult these files for detailed information:
 - **TypeScript strict mode is disabled** (`tsconfig.app.json:18`)
 - **Path aliases**: `@/` maps to `./src/` (`vite.config.ts:13-17`)
 - **No automated tests** - rely on manual testing and ESLint
-- **Component tagging**: `lovable-tagger` plugin active in dev mode
+- **No development-only plugins configured**
 
 ## Related Files
 - `package.json` - Dependencies and scripts

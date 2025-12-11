@@ -39,14 +39,13 @@ The database schema is automatically applied via the migration in `supabase/migr
 - **Port**: 8080
 - **Host**: All interfaces (`::`)
 - **Hot Reload**: Enabled via Vite
-- **Component Tagging**: `lovable-tagger` plugin in development mode (`vite.config.ts:12`)
+
 
 ## Build Configuration
 
 ### Vite Configuration (`vite.config.ts:1-19`)
 - Uses SWC for fast React compilation
 - Path aliases: `@/` maps to `./src/` (`vite.config.ts:13-17`)
-- Development plugin: `lovable-tagger` for component tagging
 - Port 8080 with host `::` (all interfaces)
 
 ### TypeScript Configuration
