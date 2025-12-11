@@ -52,9 +52,9 @@ export default function MapView() {
     }
   }, [error, toast]);
 
-  const handleNodeClick = (artist: Artist) => {
+  const handleNodeClick = useCallback((artist: Artist) => {
     setSelectedArtist(artist);
-  };
+  }, []);
 
   const handleRecenter = (name: string) => {
     navigate(`/artist/${encodeURIComponent(name)}`);

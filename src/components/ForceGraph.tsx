@@ -252,6 +252,7 @@ export function ForceGraph({
     return () => {
       simulation.stop();
       tooltip.remove();
+      simulationRef.current = null;
     };
   }, [filteredNodes, filteredEdges, centerArtist, threshold, dimensions, onNodeClick, showLabels]);
 
@@ -308,6 +309,17 @@ export function ForceGraph({
       __graphZoomOut?: () => void;
       __graphReset?: () => void;
     }).__graphReset = handleReset;
+
+    return () => {
+      const w = window as typeof window & {
+        __graphZoomIn?: () => void;
+        __graphZoomOut?: () => void;
+        __graphReset?: () => void;
+      };
+      delete w.__graphZoomIn;
+      delete w.__graphZoomOut;
+      delete w.__graphReset;
+    };
   }, [handleZoomIn, handleZoomOut, handleReset]);
 
   if (filteredNodes.length === 0) {
