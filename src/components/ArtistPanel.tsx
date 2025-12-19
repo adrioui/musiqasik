@@ -1,7 +1,7 @@
 import { ExternalLink, Music2, Users, Disc3, Tag } from 'lucide-react';
 import { Artist } from '@/types/artist';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 
 interface ArtistPanelProps {
   artist: Artist | null;
@@ -33,12 +33,7 @@ export function ArtistPanel({
     );
   }
 
-  const formatNumber = (num?: number | null) => {
-    if (!num) return 'N/A';
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-    return num.toString();
-  };
+
 
   return (
     <div className={cn('flex h-full flex-col overflow-hidden', className)}>

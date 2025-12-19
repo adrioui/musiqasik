@@ -3,7 +3,7 @@ import { Search, Loader2, Music2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Artist } from '@/types/artist';
 import { useLastFm } from '@/hooks/useLastFm';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 
 interface ArtistSearchProps {
   onSelect: (artist: Artist) => void;
@@ -25,19 +25,32 @@ export function ArtistSearch({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const handler = setTimeout(async () => {
       if (query.trim().length >= 2) {
-        const searchResults = await searchArtists(query);
-        setResults(searchResults);
-        setIsOpen(true);
-        setSelectedIndex(-1);
+        try {
+          const searchResults = await searchArtists(query, abortController.signal);
+          if (!abortController.signal.aborted) {
+            setResults(searchResults);
+            setIsOpen(true);
+            setSelectedIndex(-1);
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('Search failed:', error);
+          }
+        }
       } else {
         setResults([]);
         setIsOpen(false);
       }
     }, 300);
 
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+      abortController.abort();
+    };
   }, [query, searchArtists]);
 
   useEffect(() => {
@@ -82,16 +95,7 @@ export function ArtistSearch({
     onSelect(artist);
   };
 
-  const formatListeners = (listeners?: number | null) => {
-    if (!listeners) return '';
-    if (listeners >= 1000000) {
-      return `${(listeners / 1000000).toFixed(1)}M listeners`;
-    }
-    if (listeners >= 1000) {
-      return `${(listeners / 1000).toFixed(0)}K listeners`;
-    }
-    return `${listeners} listeners`;
-  };
+
 
   return (
     <div ref={containerRef} className={cn('relative w-full max-w-xl', className)}>
@@ -139,7 +143,7 @@ export function ArtistSearch({
                     <p className="truncate font-medium">{artist.name}</p>
                     {artist.listeners && (
                       <p className="text-sm text-muted-foreground">
-                        {formatListeners(artist.listeners)}
+                        {formatNumber(artist.listeners, 'listeners')}
                       </p>
                     )}
                   </div>
