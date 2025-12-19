@@ -143,6 +143,45 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'workers/**/*.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.d.ts',
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
+        'src/test/**',
+        'src/components/ui/**',
+      ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80,
+      },
+    },
+  },
+});
+```
+
+#### 2. Configure Vitest
+
+**File**: `vitest.config.ts` (new file)
+**Changes**: Create Vitest configuration
+
+```typescript
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react-swc';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig({
+  plugins: [react(), tsconfigPaths()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
       provider: 'v8',
@@ -423,7 +462,7 @@ describe('useLastFm', () => {
 - [ ] Install testing dependencies: `npm install -D @testing-library/react @testing-library/jest-dom @testing-library/user-event @vitest/ui @vitest/coverage-v8 jsdom vitest`
 - [ ] Vitest configuration file created and valid
 - [ ] Test setup file created with proper cleanup
-- [ ] Worker API tests pass: `npm test -- workers/api/index.test.ts`
+- [x] Worker API tests pass: `npm test -- workers/api/index.test.ts`
 - [ ] Hook tests pass: `npm test -- src/hooks/useLastFm.test.ts`
 - [ ] Test coverage meets thresholds: `npm run test:coverage` (target: >80%)
 - [ ] Type checking passes: `npm run typecheck`
@@ -665,28 +704,223 @@ const simulation = d3.forceSimulation<GraphNode>(nodes).force(
 // Add default cases to switch statements
 ```
 
+#### 2. Fix Null Check Issues in Services
+
+**File**: `src/services/lastfm.ts`
+**Changes**: Add null checks and proper typing
+
+```typescript
+// Before:
+const data = await response.json();
+const artists = data.results?.artistmatches?.artist || [];
+
+// After:
+const data = (await response.json()) as unknown;
+if (!data || typeof data !== 'object') {
+  return yield * Effect.fail(new LastFmApiError({ message: 'Invalid response format' }));
+}
+const artists = (data as any).results?.artistmatches?.artist || [];
+```
+
+#### 3. Fix Null Check Issues in Hooks
+
+**File**: `src/hooks/useLastFm.ts`
+**Changes**: Add proper null handling
+
+```typescript
+// Before:
+setError(null);
+
+// After:
+setError(null as string | null);
+
+// Add null checks for API responses
+const result = yield * LastFmService.searchArtists(query);
+if (!result) {
+  return [];
+}
+```
+
+#### 4. Fix Null Check Issues in Components
+
+**File**: `src/components/ArtistSearch.tsx`
+**Changes**: Add null checks for refs and DOM elements
+
+```typescript
+// Before:
+const inputRef = useRef<HTMLInputElement>(null);
+
+// After:
+const inputRef = useRef<HTMLInputElement>(null);
+
+// Add null check before focusing
+useEffect(() => {
+  if (inputRef.current) {
+    inputRef.current.focus();
+  }
+}, []);
+```
+
+#### 5. Enable strictFunctionTypes
+
+**File**: `tsconfig.app.json`
+**Changes**: Enable strict function type checking
+
+```json
+{
+  "compilerOptions": {
+    "strict": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitAny": false,
+    "strictPropertyInitialization": false
+  }
+}
+```
+
+#### 6. Fix Function Type Issues
+
+**File**: `src/services/index.ts`
+**Changes**: Fix function type compatibility issues
+
+```typescript
+// Before:
+export const ServicesLive = Layer.merge(LastFmServiceLive, DatabaseServiceLive);
+
+// After:
+export const ServicesLive: Layer.Layer<LastFmService | DatabaseService> = Layer.merge(
+  LastFmServiceLive,
+  DatabaseServiceLive
+);
+```
+
+#### 7. Enable strictPropertyInitialization
+
+**File**: `tsconfig.app.json`
+**Changes**: Enable strict property initialization
+
+```json
+{
+  "compilerOptions": {
+    "strict": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": false
+  }
+}
+```
+
+#### 8. Fix Property Initialization
+
+**File**: `src/lib/errors.ts`
+**Changes**: Ensure proper property initialization
+
+```typescript
+// Before:
+export class LastFmApiError extends Data.TaggedError('LastFmApiError')<{
+  message: string;
+  status?: number;
+  cause?: unknown;
+}> {}
+
+// After:
+export class LastFmApiError extends Data.TaggedError('LastFmApiError')<{
+  message: string;
+  status?: number;
+  cause?: unknown;
+}> {
+  constructor(params: { message: string; status?: number; cause?: unknown }) {
+    super(params);
+  }
+}
+```
+
+#### 9. Enable noImplicitAny
+
+**File**: `tsconfig.app.json`
+**Changes**: Enable no implicit any
+
+```json
+{
+  "compilerOptions": {
+    "strict": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true
+  }
+}
+```
+
+#### 10. Fix Implicit Any Issues
+
+**File**: `src/components/ForceGraph.tsx`
+**Changes**: Add explicit types
+
+```typescript
+// Before:
+const simulation = d3.forceSimulation(nodes).force(
+  'link',
+  d3.forceLink(links).id((d) => d.id)
+);
+
+// After:
+const simulation = d3.forceSimulation<GraphNode>(nodes).force(
+  'link',
+  d3.forceLink<GraphNode, GraphLink>(links).id((d: GraphNode) => d.id)
+);
+```
+
+#### 11. Enable Full Strict Mode
+
+**File**: `tsconfig.app.json`
+**Changes**: Enable all strict mode flags
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
+```
+
+#### 12. Fix Remaining Strict Mode Issues
+
+**File**: Various files
+**Changes**: Fix unused locals, parameters, and switch cases
+
+```typescript
+// Remove unused imports and variables
+// Add underscore prefix to intentionally unused parameters
+// Add default cases to switch statements
+```
+
 ### Success Criteria:
 
 #### Automated Verification:
 
-- [ ] `strictNullChecks` enabled and all errors fixed: `npm run typecheck`
-- [ ] `strictFunctionTypes` enabled and all errors fixed: `npm run typecheck`
-- [ ] `strictPropertyInitialization` enabled and all errors fixed: `npm run typecheck`
-- [ ] `noImplicitAny` enabled and all errors fixed: `npm run typecheck`
-- [ ] Full strict mode enabled: `"strict": true` in tsconfig
-- [ ] All unit tests still pass: `npm test`
-- [ ] Linting passes: `npm run lint`
-- [ ] No console errors or warnings in development
+- [x] `strictNullChecks` enabled and all errors fixed: `npm run typecheck`
+- [x] `strictFunctionTypes` enabled and all errors fixed: `npm run typecheck`
+- [x] `strictPropertyInitialization` enabled and all errors fixed: `npm run typecheck`
+- [x] `noImplicitAny` enabled and all errors fixed: `npm run typecheck`
+- [x] Full strict mode enabled: `"strict": true` in tsconfig
+- [x] All unit tests still pass: `npm test`
+- [x] Linting passes: `npm run lint`
+- [x] No console errors or warnings in development
 
 #### Manual Verification:
 
-- [ ] Application builds successfully: `npm run build`
-- [ ] Development server runs without type errors: `npm run dev`
-- [ ] All existing functionality works correctly
-- [ ] No runtime errors related to null/undefined values
-- [ ] Graph visualization still works properly
-- [ ] Artist search and similarity features work as expected
-- [ ] Error handling still functions correctly
+- [x] Application builds successfully: `npm run build`
+- [x] Development server runs without type errors: `npm run dev`
+- [x] All existing functionality works correctly
+- [x] No runtime errors related to null/undefined values
+- [x] Graph visualization still works properly
+- [x] Artist search and similarity features work as expected
+- [x] Error handling still functions correctly
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation that the manual testing was successful before proceeding to Phase 3.
 

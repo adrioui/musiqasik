@@ -1,6 +1,6 @@
 ---
 description: Implement highest priority small Linear ticket with worktree setup
-model: chutes/moonshotai/Kimi-K2-Thinking
+model: google/claude-opus-4-5-thinking
 ---
 
 ## PART I - IF A TICKET IS MENTIONED

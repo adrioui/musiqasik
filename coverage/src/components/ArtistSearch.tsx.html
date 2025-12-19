@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>0/154</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>0/154</span>
             </div>
         
             
@@ -214,7 +214,10 @@
 <a name='L149'></a><a href='#L149'>149</a>
 <a name='L150'></a><a href='#L150'>150</a>
 <a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -365,7 +368,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { useState, useEffect, useRef } from 'react';</span></span></span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { useState, useEffect, useRef } from 'react';</span></span></span>
 <span class="cstat-no" title="statement not covered" >import { Search, Loader2, Music2 } from 'lucide-react';</span>
 <span class="cstat-no" title="statement not covered" >import { Input } from '@/components/ui/input';</span>
 <span class="cstat-no" title="statement not covered" >import { Artist } from '@/types/artist';</span>
@@ -378,7 +384,11 @@
 <span class="cstat-no" title="statement not covered" >  placeholder?: string;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export function ArtistSearch({ onSelect, className, placeholder = "Search for an artist..." }: ArtistSearchProps) {</span>
+<span class="cstat-no" title="statement not covered" >export function ArtistSearch({</span>
+<span class="cstat-no" title="statement not covered" >  onSelect,</span>
+<span class="cstat-no" title="statement not covered" >  className,</span>
+<span class="cstat-no" title="statement not covered" >  placeholder = 'Search for an artist...',</span>
+<span class="cstat-no" title="statement not covered" >}: ArtistSearchProps) {</span>
 <span class="cstat-no" title="statement not covered" >  const [query, setQuery] = useState('');</span>
 <span class="cstat-no" title="statement not covered" >  const [results, setResults] = useState&lt;Artist[]&gt;([]);</span>
 <span class="cstat-no" title="statement not covered" >  const [isOpen, setIsOpen] = useState(false);</span>
@@ -420,11 +430,11 @@
 <span class="cstat-no" title="statement not covered" >    switch (e.key) {</span>
 <span class="cstat-no" title="statement not covered" >      case 'ArrowDown':</span>
 <span class="cstat-no" title="statement not covered" >        e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >        setSelectedIndex(prev =&gt; (prev &lt; results.length - 1 ? prev + 1 : prev));</span>
+<span class="cstat-no" title="statement not covered" >        setSelectedIndex((prev) =&gt; (prev &lt; results.length - 1 ? prev + 1 : prev));</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
 <span class="cstat-no" title="statement not covered" >      case 'ArrowUp':</span>
 <span class="cstat-no" title="statement not covered" >        e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >        setSelectedIndex(prev =&gt; (prev &gt; 0 ? prev - 1 : prev));</span>
+<span class="cstat-no" title="statement not covered" >        setSelectedIndex((prev) =&gt; (prev &gt; 0 ? prev - 1 : prev));</span>
 <span class="cstat-no" title="statement not covered" >        break;</span>
 <span class="cstat-no" title="statement not covered" >      case 'Enter':</span>
 <span class="cstat-no" title="statement not covered" >        e.preventDefault();</span>
@@ -457,9 +467,9 @@
 <span class="cstat-no" title="statement not covered" >  };</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div ref={containerRef} className={cn("relative w-full max-w-xl", className)}&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div ref={containerRef} className={cn('relative w-full max-w-xl', className)}&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;div className="relative"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;Input</span>
 <span class="cstat-no" title="statement not covered" >          ref={inputRef}</span>
 <span class="cstat-no" title="statement not covered" >          type="text"</span>
@@ -468,40 +478,38 @@
 <span class="cstat-no" title="statement not covered" >          onKeyDown={handleKeyDown}</span>
 <span class="cstat-no" title="statement not covered" >          onFocus={() =&gt; results.length &gt; 0 &amp;&amp; setIsOpen(true)}</span>
 <span class="cstat-no" title="statement not covered" >          placeholder={placeholder}</span>
-<span class="cstat-no" title="statement not covered" >          className="pl-12 pr-12 h-14 text-lg rounded-2xl border-2 border-border bg-card shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"</span>
+<span class="cstat-no" title="statement not covered" >          className="h-14 rounded-2xl border-2 border-border bg-card pl-12 pr-12 text-lg shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"</span>
 <span class="cstat-no" title="statement not covered" >        /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        {isLoading &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >          &lt;Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-muted-foreground" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        )}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {isOpen &amp;&amp; results.length &gt; 0 &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;ul className="py-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            {results.map((artist, index) =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >              &lt;li key={artist.name}&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;button</span>
 <span class="cstat-no" title="statement not covered" >                  onClick={() =&gt; handleSelect(artist)}</span>
 <span class="cstat-no" title="statement not covered" >                  className={cn(</span>
-<span class="cstat-no" title="statement not covered" >                    "w-full flex items-center gap-4 px-4 py-3 text-left transition-colors",</span>
-<span class="cstat-no" title="statement not covered" >                    index === selectedIndex</span>
-<span class="cstat-no" title="statement not covered" >                      ? "bg-secondary"</span>
-<span class="cstat-no" title="statement not covered" >                      : "hover:bg-secondary/50"</span>
+<span class="cstat-no" title="statement not covered" >                    'flex w-full items-center gap-4 px-4 py-3 text-left transition-colors',</span>
+<span class="cstat-no" title="statement not covered" >                    index === selectedIndex ? 'bg-secondary' : 'hover:bg-secondary/50'</span>
 <span class="cstat-no" title="statement not covered" >                  )}</span>
 <span class="cstat-no" title="statement not covered" >                &gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    {artist.image_url ? (</span>
 <span class="cstat-no" title="statement not covered" >                      &lt;img</span>
 <span class="cstat-no" title="statement not covered" >                        src={artist.image_url}</span>
 <span class="cstat-no" title="statement not covered" >                        alt={artist.name}</span>
-<span class="cstat-no" title="statement not covered" >                        className="w-full h-full object-cover"</span>
+<span class="cstat-no" title="statement not covered" >                        className="h-full w-full object-cover"</span>
 <span class="cstat-no" title="statement not covered" >                      /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    ) : (</span>
 <span class="cstat-no" title="statement not covered" >                      &lt;Music2 className="h-6 w-6 text-muted-foreground" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    )}</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className="flex-1 min-w-0"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;p className="font-medium truncate"&gt;{artist.name}&lt;/p&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="min-w-0 flex-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;p className="truncate font-medium"&gt;{artist.name}&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    {artist.listeners &amp;&amp; (</span>
 <span class="cstat-no" title="statement not covered" >                      &lt;p className="text-sm text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                        {formatListeners(artist.listeners)}</span>
@@ -516,14 +524,15 @@
 <span class="cstat-no" title="statement not covered" >      )}</span>
 <span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
-<span class="cstat-no" title="statement not covered" >}</span></pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

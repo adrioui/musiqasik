@@ -151,35 +151,35 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { Data } from "effect";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { Data } from 'effect';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class LastFmApiError extends Data.TaggedError("LastFmApiError")&lt;{</span>
+<span class="cstat-no" title="statement not covered" >export class LastFmApiError extends Data.TaggedError('LastFmApiError')&lt;{</span>
 <span class="cstat-no" title="statement not covered" >  message: string;</span>
 <span class="cstat-no" title="statement not covered" >  status?: number;</span>
 <span class="cstat-no" title="statement not covered" >  cause?: unknown;</span>
 <span class="cstat-no" title="statement not covered" >}&gt; {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class DatabaseError extends Data.TaggedError("DatabaseError")&lt;{</span>
+<span class="cstat-no" title="statement not covered" >export class DatabaseError extends Data.TaggedError('DatabaseError')&lt;{</span>
 <span class="cstat-no" title="statement not covered" >  message: string;</span>
 <span class="cstat-no" title="statement not covered" >  code?: string;</span>
 <span class="cstat-no" title="statement not covered" >  cause?: unknown;</span>
 <span class="cstat-no" title="statement not covered" >}&gt; {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class NetworkError extends Data.TaggedError("NetworkError")&lt;{</span>
+<span class="cstat-no" title="statement not covered" >export class NetworkError extends Data.TaggedError('NetworkError')&lt;{</span>
 <span class="cstat-no" title="statement not covered" >  message: string;</span>
 <span class="cstat-no" title="statement not covered" >  cause?: unknown;</span>
 <span class="cstat-no" title="statement not covered" >}&gt; {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class ArtistNotFoundError extends Data.TaggedError("ArtistNotFoundError")&lt;{</span>
+<span class="cstat-no" title="statement not covered" >export class ArtistNotFoundError extends Data.TaggedError('ArtistNotFoundError')&lt;{</span>
 <span class="cstat-no" title="statement not covered" >  artistName: string;</span>
 <span class="cstat-no" title="statement not covered" >}&gt; {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class ValidationError extends Data.TaggedError("ValidationError")&lt;{</span>
+<span class="cstat-no" title="statement not covered" >export class ValidationError extends Data.TaggedError('ValidationError')&lt;{</span>
 <span class="cstat-no" title="statement not covered" >  message: string;</span>
 <span class="cstat-no" title="statement not covered" >  field?: string;</span>
 <span class="cstat-no" title="statement not covered" >}&gt; {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export type AppError = </span>
+<span class="cstat-no" title="statement not covered" >export type AppError =</span>
 <span class="cstat-no" title="statement not covered" >  | LastFmApiError</span>
 <span class="cstat-no" title="statement not covered" >  | DatabaseError</span>
 <span class="cstat-no" title="statement not covered" >  | NetworkError</span>
@@ -188,12 +188,12 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export const handleUnknownError = (error: unknown): AppError =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (error instanceof Error) {</span>
-<span class="cstat-no" title="statement not covered" >    if (error.message.includes("network") || error.message.includes("fetch")) {</span>
+<span class="cstat-no" title="statement not covered" >    if (error.message.includes('network') || error.message.includes('fetch')) {</span>
 <span class="cstat-no" title="statement not covered" >      return new NetworkError({ message: error.message, cause: error });</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >    return new DatabaseError({ message: error.message, cause: error });</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
-<span class="cstat-no" title="statement not covered" >  return new DatabaseError({ message: "Unknown error occurred" });</span>
+<span class="cstat-no" title="statement not covered" >  return new DatabaseError({ message: 'Unknown error occurred' });</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;</pre></td></tr></table></pre>
 
@@ -202,7 +202,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

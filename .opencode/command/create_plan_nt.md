@@ -1,6 +1,6 @@
 ---
 description: Create implementation plans with thorough research (no thoughts directory)
-model: chutes/moonshotai/Kimi-K2-Thinking
+model: google/claude-opus-4-5-thinking
 ---
 
 # Implementation Plan

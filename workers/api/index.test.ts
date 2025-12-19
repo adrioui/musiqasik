@@ -1,8 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import worker from './index';
+import type { Env } from './index';
 
-// Mock the worker functionality for testing
+// Mock the database and lastfm services
+vi.mock('../../src/services/database', () => ({
+  getArtistFromDb: vi.fn(),
+  upsertArtist: vi.fn(),
+  upsertEdge: vi.fn(),
+}));
+
+vi.mock('../../src/services/lastfm', () => ({
+  getSimilarArtists: vi.fn(),
+  getArtistInfo: vi.fn(),
+}));
+
+// Import after mocks to get mocked versions
+import * as db from '../../src/services/database';
+import * as lastfm from '../../src/services/lastfm';
+
 describe('Worker API', () => {
-  const mockEnv = {
+  const mockEnv: Env = {
     SURREALDB_URL: 'http://localhost:8000',
     SURREALDB_NAMESPACE: 'test',
     SURREALDB_DATABASE: 'test',
@@ -14,6 +31,13 @@ describe('Worker API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+
+    // Reset mock implementations
+    vi.mocked(db.getArtistFromDb).mockReset();
+    vi.mocked(db.upsertArtist).mockReset();
+    vi.mocked(db.upsertEdge).mockReset();
+    vi.mocked(lastfm.getSimilarArtists).mockReset();
+    vi.mocked(lastfm.getArtistInfo).mockReset();
   });
 
   describe('searchArtists', () => {
@@ -23,31 +47,21 @@ describe('Worker API', () => {
         { name: 'Thom Yorke', listeners: 500000 },
       ];
 
-      // Mock the fetch call that would be made to the worker
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockArtists,
-      } as Response);
+      // Mock lastfm service
+      vi.mocked(lastfm.getSimilarArtists).mockResolvedValue(mockArtists);
 
-      // Simulate calling the worker endpoint
       const request = new Request('http://worker.test/?action=search&q=radiohead');
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
       const result = await response.json();
 
-      expect(response.ok).toBe(true);
+      expect(response.status).toBe(200);
       expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual(mockArtists);
     });
 
     it('should handle missing query parameter', async () => {
-      // Mock error response for missing query
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => ({ error: 'Query required' }),
-      } as Response);
-
       const request = new Request('http://worker.test/?action=search');
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
       const result = await response.json();
 
       expect(response.status).toBe(400);
@@ -57,19 +71,17 @@ describe('Worker API', () => {
 
   describe('buildGraph', () => {
     it('should build artist graph with BFS traversal', async () => {
-      const mockGraph = {
-        nodes: [{ name: 'Radiohead' }, { name: 'Thom Yorke' }],
-        edges: [{ source: 'Radiohead', target: 'Thom Yorke', weight: 1.0 }],
-        center: { name: 'Radiohead' },
-      };
+      // Mock artist data
+      const mockArtist = { id: '1', name: 'Radiohead' };
+      const mockSimilar = [{ name: 'Thom Yorke', match: 0.95 }];
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockGraph,
-      } as Response);
+      // Mock database and API responses
+      vi.mocked(db.getArtistFromDb).mockResolvedValue(mockArtist);
+      vi.mocked(lastfm.getSimilarArtists).mockResolvedValue(mockSimilar);
+      vi.mocked(db.upsertArtist).mockResolvedValue({ ...mockArtist, name: 'Thom Yorke' });
 
       const request = new Request('http://worker.test/?action=graph&artist=Radiohead&depth=1');
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
       const result = await response.json();
 
       expect(response.status).toBe(200);
@@ -81,25 +93,23 @@ describe('Worker API', () => {
     });
 
     it('should respect depth limit', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ nodes: [], edges: [], center: null }),
-      } as Response);
+      // Mock minimal data
+      vi.mocked(db.getArtistFromDb).mockResolvedValue({ id: '1', name: 'Radiohead' });
+      vi.mocked(lastfm.getSimilarArtists).mockResolvedValue([]);
 
       const request = new Request('http://worker.test/?action=graph&artist=Radiohead&depth=2');
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
     });
 
     it('should cap depth at maximum value', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ nodes: [], edges: [], center: null }),
-      } as Response);
+      // Mock minimal data
+      vi.mocked(db.getArtistFromDb).mockResolvedValue({ id: '1', name: 'Radiohead' });
+      vi.mocked(lastfm.getSimilarArtists).mockResolvedValue([]);
 
       const request = new Request('http://worker.test/?action=graph&artist=Radiohead&depth=10');
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
     });
@@ -107,74 +117,13 @@ describe('Worker API', () => {
 
   describe('CORS', () => {
     it('should handle OPTIONS requests', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: new Headers({
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        }),
-      } as Response);
-
       const request = new Request('http://worker.test/?action=search&q=test', {
         method: 'OPTIONS',
       });
-      const response = await fetch(request.url);
+      const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle API errors gracefully', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({ error: 'Internal error' }),
-      } as Response);
-
-      const request = new Request('http://worker.test/?action=search&q=test');
-      const response = await fetch(request.url);
-      const result = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(result.error).toBe('Internal error');
-    });
-
-    it('should handle network errors', async () => {
-      vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
-
-      const request = new Request('http://worker.test/?action=search&q=test');
-
-      await expect(fetch(request.url)).rejects.toThrow('Network error');
-    });
-  });
-
-  describe('Performance', () => {
-    it('should handle concurrent requests efficiently', async () => {
-      const mockArtists = [
-        { name: 'Radiohead', listeners: 1000000 },
-        { name: 'Thom Yorke', listeners: 500000 },
-      ];
-
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => mockArtists,
-      } as Response);
-
-      // Simulate multiple concurrent requests
-      const requests = Array.from({ length: 5 }, (_, i) =>
-        fetch(`http://worker.test/?action=search&q=artist${i}`)
-      );
-
-      const responses = await Promise.all(requests);
-
-      expect(responses).toHaveLength(5);
-      responses.forEach((response) => {
-        expect(response.ok).toBe(true);
-      });
     });
   });
 });

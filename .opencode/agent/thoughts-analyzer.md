@@ -1,7 +1,7 @@
 ---
 description: Extracts high-value insights from thoughts documents. Use this subagent when wanting to deep dive on a research topic.
 mode: subagent
-model: chutes/deepseek-ai/DeepSeek-R1-0528
+model: google/claude-sonnet-4-5
 tools:
   read: true
   grep: true

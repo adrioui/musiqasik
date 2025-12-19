@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/135</span>
+                <span class='fraction'>0/151</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/135</span>
+                <span class='fraction'>0/151</span>
             </div>
         
             
@@ -197,7 +197,24 @@
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
 <a name='L134'></a><a href='#L134'>134</a>
-<a name='L135'></a><a href='#L135'>135</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -331,7 +348,24 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { ExternalLink, Music2, Users, Disc3, Tag } from 'lucide-react';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { ExternalLink, Music2, Users, Disc3, Tag } from 'lucide-react';</span></span></span>
 <span class="cstat-no" title="statement not covered" >import { Artist } from '@/types/artist';</span>
 <span class="cstat-no" title="statement not covered" >import { Badge } from '@/components/ui/badge';</span>
 <span class="cstat-no" title="statement not covered" >import { cn } from '@/lib/utils';</span>
@@ -343,13 +377,23 @@
 <span class="cstat-no" title="statement not covered" >  className?: string;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export function ArtistPanel({ artist, similarArtists = [], onArtistClick, className }: ArtistPanelProps) {</span>
+<span class="cstat-no" title="statement not covered" >export function ArtistPanel({</span>
+<span class="cstat-no" title="statement not covered" >  artist,</span>
+<span class="cstat-no" title="statement not covered" >  similarArtists = [],</span>
+<span class="cstat-no" title="statement not covered" >  onArtistClick,</span>
+<span class="cstat-no" title="statement not covered" >  className,</span>
+<span class="cstat-no" title="statement not covered" >}: ArtistPanelProps) {</span>
 <span class="cstat-no" title="statement not covered" >  if (!artist) {</span>
 <span class="cstat-no" title="statement not covered" >    return (</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className={cn("flex flex-col items-center justify-center h-full text-center p-6", className)}&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;Music2 className="h-16 w-16 text-muted-foreground/30 mb-4" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div</span>
+<span class="cstat-no" title="statement not covered" >        className={cn(</span>
+<span class="cstat-no" title="statement not covered" >          'flex h-full flex-col items-center justify-center p-6 text-center',</span>
+<span class="cstat-no" title="statement not covered" >          className</span>
+<span class="cstat-no" title="statement not covered" >        )}</span>
+<span class="cstat-no" title="statement not covered" >      &gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;Music2 className="mb-4 h-16 w-16 text-muted-foreground/30" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;h3 className="text-lg font-medium text-muted-foreground"&gt;No artist selected&lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;p className="text-sm text-muted-foreground/70 mt-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;p className="mt-1 text-sm text-muted-foreground/70"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          Search for an artist or click a node in the graph</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
@@ -364,36 +408,42 @@
 <span class="cstat-no" title="statement not covered" >  };</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className={cn("flex flex-col h-full overflow-hidden", className)}&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className={cn('flex h-full flex-col overflow-hidden', className)}&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* Artist Header */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className="p-6 border-b border-border"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div className="border-b border-border p-6"&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;div className="flex items-start gap-4"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden flex-shrink-0"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-accent/20"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            {artist.image_url &amp;&amp; !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') ? (</span>
 <span class="cstat-no" title="statement not covered" >              &lt;img</span>
 <span class="cstat-no" title="statement not covered" >                src={artist.image_url}</span>
 <span class="cstat-no" title="statement not covered" >                alt={artist.name}</span>
-<span class="cstat-no" title="statement not covered" >                className="w-full h-full object-cover"</span>
+<span class="cstat-no" title="statement not covered" >                className="h-full w-full object-cover"</span>
 <span class="cstat-no" title="statement not covered" >                onError={(e) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                  // Hide broken images</span>
 <span class="cstat-no" title="statement not covered" >                  e.currentTarget.style.display = 'none';</span>
-<span class="cstat-no" title="statement not covered" >                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');</span>
+<span class="cstat-no" title="statement not covered" >                  e.currentTarget.parentElement</span>
+<span class="cstat-no" title="statement not covered" >                    ?.querySelector('.fallback-icon')</span>
+<span class="cstat-no" title="statement not covered" >                    ?.classList.remove('hidden');</span>
 <span class="cstat-no" title="statement not covered" >                }}</span>
 <span class="cstat-no" title="statement not covered" >              /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            ) : null}</span>
-<span class="cstat-no" title="statement not covered" >            &lt;Music2 className={cn(</span>
-<span class="cstat-no" title="statement not covered" >              "h-10 w-10 text-primary/60 fallback-icon",</span>
-<span class="cstat-no" title="statement not covered" >              artist.image_url &amp;&amp; !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') &amp;&amp; "hidden"</span>
-<span class="cstat-no" title="statement not covered" >            )} /&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;Music2</span>
+<span class="cstat-no" title="statement not covered" >              className={cn(</span>
+<span class="cstat-no" title="statement not covered" >                'fallback-icon h-10 w-10 text-primary/60',</span>
+<span class="cstat-no" title="statement not covered" >                artist.image_url &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >                  !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') &amp;&amp;</span>
+<span class="cstat-no" title="statement not covered" >                  'hidden'</span>
+<span class="cstat-no" title="statement not covered" >              )}</span>
+<span class="cstat-no" title="statement not covered" >            /&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="flex-1 min-w-0"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;h2 className="text-xl font-bold truncate"&gt;{artist.name}&lt;/h2&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="min-w-0 flex-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;h2 className="truncate text-xl font-bold"&gt;{artist.name}&lt;/h2&gt;</span>
 <span class="cstat-no" title="statement not covered" >            {artist.lastfm_url &amp;&amp; (</span>
 <span class="cstat-no" title="statement not covered" >              &lt;a</span>
 <span class="cstat-no" title="statement not covered" >                href={artist.lastfm_url}</span>
 <span class="cstat-no" title="statement not covered" >                target="_blank"</span>
 <span class="cstat-no" title="statement not covered" >                rel="noopener noreferrer"</span>
-<span class="cstat-no" title="statement not covered" >                className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"</span>
+<span class="cstat-no" title="statement not covered" >                className="mt-1 inline-flex items-center gap-1 text-sm text-primary hover:underline"</span>
 <span class="cstat-no" title="statement not covered" >              &gt;</span>
 <span class="cstat-no" title="statement not covered" >                View on Last.fm</span>
 <span class="cstat-no" title="statement not covered" >                &lt;ExternalLink className="h-3 w-3" /&gt;</span>
@@ -403,15 +453,15 @@
 <span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >        {/* Stats */}</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="grid grid-cols-2 gap-4 mt-6"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="mt-6 grid grid-cols-2 gap-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Users className="h-5 w-5 text-primary" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="text-xs text-muted-foreground"&gt;Listeners&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="font-semibold"&gt;{formatNumber(artist.listeners)}&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Disc3 className="h-5 w-5 text-accent" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="text-xs text-muted-foreground"&gt;Plays&lt;/p&gt;</span>
@@ -423,7 +473,7 @@
 <span class="cstat-no" title="statement not covered" >        {/* Tags */}</span>
 <span class="cstat-no" title="statement not covered" >        {artist.tags &amp;&amp; artist.tags.length &gt; 0 &amp;&amp; (</span>
 <span class="cstat-no" title="statement not covered" >          &lt;div className="mt-4"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className="flex items-center gap-2 mb-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="mb-2 flex items-center gap-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;Tag className="h-4 w-4 text-muted-foreground" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;span className="text-sm text-muted-foreground"&gt;Genres&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
@@ -440,7 +490,7 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* Similar Artists */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;div className="flex-1 overflow-y-auto p-6"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;h3 className="text-sm font-medium text-muted-foreground mb-3"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;h3 className="mb-3 text-sm font-medium text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          Similar Artists ({similarArtists.length})</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/h3&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;div className="space-y-2"&gt;</span>
@@ -448,16 +498,16 @@
 <span class="cstat-no" title="statement not covered" >            &lt;button</span>
 <span class="cstat-no" title="statement not covered" >              key={similar.name}</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; onArtistClick?.(similar.name)}</span>
-<span class="cstat-no" title="statement not covered" >              className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary transition-colors text-left"</span>
+<span class="cstat-no" title="statement not covered" >              className="flex w-full items-center justify-between rounded-lg bg-secondary/30 p-3 text-left transition-colors hover:bg-secondary"</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium truncate"&gt;{similar.name}&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className="text-xs text-muted-foreground ml-2 flex-shrink-0"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="truncate font-medium"&gt;{similar.name}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="ml-2 flex-shrink-0 text-xs text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                {Math.round(similar.weight * 100)}% match</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/button&gt;</span>
 <span class="cstat-no" title="statement not covered" >          ))}</span>
 <span class="cstat-no" title="statement not covered" >          {similarArtists.length === 0 &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >            &lt;p className="text-sm text-muted-foreground text-center py-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;p className="py-4 text-center text-sm text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              No similar artists found</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >          )}</span>
@@ -465,14 +515,15 @@
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
-<span class="cstat-no" title="statement not covered" >}</span></pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,6 +1,6 @@
 ---
 description: Iterate on existing implementation plans with thorough research and updates
-model: chutes/moonshotai/Kimi-K2-Thinking
+model: google/claude-opus-4-5-thinking
 ---
 
 # Iterate Implementation Plan

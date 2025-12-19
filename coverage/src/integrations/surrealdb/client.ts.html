@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/68</span>
+                <span class='fraction'>0/79</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/68</span>
+                <span class='fraction'>0/79</span>
             </div>
         
             
@@ -131,7 +131,18 @@
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -199,23 +210,45 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { Surreal } from "surrealdb";</span></span></span>
-<span class="cstat-no" title="statement not covered" >import { Context, Effect, Layer } from "effect";</span>
-<span class="cstat-no" title="statement not covered" >import { DatabaseError } from "@/lib/errors";</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { Surreal } from 'surrealdb';</span></span></span>
+<span class="cstat-no" title="statement not covered" >import { Context, Effect, Layer } from 'effect';</span>
+<span class="cstat-no" title="statement not covered" >import { DatabaseError } from '@/lib/errors';</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >const isServerless = typeof process !== "undefined" &amp;&amp; (process.env.VERCEL || process.env.NETLIFY);</span>
+<span class="cstat-no" title="statement not covered" >const isServerless = typeof process !== 'undefined' &amp;&amp; (process.env.VERCEL || process.env.NETLIFY);</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_WS_URL = import.meta.env.VITE_SURREALDB_WS_URL || (typeof process !== "undefined" ? process.env.SURREALDB_WS_URL : undefined);</span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_HTTP_URL = import.meta.env.VITE_SURREALDB_HTTP_URL || (typeof process !== "undefined" ? process.env.SURREALDB_HTTP_URL : undefined);</span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_NAMESPACE = import.meta.env.VITE_SURREALDB_NAMESPACE || (typeof process !== "undefined" ? process.env.SURREALDB_NAMESPACE : undefined) || "musiqasik";</span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_DATABASE = import.meta.env.VITE_SURREALDB_DATABASE || (typeof process !== "undefined" ? process.env.SURREALDB_DATABASE : undefined) || "main";</span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_USER = import.meta.env.VITE_SURREALDB_USER || (typeof process !== "undefined" ? process.env.SURREALDB_USER : undefined);</span>
-<span class="cstat-no" title="statement not covered" >const SURREALDB_PASS = import.meta.env.VITE_SURREALDB_PASS || (typeof process !== "undefined" ? process.env.SURREALDB_PASS : undefined);</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_WS_URL =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_WS_URL ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_WS_URL : undefined);</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_HTTP_URL =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_HTTP_URL ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_HTTP_URL : undefined);</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_NAMESPACE =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_NAMESPACE ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_NAMESPACE : undefined) ||</span>
+<span class="cstat-no" title="statement not covered" >  'musiqasik';</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_DATABASE =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_DATABASE ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_DATABASE : undefined) ||</span>
+<span class="cstat-no" title="statement not covered" >  'main';</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_USER =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_USER ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_USER : undefined);</span>
+<span class="cstat-no" title="statement not covered" >const SURREALDB_PASS =</span>
+<span class="cstat-no" title="statement not covered" >  import.meta.env.VITE_SURREALDB_PASS ||</span>
+<span class="cstat-no" title="statement not covered" >  (typeof process !== 'undefined' ? process.env.SURREALDB_PASS : undefined);</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class SurrealClient extends Context.Tag("SurrealClient")&lt;</span>
-<span class="cstat-no" title="statement not covered" >  SurrealClient,</span>
-<span class="cstat-no" title="statement not covered" >  Surreal</span>
-<span class="cstat-no" title="statement not covered" >&gt;() {}</span>
+<span class="cstat-no" title="statement not covered" >export class SurrealClient extends Context.Tag('SurrealClient')&lt;SurrealClient, Surreal&gt;() {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// Global singleton for serverless environments to prevent connection exhaustion</span>
 <span class="cstat-no" title="statement not covered" >let globalSurreal: Surreal | null = null;</span>
@@ -226,44 +259,44 @@
 <span class="cstat-no" title="statement not covered" >    if (isServerless &amp;&amp; globalSurreal) {</span>
 <span class="cstat-no" title="statement not covered" >      return globalSurreal;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    const db = new Surreal();</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    // Always use HTTP in serverless, WebSocket in Node servers</span>
 <span class="cstat-no" title="statement not covered" >    const url = isServerless ? SURREALDB_HTTP_URL : SURREALDB_WS_URL;</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (!url) {</span>
-<span class="cstat-no" title="statement not covered" >      return yield* Effect.fail(</span>
-<span class="cstat-no" title="statement not covered" >        new DatabaseError({ message: "SurrealDB URL not configured" })</span>
-<span class="cstat-no" title="statement not covered" >      );</span>
+<span class="cstat-no" title="statement not covered" >      return yield* Effect.fail(new DatabaseError({ message: 'SurrealDB URL not configured' }));</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    yield* Effect.tryPromise({</span>
-<span class="cstat-no" title="statement not covered" >      try: () =&gt; db.connect(url, {</span>
-<span class="cstat-no" title="statement not covered" >        namespace: SURREALDB_NAMESPACE,</span>
-<span class="cstat-no" title="statement not covered" >        database: SURREALDB_DATABASE,</span>
-<span class="cstat-no" title="statement not covered" >        auth: {</span>
-<span class="cstat-no" title="statement not covered" >          username: SURREALDB_USER || "root",</span>
-<span class="cstat-no" title="statement not covered" >          password: SURREALDB_PASS || "root",</span>
-<span class="cstat-no" title="statement not covered" >        },</span>
-<span class="cstat-no" title="statement not covered" >      }),</span>
-<span class="cstat-no" title="statement not covered" >      catch: (error) =&gt; new DatabaseError({ message: "Failed to connect to SurrealDB", cause: error }),</span>
+<span class="cstat-no" title="statement not covered" >      try: () =&gt;</span>
+<span class="cstat-no" title="statement not covered" >        db.connect(url, {</span>
+<span class="cstat-no" title="statement not covered" >          namespace: SURREALDB_NAMESPACE,</span>
+<span class="cstat-no" title="statement not covered" >          database: SURREALDB_DATABASE,</span>
+<span class="cstat-no" title="statement not covered" >          auth: {</span>
+<span class="cstat-no" title="statement not covered" >            username: SURREALDB_USER || 'root',</span>
+<span class="cstat-no" title="statement not covered" >            password: SURREALDB_PASS || 'root',</span>
+<span class="cstat-no" title="statement not covered" >          },</span>
+<span class="cstat-no" title="statement not covered" >        }),</span>
+<span class="cstat-no" title="statement not covered" >      catch: (error) =&gt;</span>
+<span class="cstat-no" title="statement not covered" >        new DatabaseError({ message: 'Failed to connect to SurrealDB', cause: error }),</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    yield* Effect.tryPromise({</span>
 <span class="cstat-no" title="statement not covered" >      try: () =&gt; db.ready,</span>
-<span class="cstat-no" title="statement not covered" >      catch: (error) =&gt; new DatabaseError({ message: "SurrealDB not ready", cause: error }),</span>
+<span class="cstat-no" title="statement not covered" >      catch: (error) =&gt; new DatabaseError({ message: 'SurrealDB not ready', cause: error }),</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (isServerless) {</span>
 <span class="cstat-no" title="statement not covered" >      globalSurreal = db;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    </span>
-<span class="cstat-no" title="statement not covered" >    console.log("SurrealDB connected successfully");</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    console.log('SurrealDB connected successfully');</span>
 <span class="cstat-no" title="statement not covered" >    return db;</span>
 <span class="cstat-no" title="statement not covered" >  }),</span>
 <span class="cstat-no" title="statement not covered" >  // Don't close connection in serverless to reuse across requests</span>
-<span class="cstat-no" title="statement not covered" >  (db) =&gt; isServerless ? Effect.void : Effect.promise(() =&gt; db.close())</span>
+<span class="cstat-no" title="statement not covered" >  (db) =&gt; (isServerless ? Effect.void : Effect.promise(() =&gt; db.close()))</span>
 <span class="cstat-no" title="statement not covered" >);</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export const SurrealLive = Layer.scoped(SurrealClient, connectSurreal);</span>
@@ -274,7 +307,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

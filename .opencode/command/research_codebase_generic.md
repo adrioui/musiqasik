@@ -1,6 +1,6 @@
 ---
 description: Research codebase comprehensively using parallel sub-agents
-model: chutes/moonshotai/Kimi-K2-Thinking
+model: google/claude-opus-4-5-thinking
 ---
 
 # Research Codebase

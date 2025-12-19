@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/96</span>
+                <span class='fraction'>0/94</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/96</span>
+                <span class='fraction'>0/94</span>
             </div>
         
             
@@ -157,9 +157,7 @@
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L95'></a><a href='#L95'>95</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -253,12 +251,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { useNavigate } from "react-router-dom";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >import { Music2, GitBranch, Zap, Database } from "lucide-react";</span>
-<span class="cstat-no" title="statement not covered" >import { ArtistSearch } from "@/components/ArtistSearch";</span>
-<span class="cstat-no" title="statement not covered" >import { Artist } from "@/types/artist";</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { useNavigate } from 'react-router-dom';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >import { Music2, GitBranch, Zap, Database } from 'lucide-react';</span>
+<span class="cstat-no" title="statement not covered" >import { ArtistSearch } from '@/components/ArtistSearch';</span>
+<span class="cstat-no" title="statement not covered" >import { Artist } from '@/types/artist';</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export default function Index() {</span>
 <span class="cstat-no" title="statement not covered" >  const navigate = useNavigate();</span>
@@ -268,72 +264,70 @@
 <span class="cstat-no" title="statement not covered" >  };</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className="min-h-screen bg-background flex flex-col"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="flex min-h-screen flex-col bg-background"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* Header */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;header className="w-full py-6 px-6"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="max-w-7xl mx-auto flex items-center gap-3"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;header className="w-full px-6 py-6"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="mx-auto flex max-w-7xl items-center gap-3"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Music2 className="h-5 w-5 text-primary-foreground" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;span className="font-bold text-xl"&gt;MusiqasiQ&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;span className="text-xl font-bold"&gt;MusiqasiQ&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/header&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* Hero Section */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;main className="flex-1 flex flex-col items-center justify-center px-6 pb-24"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="text-center max-w-3xl mx-auto animate-fade-in"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;main className="flex flex-1 flex-col items-center justify-center px-6 pb-24"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="animate-fade-in mx-auto max-w-3xl text-center"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h1 className="mb-6 text-5xl font-bold tracking-tight md:text-6xl"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            Explore Artist</span>
 <span class="cstat-no" title="statement not covered" >            &lt;span className="text-primary"&gt; Connections&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/h1&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;p className="text-xl text-muted-foreground mb-12 max-w-xl mx-auto"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            Discover how your favorite artists are connected through an</span>
-<span class="cstat-no" title="statement not covered" >            interactive similarity map powered by Last.fm</span>
+<span class="cstat-no" title="statement not covered" >          &lt;p className="mx-auto mb-12 max-w-xl text-xl text-muted-foreground"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            Discover how your favorite artists are connected through an interactive similarity map</span>
+<span class="cstat-no" title="statement not covered" >            powered by Last.fm</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >          {/* Search */}</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="w-full max-w-xl mx-auto mb-16"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="mx-auto mb-16 w-full max-w-xl"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;ArtistSearch onSelect={handleArtistSelect} /&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >          {/* Features */}</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className="grid md:grid-cols-3 gap-6 text-left"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="grid gap-6 text-left md:grid-cols-3"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div</span>
-<span class="cstat-no" title="statement not covered" >              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"</span>
-<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: "0.1s" }}</span>
+<span class="cstat-no" title="statement not covered" >              className="animate-slide-up rounded-2xl border border-border bg-card p-6"</span>
+<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: '0.1s' }}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;GitBranch className="h-6 w-6 text-primary" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;h3 className="font-semibold mb-2"&gt;Visual Connections&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;h3 className="mb-2 font-semibold"&gt;Visual Connections&lt;/h3&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="text-sm text-muted-foreground"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Explore artist relationships through an interactive</span>
-<span class="cstat-no" title="statement not covered" >                force-directed graph</span>
+<span class="cstat-no" title="statement not covered" >                Explore artist relationships through an interactive force-directed graph</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >            &lt;div</span>
-<span class="cstat-no" title="statement not covered" >              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"</span>
-<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: "0.2s" }}</span>
+<span class="cstat-no" title="statement not covered" >              className="animate-slide-up rounded-2xl border border-border bg-card p-6"</span>
+<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: '0.2s' }}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;Zap className="h-6 w-6 text-accent" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;h3 className="font-semibold mb-2"&gt;Configurable Depth&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;h3 className="mb-2 font-semibold"&gt;Configurable Depth&lt;/h3&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="text-sm text-muted-foreground"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Adjust the graph depth from 1-3 hops to discover more</span>
-<span class="cstat-no" title="statement not covered" >                connections</span>
+<span class="cstat-no" title="statement not covered" >                Adjust the graph depth from 1-3 hops to discover more connections</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >            &lt;div</span>
-<span class="cstat-no" title="statement not covered" >              className="p-6 rounded-2xl bg-card border border-border animate-slide-up"</span>
-<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: "0.3s" }}</span>
+<span class="cstat-no" title="statement not covered" >              className="animate-slide-up rounded-2xl border border-border bg-card p-6"</span>
+<span class="cstat-no" title="statement not covered" >              style={{ animationDelay: '0.3s' }}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;Database className="h-6 w-6 text-primary" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;h3 className="font-semibold mb-2"&gt;Smart Caching&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;h3 className="mb-2 font-semibold"&gt;Smart Caching&lt;/h3&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p className="text-sm text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                Data is cached for instant loading on subsequent searches</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/p&gt;</span>
@@ -343,8 +337,8 @@
 <span class="cstat-no" title="statement not covered" >      &lt;/main&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* Footer */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;footer className="py-6 px-6 border-t border-border"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="max-w-7xl mx-auto text-center text-sm text-muted-foreground"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;footer className="border-t border-border px-6 py-6"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="mx-auto max-w-7xl text-center text-sm text-muted-foreground"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          Powered by Last.fm</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/footer&gt;</span>
@@ -358,7 +352,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

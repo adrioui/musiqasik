@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/49</span>
+                <span class='fraction'>0/62</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/49</span>
+                <span class='fraction'>0/62</span>
             </div>
         
             
@@ -112,7 +112,20 @@
 <a name='L47'></a><a href='#L47'>47</a>
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -161,31 +174,58 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { Context, Effect, Layer } from "effect";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >import type { AppError } from "@/lib/errors";</span>
-<span class="cstat-no" title="statement not covered" >import type { Artist, GraphData } from "@/integrations/surrealdb/types";</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { Context, Effect, Layer } from 'effect';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >import type { AppError } from '@/lib/errors';</span>
+<span class="cstat-no" title="statement not covered" >import type { Artist, GraphData } from '@/integrations/surrealdb/types';</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class LastFmService extends Context.Tag("LastFmService")&lt;</span>
+<span class="cstat-no" title="statement not covered" >export class LastFmService extends Context.Tag('LastFmService')&lt;</span>
 <span class="cstat-no" title="statement not covered" >  LastFmService,</span>
 <span class="cstat-no" title="statement not covered" >  {</span>
 <span class="cstat-no" title="statement not covered" >    searchArtists: (query: string) =&gt; Effect.Effect&lt;Artist[], AppError&gt;;</span>
 <span class="cstat-no" title="statement not covered" >    getArtistInfo: (artistName: string) =&gt; Effect.Effect&lt;Artist | null, AppError&gt;;</span>
-<span class="cstat-no" title="statement not covered" >    getSimilarArtists: (artistName: string) =&gt; Effect.Effect&lt;Array&lt;{ name: string; match: number }&gt;, AppError&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    getSimilarArtists: (</span>
+<span class="cstat-no" title="statement not covered" >      artistName: string</span>
+<span class="cstat-no" title="statement not covered" >    ) =&gt; Effect.Effect&lt;Array&lt;{ name: string; match: number }&gt;, AppError&gt;;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >&gt;() {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class DatabaseService extends Context.Tag("DatabaseService")&lt;</span>
+<span class="cstat-no" title="statement not covered" >export class DatabaseService extends Context.Tag('DatabaseService')&lt;</span>
 <span class="cstat-no" title="statement not covered" >  DatabaseService,</span>
 <span class="cstat-no" title="statement not covered" >  {</span>
 <span class="cstat-no" title="statement not covered" >    getArtist: (artistName: string) =&gt; Effect.Effect&lt;Artist | null, AppError&gt;;</span>
-<span class="cstat-no" title="statement not covered" >    upsertArtist: (artist: Omit&lt;Artist, "id"&gt;) =&gt; Effect.Effect&lt;Artist, AppError&gt;;</span>
-<span class="cstat-no" title="statement not covered" >    getCachedEdges: (artistId: string) =&gt; Effect.Effect&lt;Array&lt;{ target: Artist; match_score: number }&gt;, AppError&gt;;</span>
-<span class="cstat-no" title="statement not covered" >    upsertEdges: (edges: Array&lt;{ source_artist_id: string; target_artist_id: string; match_score: number; depth: number }&gt;) =&gt; Effect.Effect&lt;void, AppError&gt;;</span>
-<span class="cstat-no" title="statement not covered" >    getSimilarityGraph: (artistName: string, maxDepth: number) =&gt; Effect.Effect&lt;GraphData, AppError&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    upsertArtist: (artist: Omit&lt;Artist, 'id'&gt;) =&gt; Effect.Effect&lt;Artist, AppError&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    getCachedEdges: (</span>
+<span class="cstat-no" title="statement not covered" >      artistId: string</span>
+<span class="cstat-no" title="statement not covered" >    ) =&gt; Effect.Effect&lt;Array&lt;{ target: Artist; match_score: number }&gt;, AppError&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    upsertEdges: (</span>
+<span class="cstat-no" title="statement not covered" >      edges: Array&lt;{</span>
+<span class="cstat-no" title="statement not covered" >        source_artist_id: string;</span>
+<span class="cstat-no" title="statement not covered" >        target_artist_id: string;</span>
+<span class="cstat-no" title="statement not covered" >        match_score: number;</span>
+<span class="cstat-no" title="statement not covered" >        depth: number;</span>
+<span class="cstat-no" title="statement not covered" >      }&gt;</span>
+<span class="cstat-no" title="statement not covered" >    ) =&gt; Effect.Effect&lt;void, AppError&gt;;</span>
+<span class="cstat-no" title="statement not covered" >    getSimilarityGraph: (</span>
+<span class="cstat-no" title="statement not covered" >      artistName: string,</span>
+<span class="cstat-no" title="statement not covered" >      maxDepth: number</span>
+<span class="cstat-no" title="statement not covered" >    ) =&gt; Effect.Effect&lt;GraphData, AppError&gt;;</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >&gt;() {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export class ConfigService extends Context.Tag("ConfigService")&lt;</span>
+<span class="cstat-no" title="statement not covered" >export class ConfigService extends Context.Tag('ConfigService')&lt;</span>
 <span class="cstat-no" title="statement not covered" >  ConfigService,</span>
 <span class="cstat-no" title="statement not covered" >  {</span>
 <span class="cstat-no" title="statement not covered" >    lastFmApiKey: string;</span>
@@ -198,18 +238,17 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >&gt;() {}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export const ConfigLive = Layer.succeed(</span>
-<span class="cstat-no" title="statement not covered" >  ConfigService,</span>
-<span class="cstat-no" title="statement not covered" >  {</span>
-<span class="cstat-no" title="statement not covered" >    lastFmApiKey: typeof process !== "undefined" ? process.env.LASTFM_API_KEY || "" : "",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbWsUrl: typeof process !== "undefined" ? process.env.SURREALDB_WS_URL || "" : "",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbHttpUrl: typeof process !== "undefined" ? process.env.SURREALDB_HTTP_URL || "" : "",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbNamespace: typeof process !== "undefined" ? process.env.SURREALDB_NAMESPACE || "musiqasik" : "musiqasik",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbDatabase: typeof process !== "undefined" ? process.env.SURREALDB_DATABASE || "main" : "main",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbUser: typeof process !== "undefined" ? process.env.SURREALDB_USER || "" : "",</span>
-<span class="cstat-no" title="statement not covered" >    surrealdbPass: typeof process !== "undefined" ? process.env.SURREALDB_PASS || "" : "",</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
-<span class="cstat-no" title="statement not covered" >);</span>
+<span class="cstat-no" title="statement not covered" >export const ConfigLive = Layer.succeed(ConfigService, {</span>
+<span class="cstat-no" title="statement not covered" >  lastFmApiKey: typeof process !== 'undefined' ? process.env.LASTFM_API_KEY || '' : '',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbWsUrl: typeof process !== 'undefined' ? process.env.SURREALDB_WS_URL || '' : '',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbHttpUrl: typeof process !== 'undefined' ? process.env.SURREALDB_HTTP_URL || '' : '',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbNamespace:</span>
+<span class="cstat-no" title="statement not covered" >    typeof process !== 'undefined' ? process.env.SURREALDB_NAMESPACE || 'musiqasik' : 'musiqasik',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbDatabase:</span>
+<span class="cstat-no" title="statement not covered" >    typeof process !== 'undefined' ? process.env.SURREALDB_DATABASE || 'main' : 'main',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbUser: typeof process !== 'undefined' ? process.env.SURREALDB_USER || '' : '',</span>
+<span class="cstat-no" title="statement not covered" >  surrealdbPass: typeof process !== 'undefined' ? process.env.SURREALDB_PASS || '' : '',</span>
+<span class="cstat-no" title="statement not covered" >});</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -217,7 +256,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-09T07:52:18.393Z
+                at 2025-12-09T10:08:42.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

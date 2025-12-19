@@ -1,7 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useLastFm } from './useLastFm';
-import type { Artist, GraphData } from '@/types/artist';
 
 describe('useLastFm', () => {
   beforeEach(() => {
@@ -17,7 +16,7 @@ describe('useLastFm', () => {
   });
 
   it('should search for artists', async () => {
-    const mockArtists: Artist[] = [
+    const mockArtists = [
       { name: 'Radiohead', listeners: 1000000 },
       { name: 'Thom Yorke', listeners: 500000 },
     ];
@@ -29,7 +28,7 @@ describe('useLastFm', () => {
 
     const { result } = renderHook(() => useLastFm());
 
-    let searchResult: Artist[] = [];
+    let searchResult;
     await act(async () => {
       searchResult = await result.current.searchArtists('radiohead');
     });
@@ -53,7 +52,9 @@ describe('useLastFm', () => {
 
     const { result } = renderHook(() => useLastFm());
 
-    await act(() => result.current.searchArtists('radiohead'));
+    await act(async () => {
+      await result.current.searchArtists('radiohead');
+    });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Search failed');
@@ -62,10 +63,10 @@ describe('useLastFm', () => {
   });
 
   it('should fetch artist graph', async () => {
-    const mockGraph: GraphData = {
+    const mockGraph = {
       nodes: [{ name: 'Radiohead' }, { name: 'Thom Yorke' }],
       edges: [{ source: 'Radiohead', target: 'Thom Yorke', weight: 1.0 }],
-      center: null,
+      center: { name: 'Radiohead' },
     };
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
@@ -75,7 +76,7 @@ describe('useLastFm', () => {
 
     const { result } = renderHook(() => useLastFm());
 
-    let graphResult: GraphData | null = null;
+    let graphResult;
     await act(async () => {
       graphResult = await result.current.getGraph('Radiohead', 1);
     });
@@ -91,7 +92,7 @@ describe('useLastFm', () => {
   });
 
   it('should fetch individual artist', async () => {
-    const mockArtist: Artist = {
+    const mockArtist = {
       name: 'Radiohead',
       listeners: 1000000,
       image_url: 'https://example.com/image.jpg',
@@ -104,7 +105,7 @@ describe('useLastFm', () => {
 
     const { result } = renderHook(() => useLastFm());
 
-    let artistResult: Artist | null = null;
+    let artistResult;
     await act(async () => {
       artistResult = await result.current.getArtist('Radiohead');
     });
@@ -122,7 +123,7 @@ describe('useLastFm', () => {
   it('should handle empty queries', async () => {
     const { result } = renderHook(() => useLastFm());
 
-    let searchResult: Artist[] = [];
+    let searchResult;
     await act(async () => {
       searchResult = await result.current.searchArtists('   ');
     });

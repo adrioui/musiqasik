@@ -1,6 +1,6 @@
 ---
 description: Document codebase as-is without evaluation or recommendations
-model: chutes/moonshotai/Kimi-K2-Thinking
+model: google/claude-opus-4-5-thinking
 ---
 
 # Research Codebase
