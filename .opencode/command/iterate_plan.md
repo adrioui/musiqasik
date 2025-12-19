@@ -1,6 +1,6 @@
 ---
 description: Iterate on existing implementation plans with thorough research and updates
-model: google/claude-opus-4-5-thinking
+model: google/gemini-claude-opus-4-5-thinking-high
 ---
 
 # Iterate Implementation Plan

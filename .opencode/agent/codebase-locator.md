@@ -1,7 +1,7 @@
 ---
 description: Locates files, directories, and components relevant to a feature or task. Call codebase-locator with human language prompt describing what you're looking for.
 mode: subagent
-model: google/claude-sonnet-4-5
+model: google/gemini-claude-sonnet-4-5-thinking-high
 tools:
   grep: true
   glob: true

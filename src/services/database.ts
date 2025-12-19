@@ -2,7 +2,7 @@ import { Effect, Layer } from 'effect';
 import { DatabaseError } from '@/lib/errors';
 import { DatabaseService } from '@/services';
 import { SurrealClient } from '@/integrations/surrealdb/client';
-import type { Artist, GraphData } from '@/integrations/surrealdb/types';
+import type { Artist } from '@/types/artist';
 
 const makeDatabaseService = Effect.gen(function* () {
   const db = yield* SurrealClient;
@@ -85,7 +85,7 @@ const makeDatabaseService = Effect.gen(function* () {
         // Build RELATE statements for each edge
         const relateStatements = edges
           .map(
-            (edge, i) =>
+            (_, i) =>
               `RELATE $source${i}->similarity_edges->$target${i} SET match_score = $score${i}, depth = $depth${i};`
           )
           .join('\n');
@@ -127,8 +127,8 @@ const makeDatabaseService = Effect.gen(function* () {
         const graphResult = yield* Effect.tryPromise({
           try: () =>
             db.query<[Array<{ in: Artist; out: Artist; match_score: number }>]>(
-              `SELECT in.*, out.*, match_score 
-             FROM similarity_edges 
+              `SELECT in.*, out.*, match_score
+             FROM similarity_edges
              WHERE in = $centerId OR depth <= $maxDepth`,
               { centerId: center.id, maxDepth }
             ),

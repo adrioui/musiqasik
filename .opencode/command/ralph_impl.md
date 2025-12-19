@@ -1,6 +1,6 @@
 ---
 description: Implement highest priority small Linear ticket with worktree setup
-model: google/claude-opus-4-5-thinking
+model: google/gemini-claude-opus-4-5-thinking-high
 ---
 
 ## PART I - IF A TICKET IS MENTIONED

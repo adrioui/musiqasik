@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn } from './utils';
+import { cn, formatNumber, isPlaceholderImage } from './utils';
 
 describe('cn utility', () => {
   it('should merge class names', () => {
@@ -42,5 +42,59 @@ describe('cn utility', () => {
   it('should handle empty inputs', () => {
     const result = cn();
     expect(result).toBe('');
+  });
+});
+
+describe('formatNumber', () => {
+  it('formats millions with M suffix', () => {
+    expect(formatNumber(1500000)).toBe('1.5M');
+    expect(formatNumber(10000000)).toBe('10.0M');
+  });
+
+  it('formats thousands with K suffix', () => {
+    expect(formatNumber(1500)).toBe('2K');
+    expect(formatNumber(999000)).toBe('999K');
+  });
+
+  it('returns raw number for small values', () => {
+    expect(formatNumber(500)).toBe('500');
+    expect(formatNumber(0)).toBe('0');
+  });
+
+  it('returns N/A for null or undefined', () => {
+    expect(formatNumber(null)).toBe('N/A');
+    expect(formatNumber(undefined)).toBe('N/A');
+  });
+
+  it('appends suffix when provided', () => {
+    expect(formatNumber(1500000, 'listeners')).toBe('1.5M listeners');
+    expect(formatNumber(null, 'listeners')).toBe('N/A');
+  });
+});
+
+describe('isPlaceholderImage', () => {
+  it('returns true for null or undefined', () => {
+    expect(isPlaceholderImage(null)).toBe(true);
+    expect(isPlaceholderImage(undefined)).toBe(true);
+  });
+
+  it('returns true for empty string', () => {
+    expect(isPlaceholderImage('')).toBe(true);
+  });
+
+  it('returns true for Last.fm placeholder hash', () => {
+    expect(isPlaceholderImage('https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png')).toBe(true);
+  });
+
+  it('returns true for star placeholder', () => {
+    expect(isPlaceholderImage('https://example.com/star.png')).toBe(true);
+  });
+
+  it('returns true for noimage path', () => {
+    expect(isPlaceholderImage('https://example.com/noimage/')).toBe(true);
+  });
+
+  it('returns false for valid image URLs', () => {
+    expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false);
   });
 });

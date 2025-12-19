@@ -1,7 +1,7 @@
 ---
 description: Finds similar implementations, usage examples, or existing patterns that can be modeled after. It will give you concrete code examples based on what you're looking for.
 mode: subagent
-model: google/claude-sonnet-4-5
+model: google/gemini-claude-sonnet-4-5-thinking-high
 tools:
   grep: true
   glob: true

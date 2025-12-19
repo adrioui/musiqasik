@@ -1,6 +1,6 @@
 ---
 description: Research codebase comprehensively using parallel sub-agents
-model: google/claude-opus-4-5-thinking
+model: google/gemini-claude-opus-4-5-thinking-high
 ---
 
 # Research Codebase

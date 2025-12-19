@@ -1,7 +1,8 @@
 import { Effect, Schedule, Layer, pipe } from 'effect';
 import { LastFmApiError, NetworkError } from '@/lib/errors';
-import { LastFmService, ConfigService } from '@/services';
-import type { Artist } from '@/integrations/surrealdb/types';
+import { LastFmService, ConfigService } from './tags';
+import { isPlaceholderImage } from '@/lib/utils';
+import type { Artist } from '@/types/artist';
 
 const fetchWithTimeout = (url: string, options: RequestInit = {}, timeoutMs = 5000) =>
   Effect.async<Response, NetworkError>((resume) => {
@@ -36,16 +37,6 @@ const fetchWithRetry = (url: string, options: RequestInit = {}, maxRetries = 2) 
     ),
     Effect.retry(Schedule.exponential(100).pipe(Schedule.compose(Schedule.recurs(maxRetries))))
   );
-
-const isPlaceholderImage = (url?: string): boolean => {
-  if (!url) return true;
-  return (
-    url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
-    url.includes('star') ||
-    url === '' ||
-    url.endsWith('/noimage/')
-  );
-};
 
 const fetchDeezerImage = (artistName: string): Effect.Effect<string | undefined, NetworkError> =>
   pipe(

@@ -1,6 +1,6 @@
 ---
 description: Create implementation plans with thorough research (no thoughts directory)
-model: google/claude-opus-4-5-thinking
+model: google/gemini-claude-opus-4-5-thinking-high
 ---
 
 # Implementation Plan
