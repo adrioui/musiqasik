@@ -33,7 +33,12 @@ export function GraphControls({
   className,
 }: GraphControlsProps) {
   return (
-    <div className={cn("flex flex-col gap-6 p-4 bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-lg", className)}>
+    <div
+      className={cn(
+        'flex flex-col gap-6 rounded-xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur-sm',
+        className
+      )}
+    >
       {/* Depth Control */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -41,7 +46,7 @@ export function GraphControls({
             <Layers className="h-4 w-4 text-primary" />
             <Label className="text-sm font-medium">Depth</Label>
           </div>
-          <span className="text-sm font-mono bg-secondary px-2 py-0.5 rounded">
+          <span className="rounded bg-secondary px-2 py-0.5 font-mono text-sm">
             {depth} {depth === 1 ? 'hop' : 'hops'}
           </span>
         </div>
@@ -83,7 +88,7 @@ export function GraphControls({
             <Tag className="h-4 w-4 text-accent" />
             <Label className="text-sm font-medium">Min Match</Label>
           </div>
-          <span className="text-sm font-mono bg-secondary px-2 py-0.5 rounded">
+          <span className="rounded bg-secondary px-2 py-0.5 font-mono text-sm">
             {Math.round(threshold * 100)}%
           </span>
         </div>
@@ -99,46 +104,27 @@ export function GraphControls({
 
       {/* Labels Toggle */}
       <div className="flex items-center justify-between">
-        <Label htmlFor="show-labels" className="text-sm font-medium cursor-pointer">
+        <Label htmlFor="show-labels" className="cursor-pointer text-sm font-medium">
           Show Labels
         </Label>
-        <Switch
-          id="show-labels"
-          checked={showLabels}
-          onCheckedChange={onShowLabelsChange}
-        />
+        <Switch id="show-labels" checked={showLabels} onCheckedChange={onShowLabelsChange} />
       </div>
 
       {/* Zoom Controls */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onZoomIn}
-        >
-          <ZoomIn className="h-4 w-4 mr-1" />
+        <Button variant="outline" size="sm" className="flex-1" onClick={onZoomIn}>
+          <ZoomIn className="mr-1 h-4 w-4" />
           Zoom In
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onZoomOut}
-        >
-          <ZoomOut className="h-4 w-4 mr-1" />
+        <Button variant="outline" size="sm" className="flex-1" onClick={onZoomOut}>
+          <ZoomOut className="mr-1 h-4 w-4" />
           Zoom Out
         </Button>
       </div>
 
       {/* Reset Button */}
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={onReset}
-        className="w-full"
-      >
-        <RotateCcw className="h-4 w-4 mr-2" />
+      <Button variant="secondary" size="sm" onClick={onReset} className="w-full">
+        <RotateCcw className="mr-2 h-4 w-4" />
         Reset View
       </Button>
     </div>

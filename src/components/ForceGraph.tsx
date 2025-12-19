@@ -43,7 +43,9 @@ export function ForceGraph({
 
   // Filter nodes to only include connected ones (or center)
   const filteredNodes = nodes.filter(
-    (n) => connectedNodes.has(n.name.toLowerCase()) || n.name.toLowerCase() === centerArtist?.toLowerCase()
+    (n) =>
+      connectedNodes.has(n.name.toLowerCase()) ||
+      n.name.toLowerCase() === centerArtist?.toLowerCase()
   );
 
   // Update dimensions on resize
@@ -74,7 +76,8 @@ export function ForceGraph({
     const g = svg.append('g').attr('class', 'graph-container');
 
     // Setup zoom
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
@@ -103,11 +106,15 @@ export function ForceGraph({
       .filter((link): link is GraphLink => link !== null);
 
     // Create simulation
-    const simulation = d3.forceSimulation<GraphNode>(graphNodes)
-      .force('link', d3.forceLink<GraphNode, GraphLink>(graphLinks)
-        .id((d) => d.name)
-        .distance((d) => 100 + (1 - d.weight) * 100)
-        .strength((d) => d.weight * 0.5)
+    const simulation = d3
+      .forceSimulation<GraphNode>(graphNodes)
+      .force(
+        'link',
+        d3
+          .forceLink<GraphNode, GraphLink>(graphLinks)
+          .id((d) => d.name)
+          .distance((d) => 100 + (1 - d.weight) * 100)
+          .strength((d) => d.weight * 0.5)
       )
       .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(width / 2, height / 2))
@@ -116,7 +123,8 @@ export function ForceGraph({
     simulationRef.current = simulation;
 
     // Draw links
-    const link = g.append('g')
+    const link = g
+      .append('g')
       .attr('class', 'links')
       .selectAll('line')
       .data(graphLinks)
@@ -126,34 +134,38 @@ export function ForceGraph({
       .attr('stroke-width', (d) => 1 + d.weight * 2);
 
     // Draw nodes
-    const node = g.append('g')
+    const node = g
+      .append('g')
       .attr('class', 'nodes')
       .selectAll('g')
       .data(graphNodes)
       .join('g')
       .attr('class', 'graph-node')
       .style('cursor', 'pointer')
-      .call(d3.drag<SVGGElement, GraphNode>()
-        .on('start', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on('drag', (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on('end', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        })
+      .call(
+        d3
+          .drag<SVGGElement, GraphNode>()
+          .on('start', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
       );
 
     // Node circles
-    node.append('circle')
-      .attr('r', (d) => d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8)
-      .attr('fill', (d) => d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))')
+    node
+      .append('circle')
+      .attr('r', (d) => (d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8))
+      .attr('fill', (d) => (d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))'))
       .attr('stroke', 'hsl(var(--background))')
       .attr('stroke-width', 3)
       .style('transition', 'fill 0.2s ease-out')
@@ -161,29 +173,35 @@ export function ForceGraph({
         d3.select(this).attr('fill', 'hsl(var(--graph-node-hover))');
       })
       .on('mouseleave', function (event, d) {
-        d3.select(this).attr('fill', d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))');
+        d3.select(this).attr(
+          'fill',
+          d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))'
+        );
       });
 
     // Node images (skip Last.fm placeholder images)
     node.each(function (d) {
-      const isPlaceholder = !d.image_url || 
+      const isPlaceholder =
+        !d.image_url ||
         d.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
         d.image_url.includes('star') ||
         d.image_url === '';
-      
+
       if (!isPlaceholder && d.image_url) {
         const nodeG = d3.select(this);
         const radius = d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8;
-        
+
         // Create clipPath
         const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        svg.append('defs')
+        svg
+          .append('defs')
           .append('clipPath')
           .attr('id', clipId)
           .append('circle')
           .attr('r', radius - 2);
-        
-        nodeG.insert('image', 'circle')
+
+        nodeG
+          .insert('image', 'circle')
           .attr('xlink:href', d.image_url)
           .attr('x', -(radius - 2))
           .attr('y', -(radius - 2))
@@ -195,7 +213,8 @@ export function ForceGraph({
     });
 
     // Node labels
-    const labels = node.append('text')
+    const labels = node
+      .append('text')
       .text((d) => d.name)
       .attr('text-anchor', 'middle')
       .attr('dy', (d) => (d.isCenter ? 45 : 35))
@@ -211,31 +230,34 @@ export function ForceGraph({
     });
 
     // Tooltip
-    const tooltip = d3.select('body').append('div')
+    const tooltip = d3
+      .select('body')
+      .append('div')
       .attr('class', 'graph-tooltip')
       .style('opacity', 0)
       .style('display', 'none');
 
-    node.on('mouseenter', (event, d) => {
-      tooltip
-        .style('display', 'block')
-        .style('opacity', 1)
-        .html(`
+    node
+      .on('mouseenter', (event, d) => {
+        tooltip
+          .style('display', 'block')
+          .style('opacity', 1)
+          .html(
+            `
           <div class="font-semibold">${d.name}</div>
           ${d.listeners ? `<div class="text-sm text-muted-foreground">${(d.listeners / 1000000).toFixed(1)}M listeners</div>` : ''}
           ${d.tags && d.tags.length > 0 ? `<div class="text-xs text-muted-foreground mt-1">${d.tags.slice(0, 3).join(', ')}</div>` : ''}
-        `)
-        .style('left', `${event.pageX + 15}px`)
-        .style('top', `${event.pageY - 10}px`);
-    })
-    .on('mousemove', (event) => {
-      tooltip
-        .style('left', `${event.pageX + 15}px`)
-        .style('top', `${event.pageY - 10}px`);
-    })
-    .on('mouseleave', () => {
-      tooltip.style('opacity', 0).style('display', 'none');
-    });
+        `
+          )
+          .style('left', `${event.pageX + 15}px`)
+          .style('top', `${event.pageY - 10}px`);
+      })
+      .on('mousemove', (event) => {
+        tooltip.style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`);
+      })
+      .on('mouseleave', () => {
+        tooltip.style('opacity', 0).style('display', 'none');
+      });
 
     // Update positions on tick
     simulation.on('tick', () => {
@@ -267,19 +289,13 @@ export function ForceGraph({
   // Expose zoom methods
   const handleZoomIn = useCallback(() => {
     if (svgRef.current && zoomRef.current) {
-      d3.select(svgRef.current)
-        .transition()
-        .duration(300)
-        .call(zoomRef.current.scaleBy, 1.4);
+      d3.select(svgRef.current).transition().duration(300).call(zoomRef.current.scaleBy, 1.4);
     }
   }, []);
 
   const handleZoomOut = useCallback(() => {
     if (svgRef.current && zoomRef.current) {
-      d3.select(svgRef.current)
-        .transition()
-        .duration(300)
-        .call(zoomRef.current.scaleBy, 0.7);
+      d3.select(svgRef.current).transition().duration(300).call(zoomRef.current.scaleBy, 0.7);
     }
   }, []);
 
@@ -294,21 +310,27 @@ export function ForceGraph({
 
   // Expose methods via ref
   useEffect(() => {
-    (window as typeof window & {
-      __graphZoomIn?: () => void;
-      __graphZoomOut?: () => void;
-      __graphReset?: () => void;
-    }).__graphZoomIn = handleZoomIn;
-    (window as typeof window & {
-      __graphZoomIn?: () => void;
-      __graphZoomOut?: () => void;
-      __graphReset?: () => void;
-    }).__graphZoomOut = handleZoomOut;
-    (window as typeof window & {
-      __graphZoomIn?: () => void;
-      __graphZoomOut?: () => void;
-      __graphReset?: () => void;
-    }).__graphReset = handleReset;
+    (
+      window as typeof window & {
+        __graphZoomIn?: () => void;
+        __graphZoomOut?: () => void;
+        __graphReset?: () => void;
+      }
+    ).__graphZoomIn = handleZoomIn;
+    (
+      window as typeof window & {
+        __graphZoomIn?: () => void;
+        __graphZoomOut?: () => void;
+        __graphReset?: () => void;
+      }
+    ).__graphZoomOut = handleZoomOut;
+    (
+      window as typeof window & {
+        __graphZoomIn?: () => void;
+        __graphZoomOut?: () => void;
+        __graphReset?: () => void;
+      }
+    ).__graphReset = handleReset;
 
     return () => {
       const w = window as typeof window & {
@@ -324,14 +346,16 @@ export function ForceGraph({
 
   if (filteredNodes.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center h-full text-muted-foreground", className)}>
+      <div
+        className={cn('flex h-full items-center justify-center text-muted-foreground', className)}
+      >
         <p>Search for an artist to explore their similarity map</p>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className={cn("w-full h-full", className)}>
+    <div ref={containerRef} className={cn('h-full w-full', className)}>
       <svg
         ref={svgRef}
         width={dimensions.width}

@@ -21,6 +21,10 @@ export interface GraphData {
   nodes: Artist[];
   edges: SimilarityEdge[];
   center: Artist | null;
+  metrics?: {
+    duration: number;
+    nodeCount: number;
+  };
 }
 
 export interface GraphNode extends Artist {

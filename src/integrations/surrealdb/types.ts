@@ -31,4 +31,4 @@ export interface GraphData {
 }
 
 export type RecordId<T extends string> = `${T}:${string}`;
-export type ArtistId = RecordId<"artists">;
+export type ArtistId = RecordId<'artists'>;

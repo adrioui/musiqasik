@@ -13,6 +13,7 @@ This directory contains detailed documentation organized by topic. The main `AGE
 ## Usage
 
 When working on the project:
+
 1. Read `AGENTS.md` first for essential onboarding
 2. Consult relevant documentation files as needed
 3. Follow existing code patterns in the codebase
@@ -21,6 +22,7 @@ When working on the project:
 ## Philosophy
 
 This documentation follows **progressive disclosure** principles:
+
 - **AGENTS.md** contains only universally applicable information needed in every session
 - **These files** contain detailed information for specific tasks
 - **Code patterns** are learned by examining existing implementations, not memorizing rules
@@ -28,6 +30,7 @@ This documentation follows **progressive disclosure** principles:
 ## File References
 
 All documentation uses `file:line` references to point to actual code:
+
 - `src/components/ArtistSearch.tsx:24-37` - Search component with debouncing
 - `src/hooks/useLastFm.ts:11-33` - API integration hook
 - `supabase/functions/lastfm/index.ts:122-187` - Graph building algorithm
@@ -36,6 +39,7 @@ All documentation uses `file:line` references to point to actual code:
 ## Contributing
 
 When updating documentation:
+
 1. Keep information accurate and up-to-date
 2. Use `file:line` references instead of copying code
 3. Focus on patterns, not rules

@@ -11,7 +11,11 @@ interface ArtistSearchProps {
   placeholder?: string;
 }
 
-export function ArtistSearch({ onSelect, className, placeholder = "Search for an artist..." }: ArtistSearchProps) {
+export function ArtistSearch({
+  onSelect,
+  className,
+  placeholder = 'Search for an artist...',
+}: ArtistSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Artist[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -53,11 +57,11 @@ export function ArtistSearch({ onSelect, className, placeholder = "Search for an
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
         break;
       case 'Enter':
         e.preventDefault();
@@ -90,9 +94,9 @@ export function ArtistSearch({ onSelect, className, placeholder = "Search for an
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full max-w-xl", className)}>
+    <div ref={containerRef} className={cn('relative w-full max-w-xl', className)}>
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
@@ -101,40 +105,38 @@ export function ArtistSearch({ onSelect, className, placeholder = "Search for an
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
-          className="pl-12 pr-12 h-14 text-lg rounded-2xl border-2 border-border bg-card shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"
+          className="h-14 rounded-2xl border-2 border-border bg-card pl-12 pr-12 text-lg shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"
         />
         {isLoading && (
-          <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+          <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
+        <div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
           <ul className="py-2">
             {results.map((artist, index) => (
               <li key={artist.name}>
                 <button
                   onClick={() => handleSelect(artist)}
                   className={cn(
-                    "w-full flex items-center gap-4 px-4 py-3 text-left transition-colors",
-                    index === selectedIndex
-                      ? "bg-secondary"
-                      : "hover:bg-secondary/50"
+                    'flex w-full items-center gap-4 px-4 py-3 text-left transition-colors',
+                    index === selectedIndex ? 'bg-secondary' : 'hover:bg-secondary/50'
                   )}
                 >
-                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
                     {artist.image_url ? (
                       <img
                         src={artist.image_url}
                         alt={artist.name}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
                       <Music2 className="h-6 w-6 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{artist.name}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{artist.name}</p>
                     {artist.listeners && (
                       <p className="text-sm text-muted-foreground">
                         {formatListeners(artist.listeners)}

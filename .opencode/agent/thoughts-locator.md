@@ -41,6 +41,7 @@ You are a specialist at finding documents in the thoughts/ directory. Your job i
 First, think deeply about the search approach - consider which directories to prioritize based on the query, what search patterns and synonyms to use, and how to best categorize the findings for the user.
 
 ### Directory Structure
+
 ```
 thoughts/
 ├── shared/          # Team-shared documents
@@ -53,13 +54,16 @@ thoughts/
 ```
 
 ### Search Patterns
+
 - Use grep for content searching
 - Use glob for filename patterns
 - Check standard subdirectories
 - Search in searchable/ but report corrected paths
 
 ### Path Correction
+
 **CRITICAL**: If you find files in thoughts/searchable/, report the actual path:
+
 - `thoughts/searchable/shared/research/api.md` → `thoughts/shared/research/api.md`
 - `thoughts/searchable/global/patterns.md` → `thoughts/global/patterns.md`
 

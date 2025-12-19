@@ -1,7 +1,7 @@
-import { Effect, Schedule, Layer, pipe } from "effect";
-import { LastFmApiError, NetworkError } from "@/lib/errors";
-import { LastFmService, ConfigService } from "@/services";
-import type { Artist } from "@/integrations/surrealdb/types";
+import { Effect, Schedule, Layer, pipe } from 'effect';
+import { LastFmApiError, NetworkError } from '@/lib/errors';
+import { LastFmService, ConfigService } from '@/services';
+import type { Artist } from '@/integrations/surrealdb/types';
 
 const fetchWithTimeout = (url: string, options: RequestInit = {}, timeoutMs = 5000) =>
   Effect.async<Response, NetworkError>((resume) => {
@@ -34,19 +34,17 @@ const fetchWithRetry = (url: string, options: RequestInit = {}, maxRetries = 2) 
         }
       })
     ),
-    Effect.retry(
-      Schedule.exponential(100).pipe(
-        Schedule.compose(Schedule.recurs(maxRetries))
-      )
-    )
+    Effect.retry(Schedule.exponential(100).pipe(Schedule.compose(Schedule.recurs(maxRetries))))
   );
 
 const isPlaceholderImage = (url?: string): boolean => {
   if (!url) return true;
-  return url.includes("2a96cbd8b46e442fc41c2b86b821562f") || 
-         url.includes("star") || 
-         url === "" || 
-         url.endsWith("/noimage/");
+  return (
+    url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
+    url.includes('star') ||
+    url === '' ||
+    url.endsWith('/noimage/')
+  );
 };
 
 const fetchDeezerImage = (artistName: string): Effect.Effect<string | undefined, NetworkError> =>
@@ -57,7 +55,8 @@ const fetchDeezerImage = (artistName: string): Effect.Effect<string | undefined,
     Effect.flatMap((response) =>
       Effect.tryPromise({
         try: () => response.json() as Promise<{ data?: Array<{ picture_xl?: string }> }>,
-        catch: (error) => new NetworkError({ message: "Failed to parse Deezer response", cause: error }),
+        catch: (error) =>
+          new NetworkError({ message: 'Failed to parse Deezer response', cause: error }),
       })
     ),
     Effect.map((data) => data.data?.[0]?.picture_xl),
@@ -76,31 +75,36 @@ const makeLastFmService = Effect.gen(function* () {
 
         if (!response.ok) {
           return yield* Effect.fail(
-            new LastFmApiError({ message: `Last.fm API error: ${response.status}`, status: response.status })
+            new LastFmApiError({
+              message: `Last.fm API error: ${response.status}`,
+              status: response.status,
+            })
           );
         }
 
         const data = yield* Effect.tryPromise({
-          try: () => response.json() as Promise<{
-            results?: {
-              artistmatches?: {
-                artist?: Array<{
-                  name: string;
-                  mbid?: string;
-                  image?: Array<{ size: string; "#text": string }>;
-                  listeners?: string;
-                  url?: string;
-                }>;
+          try: () =>
+            response.json() as Promise<{
+              results?: {
+                artistmatches?: {
+                  artist?: Array<{
+                    name: string;
+                    mbid?: string;
+                    image?: Array<{ size: string; '#text': string }>;
+                    listeners?: string;
+                    url?: string;
+                  }>;
+                };
               };
-            };
-          }>,
-          catch: (error) => new LastFmApiError({ message: "Failed to parse Last.fm response", cause: error }),
+            }>,
+          catch: (error) =>
+            new LastFmApiError({ message: 'Failed to parse Last.fm response', cause: error }),
         });
 
         const artists = data.results?.artistmatches?.artist || [];
 
         return artists.map((artist) => {
-          const lastfmImage = artist.image?.find((img) => img.size === "large")?.["#text"];
+          const lastfmImage = artist.image?.find((img) => img.size === 'large')?.['#text'];
           return {
             name: artist.name,
             lastfm_mbid: artist.mbid || undefined,
@@ -119,23 +123,28 @@ const makeLastFmService = Effect.gen(function* () {
 
         if (!response.ok) {
           return yield* Effect.fail(
-            new LastFmApiError({ message: `Last.fm API error: ${response.status}`, status: response.status })
+            new LastFmApiError({
+              message: `Last.fm API error: ${response.status}`,
+              status: response.status,
+            })
           );
         }
 
         const data = yield* Effect.tryPromise({
-          try: () => response.json() as Promise<{
-            error?: number;
-            artist?: {
-              name: string;
-              mbid?: string;
-              image?: Array<{ size: string; "#text": string }>;
-              stats?: { listeners?: string; playcount?: string };
-              tags?: { tag?: Array<{ name: string }> };
-              url?: string;
-            };
-          }>,
-          catch: (error) => new LastFmApiError({ message: "Failed to parse Last.fm response", cause: error }),
+          try: () =>
+            response.json() as Promise<{
+              error?: number;
+              artist?: {
+                name: string;
+                mbid?: string;
+                image?: Array<{ size: string; '#text': string }>;
+                stats?: { listeners?: string; playcount?: string };
+                tags?: { tag?: Array<{ name: string }> };
+                url?: string;
+              };
+            }>,
+          catch: (error) =>
+            new LastFmApiError({ message: 'Failed to parse Last.fm response', cause: error }),
         });
 
         if (data.error || !data.artist) {
@@ -143,7 +152,7 @@ const makeLastFmService = Effect.gen(function* () {
         }
 
         const artist = data.artist;
-        const lastfmImage = artist.image?.find((img) => img.size === "extralarge")?.["#text"];
+        const lastfmImage = artist.image?.find((img) => img.size === 'extralarge')?.['#text'];
 
         let imageUrl: string | undefined;
         if (isPlaceholderImage(lastfmImage)) {
@@ -171,17 +180,22 @@ const makeLastFmService = Effect.gen(function* () {
 
         if (!response.ok) {
           return yield* Effect.fail(
-            new LastFmApiError({ message: `Last.fm API error: ${response.status}`, status: response.status })
+            new LastFmApiError({
+              message: `Last.fm API error: ${response.status}`,
+              status: response.status,
+            })
           );
         }
 
         const data = yield* Effect.tryPromise({
-          try: () => response.json() as Promise<{
-            similarartists?: {
-              artist?: Array<{ name: string; match: string }>;
-            };
-          }>,
-          catch: (error) => new LastFmApiError({ message: "Failed to parse Last.fm response", cause: error }),
+          try: () =>
+            response.json() as Promise<{
+              similarartists?: {
+                artist?: Array<{ name: string; match: string }>;
+              };
+            }>,
+          catch: (error) =>
+            new LastFmApiError({ message: 'Failed to parse Last.fm response', cause: error }),
         });
 
         const similar = data.similarartists?.artist || [];
