@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ForceGraph } from '@/components/ForceGraph';
+import { ForceGraph, ForceGraphHandle } from '@/components/ForceGraph';
 import { ArtistPanel } from '@/components/ArtistPanel';
 import { GraphControls } from '@/components/GraphControls';
 import { ArtistSearch } from '@/components/ArtistSearch';
 import { useLastFm } from '@/hooks/useLastFm';
-import { Artist, GraphData, SimilarityEdge } from '@/types/artist';
+import { useSimilarArtists } from '@/hooks/useSimilarArtists';
+import { Artist, GraphData } from '@/types/artist';
 import { useToast } from '@/hooks/use-toast';
 
 export default function MapView() {
@@ -15,12 +16,16 @@ export default function MapView() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { getGraph, isLoading, error } = useLastFm();
+  const graphRef = useRef<ForceGraphHandle>(null);
 
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null);
   const [depth, setDepth] = useState(1);
   const [threshold, setThreshold] = useState(0);
   const [showLabels, setShowLabels] = useState(true);
+
+  // Use memoized hook for similar artists
+  const similarArtists = useSimilarArtists(selectedArtist, graphData);
 
   // Load graph data
   const loadGraph = useCallback(
@@ -68,27 +73,6 @@ export default function MapView() {
     setDepth(newDepth);
   };
 
-  // Get similar artists for the selected node
-  const getSimilarArtists = (): { name: string; weight: number }[] => {
-    if (!selectedArtist || !graphData) return [];
-
-    return graphData.edges
-      .filter(
-        (e) =>
-          e.source.toLowerCase() === selectedArtist.name.toLowerCase() ||
-          e.target.toLowerCase() === selectedArtist.name.toLowerCase()
-      )
-      .map((e) => ({
-        name: e.source.toLowerCase() === selectedArtist.name.toLowerCase() ? e.target : e.source,
-        weight: e.weight,
-      }))
-      .filter(
-        (item, index, self) =>
-          index === self.findIndex((t) => t.name.toLowerCase() === item.name.toLowerCase())
-      )
-      .sort((a, b) => b.weight - a.weight);
-  };
-
   return (
     <div className="flex h-screen bg-background">
       {/* Main Graph Area */}
@@ -125,6 +109,7 @@ export default function MapView() {
             </div>
           ) : (
             <ForceGraph
+              ref={graphRef}
               nodes={graphData?.nodes || []}
               edges={graphData?.edges || []}
               centerArtist={graphData?.center?.name || null}
@@ -144,15 +129,9 @@ export default function MapView() {
             onThresholdChange={setThreshold}
             showLabels={showLabels}
             onShowLabelsChange={setShowLabels}
-            onZoomIn={() =>
-              (window as typeof window & { __graphZoomIn?: () => void }).__graphZoomIn?.()
-            }
-            onZoomOut={() =>
-              (window as typeof window & { __graphZoomOut?: () => void }).__graphZoomOut?.()
-            }
-            onReset={() =>
-              (window as typeof window & { __graphReset?: () => void }).__graphReset?.()
-            }
+            onZoomIn={() => graphRef.current?.zoomIn()}
+            onZoomOut={() => graphRef.current?.zoomOut()}
+            onReset={() => graphRef.current?.reset()}
             isLoading={isLoading}
           />
         </div>
@@ -162,7 +141,7 @@ export default function MapView() {
       <aside className="flex w-80 flex-col border-l border-border bg-card">
         <ArtistPanel
           artist={selectedArtist}
-          similarArtists={getSimilarArtists()}
+          similarArtists={similarArtists}
           onArtistClick={handleRecenter}
         />
       </aside>
