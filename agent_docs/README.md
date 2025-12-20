@@ -1,6 +1,6 @@
 # MusiqasiQ Documentation
 
-This directory contains detailed documentation organized by topic. The main `AGENTS.md` file provides high-level onboarding, while these files offer deep dives into specific areas.
+This directory contains detailed documentation organized by topic. The main `CLAUDE.md` file provides high-level onboarding, while these files offer deep dives into specific areas.
 
 ## Available Documentation
 
@@ -14,7 +14,7 @@ This directory contains detailed documentation organized by topic. The main `AGE
 
 When working on the project:
 
-1. Read `AGENTS.md` first for essential onboarding
+1. Read `CLAUDE.md` first for essential onboarding
 2. Consult relevant documentation files as needed
 3. Follow existing code patterns in the codebase
 4. Use `file:line` references to examine actual implementations
@@ -23,7 +23,7 @@ When working on the project:
 
 This documentation follows **progressive disclosure** principles:
 
-- **AGENTS.md** contains only universally applicable information needed in every session
+- **CLAUDE.md** contains only universally applicable information needed in every session
 - **These files** contain detailed information for specific tasks
 - **Code patterns** are learned by examining existing implementations, not memorizing rules
 
@@ -32,9 +32,10 @@ This documentation follows **progressive disclosure** principles:
 All documentation uses `file:line` references to point to actual code:
 
 - `src/components/ArtistSearch.tsx:24-37` - Search component with debouncing
-- `src/hooks/useLastFm.ts:11-33` - API integration hook
-- `supabase/functions/lastfm/index.ts:122-187` - Graph building algorithm
-- `ForceGraph.tsx:77-84` - D3.js zoom and pan interactions
+- `src/hooks/useLastFm.ts:11-33` - Effect service integration hook
+- `src/services/graph.ts:28-192` - Graph building algorithm (BFS)
+- `src/components/ForceGraph/index.tsx` - D3.js force-directed graph
+- `src/components/ForceGraph/hooks/useD3Zoom.ts` - Zoom and pan interactions
 
 ## Contributing
 

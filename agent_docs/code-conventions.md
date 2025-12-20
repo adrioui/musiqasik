@@ -106,24 +106,6 @@ const [isLoading, setIsLoading] = useState(false);
 const [artists, setArtists] = useState<Artist[]>([]);
 ```
 
-#### Server State
-
-Use React Query (TanStack Query) for server state management.
-
-**Example from `MapView.tsx:26-42`:**
-
-```typescript
-const {
-  data: graphData,
-  isLoading,
-  error,
-} = useLastFm({
-  action: 'graph',
-  artist: artistName,
-  depth: graphDepth,
-});
-```
-
 #### URL State
 
 Use React Router for shareable URL state.
@@ -188,9 +170,7 @@ if (!artist) {
 
 ### Type Definitions
 
-Place TypeScript interfaces in `src/types/` directory.
-
-**Example from `src/types/artist.ts:1-38`:**
+Artist and graph types are defined in `src/types/artist.ts`. Use these types for data handling:
 
 ```typescript
 export interface Artist {
@@ -198,11 +178,20 @@ export interface Artist {
   mbid?: string;
   url?: string;
   image_small?: string;
-  image_medium?: string;
-  image_large?: string;
-  image_extralarge?: string;
   listeners?: number;
   playcount?: number;
+}
+
+export interface GraphNode extends Artist {
+  isCenter?: boolean;
+  x?: number;
+  y?: number;
+}
+
+export interface GraphLink {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  weight: number;
 }
 ```
 
@@ -214,9 +203,103 @@ Use `?` for optional properties and `| null` for nullable types.
 
 Use `extends` for type inheritance when appropriate.
 
-### Generated Types
+## API Integration Patterns
 
-Supabase types are auto-generated in `src/integrations/supabase/types.ts:1-237`. Use these types for database interactions.
+### Effect Service Pattern
+
+Follow the pattern in `src/services/lastfm.ts:57-201`:
+
+1. **Define service interface** in `src/services/tags.ts`
+2. **Implement with Effect.gen** for composable operations
+3. **Use typed errors** from `src/lib/errors.ts`
+4. **Create Layer** for dependency injection
+
+```typescript
+// Service implementation pattern
+export const LastFmServiceLive = Layer.effect(
+  LastFmService,
+  Effect.gen(function* () {
+    const config = yield* ConfigService;
+    
+    return {
+      searchArtists: (query: string) =>
+        Effect.gen(function* () {
+          // Implementation
+        }),
+    };
+  })
+);
+```
+
+### Hook Pattern for Effect Services
+
+Use the `useLastFm` hook pattern (`src/hooks/useLastFm.ts`):
+
+1. **Effect runtime**: Execute Effect programs in React
+2. **State management**: data, isLoading, error states
+3. **Cleanup**: Cancel effects on unmount
+4. **Return object**: Consistent interface for consumers
+
+```typescript
+export function useLastFm(params: UseLastFmParams) {
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const program = Effect.gen(function* () {
+      const service = yield* LastFmService;
+      return yield* service.searchArtists(params.query);
+    });
+
+    Effect.runPromise(
+      program.pipe(
+        Effect.provide(LastFmServiceLive),
+        Effect.provide(ConfigLive)
+      )
+    )
+      .then(setData)
+      .catch(setError)
+      .finally(() => setIsLoading(false));
+  }, [params.query]);
+
+  return { data, isLoading, error };
+}
+```
+
+## Database Patterns
+
+### SurrealDB Schema
+
+Define schema in `surrealdb/schema.surql`:
+
+1. **Tables with fields**: Type-safe field definitions
+2. **Indexes for performance**: On commonly queried columns
+3. **Relationships**: Record links between tables
+
+### Type Safety
+
+Use types from `src/types/artist.ts` for database interactions.
+
+### DatabaseService Pattern
+
+Follow the pattern in `src/services/database.ts:7-163`:
+
+```typescript
+export const DatabaseServiceLive = Layer.effect(
+  DatabaseService,
+  Effect.gen(function* () {
+    const config = yield* ConfigService;
+    
+    return {
+      getArtist: (name: string) =>
+        Effect.gen(function* () {
+          // SurrealDB query implementation
+        }),
+    };
+  })
+);
+```
 
 ## Hook Patterns
 
@@ -237,10 +320,6 @@ export function useLastFm(params: UseLastFmParams) {
 }
 ```
 
-### API Integration Hooks
-
-Use the `useLastFm` hook pattern for API integrations with error handling and loading states.
-
 ### Utility Hooks
 
 Create focused hooks for specific concerns (e.g., `use-mobile.tsx:5-19` for mobile detection).
@@ -249,54 +328,28 @@ Create focused hooks for specific concerns (e.g., `use-mobile.tsx:5-19` for mobi
 
 ### D3.js Integration
 
-Follow the patterns in `ForceGraph.tsx:19-314` for D3.js integration with React:
+Follow the patterns in `ForceGraph/index.tsx:19-314` for D3.js integration with React:
 
 1. **Ref for DOM access**: `const svgRef = useRef<SVGSVGElement>(null)`
 2. **Effect for setup**: `useEffect(() => { /* D3 setup */ }, [])`
 3. **Cleanup on unmount**: `return () => { /* Cleanup */ }`
 4. **Event handling**: Coordinate React and D3.js events
 
+### ForceGraph Hooks
+
+The ForceGraph component uses modular hooks:
+
+- `useElementDimensions`: Track container dimensions
+- `useGraphData`: Filter and process graph data
+- `useD3Zoom`: Manage zoom behavior
+- `useD3Simulation`: Manage force simulation (available but optional)
+
 ### Performance Optimization
 
-- Stop simulation on cleanup (`ForceGraph.tsx:247-250`)
+- Stop simulation on cleanup
 - Limit node count via BFS depth
 - Filter edges by similarity threshold
 - Use React memoization where appropriate
-
-## API Integration Patterns
-
-### Edge Function Pattern
-
-Follow the pattern in `supabase/functions/lastfm/index.ts:189-221`:
-
-1. **CORS headers**: Define at top of file
-2. **Action-based routing**: Switch statement on `action` parameter
-3. **Error handling**: Try/catch with appropriate responses
-4. **Caching**: Two-level cache (database + API)
-
-### Hook Pattern for API Calls
-
-Use the `useLastFm` hook pattern (`useLastFm.ts:7-92`):
-
-1. **Parameters object**: Accepts action, query, artist, depth
-2. **State management**: data, isLoading, error states
-3. **Effect for fetching**: `useEffect` with cleanup
-4. **Return object**: Consistent interface for consumers
-
-## Database Patterns
-
-### Migration Structure
-
-Create migrations in `supabase/migrations/` following the existing pattern:
-
-1. **Tables with constraints**: Primary keys, foreign keys, unique constraints
-2. **Indexes for performance**: On commonly queried columns
-3. **RLS policies**: For row-level security
-4. **Timestamps**: `created_at` with timezone
-
-### Type Safety
-
-Use generated types from `src/integrations/supabase/types.ts:1-237` for database interactions.
 
 ## Configuration Patterns
 
@@ -314,7 +367,7 @@ import { useLastFm } from '@/hooks/useLastFm';
 ### Environment Variables
 
 - Frontend: Use `import.meta.env` with `VITE_` prefix
-- Edge Function: Use `Deno.env.get()` for environment variables
+- Access via ConfigService for type safety
 
 ### Build Configuration
 
@@ -329,23 +382,24 @@ When in doubt, examine these key files to understand patterns:
 ### Component Patterns
 
 - `ArtistSearch.tsx:14-37` - Search component with debouncing
-- `ForceGraph.tsx:19-314` - D3.js integration with React
+- `ForceGraph/index.tsx:19-314` - D3.js integration with React
 - `MapView.tsx:19-53` - Page component with data fetching
 
 ### Hook Patterns
 
-- `useLastFm.ts:7-92` - API integration with state management
+- `useLastFm.ts:7-92` - Effect service integration with state management
 - `use-toast.ts:1-187` - Toast notification system
 
-### API Patterns
+### Service Patterns
 
-- `supabase/functions/lastfm/index.ts:122-187` - BFS graph algorithm
-- `supabase/functions/lastfm/index.ts:88-120` - Two-level caching
+- `src/services/lastfm.ts:57-201` - Effect service implementation
+- `src/services/graph.ts:28-192` - BFS graph algorithm
+- `src/services/database.ts:7-163` - SurrealDB operations
 
 ### Type Patterns
 
-- `src/types/artist.ts:1-38` - TypeScript interface definitions
-- `src/integrations/supabase/types.ts:1-237` - Generated database types
+- `src/types/artist.ts` - TypeScript interface definitions for Artist, GraphNode, GraphLink
+- `src/lib/errors.ts` - Typed error classes (NetworkError, LastFmApiError, DatabaseError)
 
 ## ESLint Configuration
 
@@ -362,5 +416,7 @@ Run `npm run lint` to check code quality.
 
 - **TypeScript strict mode is disabled** (`tsconfig.app.json:18`)
 - **Path aliases**: `@/` maps to `./src/` (`vite.config.ts:13-17`)
-- **No automated tests** - rely on manual testing and ESLint
+- **Effect for services**: Use Effect library for typed, composable operations
+- **Database optional**: App works without SurrealDB using Last.fm directly
+- **Testing**: Unit tests with Vitest, E2E tests with Playwright
 - **Follow existing patterns** rather than memorizing rules

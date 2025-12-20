@@ -97,110 +97,162 @@ Add the route in `src/App.tsx:18-22`:
 - **Loading states** for async data
 - **Error boundaries** for graceful failure
 
-## Adding New API Endpoints
+## Adding New Effect Services
 
-### 1. Extend Edge Function
+### 1. Define Service Interface
 
-Add a new case in the switch statement in `supabase/functions/lastfm/index.ts:196-213`:
+Add the service tag in `src/services/tags.ts`:
 
 ```typescript
-case 'new-action':
-  const result = await handleNewAction(params);
-  return new Response(JSON.stringify(result), { headers });
+export interface NewServiceImpl {
+  doSomething: (param: string) => Effect.Effect<Result, AppError>;
+}
+
+export class NewService extends Context.Tag('NewService')<
+  NewService,
+  NewServiceImpl
+>() {}
 ```
 
-### 2. Implement Handler Function
+### 2. Implement Service
 
-Add the handler function above the main handler:
+Create `src/services/newservice.ts`:
 
 ```typescript
-async function handleNewAction(params: any) {
-  // Implementation
-  return { success: true, data: result };
+import { Effect, Layer } from 'effect';
+import { NewService, ConfigService } from './tags';
+import { AppError } from '@/lib/errors';
+
+export const NewServiceLive = Layer.effect(
+  NewService,
+  Effect.gen(function* () {
+    const config = yield* ConfigService;
+    
+    return {
+      doSomething: (param: string) =>
+        Effect.gen(function* () {
+          // Implementation
+          return result;
+        }),
+    };
+  })
+);
+```
+
+### 3. Export from Index
+
+Add to `src/services/index.ts`:
+
+```typescript
+export { NewService } from './tags';
+export { NewServiceLive } from './newservice';
+```
+
+### 4. Create Hook (Optional)
+
+If the service needs React integration, create a hook in `src/hooks/`:
+
+```typescript
+export function useNewService(params: Params) {
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const program = Effect.gen(function* () {
+      const service = yield* NewService;
+      return yield* service.doSomething(params.value);
+    });
+
+    setIsLoading(true);
+    Effect.runPromise(
+      program.pipe(
+        Effect.provide(NewServiceLive),
+        Effect.provide(ConfigLive)
+      )
+    )
+      .then(setData)
+      .catch(setError)
+      .finally(() => setIsLoading(false));
+  }, [params.value]);
+
+  return { data, isLoading, error };
 }
 ```
 
-### 3. Update TypeScript Types
+### 5. Write Tests
 
-If needed, add types in `src/types/artist.ts:1-38`:
-
-```typescript
-export interface NewActionResponse {
-  success: boolean;
-  data: NewDataType;
-}
-```
-
-### 4. Update API Hook
-
-Add the new action to `src/hooks/useLastFm.ts:61-83`:
+Add tests in `src/services/newservice.test.ts`:
 
 ```typescript
-export function useLastFm(params: UseLastFmParams) {
-  // ...
+import { describe, it, expect, vi } from 'vitest';
+import { Effect, Layer } from 'effect';
+import { NewService, NewServiceLive } from './newservice';
 
-  const fetchData = useCallback(async () => {
-    // ...
-    switch (action) {
-      case 'new-action':
-        // Handle new action
-        break;
-      // ...
-    }
-  }, [action, query, artist, depth]);
-
-  // ...
-}
+describe('NewService', () => {
+  it('should do something', async () => {
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const service = yield* NewService;
+        return yield* service.doSomething('test');
+      }).pipe(Effect.provide(NewServiceLive))
+    );
+    
+    expect(result).toBeDefined();
+  });
+});
 ```
 
-### 5. Test the Endpoint
+## Adding New Database Tables (SurrealDB)
 
-Test with curl or in the browser:
+### 1. Update Schema
+
+Add table definition to `surrealdb/schema.surql`:
+
+```surql
+DEFINE TABLE new_table SCHEMAFULL;
+
+DEFINE FIELD name ON TABLE new_table TYPE string;
+DEFINE FIELD artist ON TABLE new_table TYPE record<artist>;
+DEFINE FIELD created_at ON TABLE new_table TYPE datetime DEFAULT time::now();
+
+DEFINE INDEX idx_new_table_name ON TABLE new_table COLUMNS name;
+```
+
+### 2. Apply Schema
 
 ```bash
-curl "http://localhost:54321/functions/v1/lastfm?action=new-action&param=value"
+surreal import --conn http://localhost:8000 --ns musiqasik --db main surrealdb/schema.surql
 ```
 
-## Adding New Database Tables
+### 3. Add TypeScript Types
 
-### 1. Create Migration File
+Add to `src/types/artist.ts`:
 
-Create a new file in `supabase/migrations/` with timestamp prefix:
-
-**Example**: `supabase/migrations/20251207_new_table.sql`
-
-### 2. Define Table Schema
-
-Follow the pattern from existing migration:
-
-```sql
--- Create new table
-CREATE TABLE new_table (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
-);
-
--- Add indexes for performance
-CREATE INDEX idx_new_table_artist_id ON new_table(artist_id);
-CREATE INDEX idx_new_table_name ON new_table(name);
-
--- Enable Row Level Security
-ALTER TABLE new_table ENABLE ROW LEVEL SECURITY;
-
--- Public read access (guest-only app)
-CREATE POLICY "Allow public read access on new_table" ON new_table
-  FOR SELECT USING (true);
+```typescript
+export interface NewTable {
+  id?: string;
+  name: string;
+  artist: string; // Record ID reference
+  created_at?: string;
+}
 ```
 
-### 3. Update TypeScript Types
+### 4. Update DatabaseService
 
-Generate new types by running Supabase type generation or manually update `src/integrations/supabase/types.ts:1-237`.
+Add methods to `src/services/database.ts`:
 
-### 4. Test the Migration
-
-Apply the migration and verify the table works correctly.
+```typescript
+getNewTableItem: (name: string) =>
+  Effect.gen(function* () {
+    const client = yield* getSurrealClient();
+    const result = await client.query<NewTable[]>(
+      'SELECT * FROM new_table WHERE name = $name',
+      { name }
+    );
+    return result[0]?.[0] ?? null;
+  }),
+```
 
 ## Adding New UI Components (shadcn/ui)
 
@@ -233,7 +285,7 @@ import { NewComponent } from '@/components/ui/new-component';
 
 ### 1. Understand Current Implementation
 
-Study `ForceGraph.tsx:19-314` to understand:
+Study `ForceGraph/index.tsx:19-314` to understand:
 
 - D3.js force simulation setup
 - Zoom and pan interactions
@@ -244,7 +296,7 @@ Study `ForceGraph.tsx:19-314` to understand:
 
 #### Change Node Styling
 
-Modify the node rendering in `ForceGraph.tsx:209-233`:
+Modify the node rendering in ForceGraph:
 
 ```typescript
 // Change node appearance
@@ -258,7 +310,7 @@ node
 
 #### Add Node Interactions
 
-Add event handlers in `ForceGraph.tsx:136-151`:
+Add event handlers:
 
 ```typescript
 node.call(drag(simulation)).on('click', (event, d) => {
@@ -269,7 +321,7 @@ node.call(drag(simulation)).on('click', (event, d) => {
 
 #### Modify Graph Layout
 
-Adjust force simulation parameters in `ForceGraph.tsx:106-114`:
+Adjust force simulation parameters:
 
 ```typescript
 const simulation = d3
@@ -288,7 +340,7 @@ const simulation = d3
 
 ### 3. Performance Considerations
 
-- Stop simulation on cleanup (`ForceGraph.tsx:247-250`)
+- Stop simulation on cleanup
 - Limit node count via BFS depth parameter
 - Use React memoization for expensive calculations
 
@@ -324,11 +376,71 @@ export function NewControl({ value, onChange }: NewControlProps) {
 
 ### 2. Graph Data Processing
 
-Extend the BFS algorithm in `supabase/functions/lastfm/index.ts:122-187` if needed.
+Extend the BFS algorithm in `src/services/graph.ts:28-192` if needed.
 
 ### 3. State Integration
 
 Connect new features to existing state management in `MapView.tsx:19-53`.
+
+## Testing Changes
+
+### 1. Unit Tests (Vitest)
+
+Run all unit tests:
+```bash
+npm run test
+```
+
+Run specific test file:
+```bash
+npm run test src/hooks/useLastFm.test.ts
+```
+
+Run tests in watch mode:
+```bash
+npm run test -- --watch
+```
+
+### 2. E2E Tests (Playwright)
+
+Run all E2E tests:
+```bash
+npm run test:e2e
+```
+
+Run specific E2E test:
+```bash
+npx playwright test e2e/home.spec.ts
+```
+
+Run with UI:
+```bash
+npx playwright test --ui
+```
+
+### 3. Coverage Report
+
+Generate coverage:
+```bash
+npm run test:coverage
+```
+
+View report: Open `coverage/index.html` in browser
+
+### 4. Linting
+
+Check code quality:
+```bash
+npm run lint
+```
+
+### 5. Build Verification
+
+Test production build:
+```bash
+npm run build
+npm run preview
+```
 
 ## Styling Changes
 
@@ -386,61 +498,33 @@ Access in code:
 const value = import.meta.env.VITE_NEW_VARIABLE;
 ```
 
-### 2. Edge Function Environment Variables
+### 2. Update ConfigService
 
-Add to Supabase dashboard under Edge Function environment variables.
-
-Access in Edge Function:
+Add to `src/services/index.ts`:
 
 ```typescript
-const value = Deno.env.get('NEW_VARIABLE');
+export const ConfigLive = Layer.succeed(ConfigService, {
+  // ... existing config
+  newVariable: import.meta.env.VITE_NEW_VARIABLE || '',
+});
 ```
 
 ### 3. TypeScript Support
 
 Add type definitions if needed in `src/vite-env.d.ts`.
 
-## Testing Changes
-
-### 1. Manual Testing
-
-- Start dev server: `npm run dev`
-- Test feature in browser
-- Check console for errors
-- Verify functionality works as expected
-
-### 2. Linting
-
-Run ESLint to check code quality:
-
-```bash
-npm run lint
-```
-
-### 3. Build Verification
-
-Test production build:
-
-```bash
-npm run build
-npm run preview
-```
-
-### 4. Edge Function Testing
-
-Test locally with Supabase CLI or deploy and test in browser.
-
 ## Deployment Checklist
 
 Before deploying changes:
 
-1. **Run linter**: `npm run lint`
-2. **Build test**: `npm run build`
-3. **Preview test**: `npm run preview`
-4. **Database migrations**: Apply if schema changed
-5. **Edge Function**: Deploy if logic changed
-6. **Environment variables**: Verify all required variables are set
-7. **Browser testing**: Test in different browsers if needed
+1. **Run tests**: `npm run test`
+2. **Run E2E tests**: `npm run test:e2e`
+3. **Run linter**: `npm run lint`
+4. **Build test**: `npm run build`
+5. **Preview test**: `npm run preview`
+6. **Database schema**: Apply if schema changed (SurrealDB)
+7. **Environment variables**: Verify all required variables are set
+8. **Browser testing**: Test in different browsers if needed
 
 ## Common Pitfalls
 
@@ -452,9 +536,9 @@ Always check `package.json` for required dependencies before adding new imports.
 
 Run type checking if available, or rely on IDE TypeScript support.
 
-### 3. CORS Issues
+### 3. Effect Service Errors
 
-Verify CORS headers in `supabase/functions/lastfm/index.ts:3-6` if making cross-origin requests.
+Ensure all service dependencies are provided in the Layer composition.
 
 ### 4. State Management
 
