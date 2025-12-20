@@ -1,19 +1,12 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { cn, isPlaceholderImage } from '@/lib/utils';
-import type { GraphNode } from '@/types/artist';
+import type { GraphNode, SimulationNode, SimulationLink } from './types';
 import { useElementDimensions } from './hooks/useElementDimensions';
 import { useGraphData } from './hooks/useGraphData';
 import { useD3Zoom } from './hooks/useD3Zoom';
 import { useD3Simulation } from './hooks/useD3Simulation';
 import type { ForceGraphProps, ForceGraphHandle } from './types';
-
-// Internal type for D3 force simulation links (source/target are always GraphNode after simulation starts)
-interface SimulationLink {
-  source: GraphNode;
-  target: GraphNode;
-  weight: number;
-}
 
 export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
   function ForceGraph(
@@ -26,7 +19,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
 
     // Refs for D3 selections that need to be updated on tick
     const linkSelectionRef = useRef<d3.Selection<SVGLineElement, SimulationLink, SVGGElement, unknown> | null>(null);
-    const nodeSelectionRef = useRef<d3.Selection<SVGGElement, GraphNode, SVGGElement, unknown> | null>(null);
+    const nodeSelectionRef = useRef<d3.Selection<SVGGElement, SimulationNode, SVGGElement, unknown> | null>(null);
 
     // Use extracted hooks
     const dimensions = useElementDimensions(containerRef);
@@ -40,14 +33,20 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
 
     // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
     const { graphNodes, links } = useMemo(() => {
-      const nodes: GraphNode[] = filteredNodes.map((node) => ({ ...node }));
+      // Clone nodes for D3 mutation with required position fields
+      const nodes: SimulationNode[] = filteredNodes.map((node) => ({
+        ...node,
+        x: node.x ?? 0,
+        y: node.y ?? 0,
+      }));
       const nodeMap = new Map(nodes.map((n) => [n.name.toLowerCase(), n]));
 
       // Build links with resolved node references
+      // graphLinks contain string-based source/target from useGraphData
       const resolvedLinks: SimulationLink[] = [];
       for (const link of graphLinks) {
-        const sourceName = typeof link.source === 'string' ? link.source : link.source.name;
-        const targetName = typeof link.target === 'string' ? link.target : link.target.name;
+        const sourceName = typeof link.source === 'string' ? link.source : (link.source as SimulationNode).name;
+        const targetName = typeof link.target === 'string' ? link.target : (link.target as SimulationNode).name;
         const source = nodeMap.get(sourceName.toLowerCase());
         const target = nodeMap.get(targetName.toLowerCase());
         if (source && target) {

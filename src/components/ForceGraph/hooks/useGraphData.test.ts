@@ -194,8 +194,9 @@ describe('useGraphData', () => {
     );
 
     expect(result.current.graphLinks).toHaveLength(1);
-    expect(result.current.graphLinks[0].source.name).toBe('Artist A');
-    expect(result.current.graphLinks[0].target.name).toBe('Artist B');
+    // Note: graphLinks now contain string-based source/target for WASM compatibility
+    expect(result.current.graphLinks[0].source).toBe('Artist A');
+    expect(result.current.graphLinks[0].target).toBe('Artist B');
     expect(result.current.graphLinks[0].weight).toBe(0.9);
   });
 
@@ -267,5 +268,41 @@ describe('useGraphData', () => {
     const secondResult = result.current;
 
     expect(firstResult).toBe(secondResult);
+  });
+
+  it('returns usedWasm indicator in result', () => {
+    const nodes = [createArtist('Artist A'), createArtist('Artist B')];
+    const edges = [createEdge('Artist A', 'Artist B', 0.9)];
+
+    const { result } = renderHook(() =>
+      useGraphData({
+        nodes,
+        edges,
+        centerArtist: 'Artist A',
+        threshold: 0,
+      })
+    );
+
+    // In test environment WASM is not loaded, so usedWasm should be false
+    expect(result.current.usedWasm).toBe(false);
+  });
+
+  it('should fall back to JS when WASM is unavailable', () => {
+    const nodes = [createArtist('Artist A'), createArtist('Artist B')];
+    const edges = [createEdge('Artist A', 'Artist B', 0.9)];
+
+    const { result } = renderHook(() =>
+      useGraphData({
+        nodes,
+        edges,
+        centerArtist: 'Artist A',
+        threshold: 0,
+      })
+    );
+
+    // Should still work even without WASM
+    expect(result.current.filteredNodes).toHaveLength(2);
+    expect(result.current.graphLinks).toHaveLength(1);
+    expect(result.current.usedWasm).toBe(false);
   });
 });
