@@ -61,3 +61,6 @@ pids
 
 # Yarn Integrity file
 .yarn-integrity
+
+# SurrealDB data
+surrealdb-data/

@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "dev:db": "surreal start --user root --pass root memory",
+    "dev:db": "docker run --rm --name musiqasik-db -v ./surrealdb-data:/data -p 8000:8000 surrealdb/surrealdb start --user root --pass root file:/data/musiqasik.db",
     "dev:all": "concurrently -n db,web -c blue,green \"npm run dev:db\" \"npm run dev\""
   },
   "dependencies": {
