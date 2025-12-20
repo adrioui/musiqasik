@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the WASM module for unit tests
+// The default export is the initialization function that must be called first
 vi.mock('@/wasm/pkg', () => ({
-  default: undefined,
-  init: vi.fn().mockResolvedValue(undefined),
+  default: vi.fn().mockResolvedValue(undefined),
+  init: vi.fn(),
   get_version: vi.fn().mockReturnValue('0.1.0'),
   health_check: vi.fn().mockReturnValue(true),
   benchmark_sum: vi.fn().mockReturnValue(BigInt(5050)),
@@ -101,9 +102,12 @@ describe('WASM Loader - Error Handling', () => {
   });
 
   it('should handle initialization errors', async () => {
-    // Mock a failing WASM import
+    // Mock a failing WASM import - the default export throws when called
     vi.doMock('@/wasm/pkg', () => ({
-      init: vi.fn().mockRejectedValue(new Error('WASM load failed')),
+      default: vi.fn().mockRejectedValue(new Error('WASM load failed')),
+      init: vi.fn(),
+      get_version: vi.fn(),
+      health_check: vi.fn(),
     }));
 
     const { initWasm, isWasmLoaded, getWasmError } = await import('@/wasm/loader');
@@ -118,7 +122,10 @@ describe('WASM Loader - Error Handling', () => {
 
   it('should return false on subsequent calls after error', async () => {
     vi.doMock('@/wasm/pkg', () => ({
-      init: vi.fn().mockRejectedValue(new Error('WASM load failed')),
+      default: vi.fn().mockRejectedValue(new Error('WASM load failed')),
+      init: vi.fn(),
+      get_version: vi.fn(),
+      health_check: vi.fn(),
     }));
 
     const { initWasm } = await import('@/wasm/loader');
