@@ -64,3 +64,11 @@ pids
 
 # SurrealDB data
 surrealdb-data/
+
+# Rust/WASM build artifacts
+rust/graph-wasm/target/
+rust/graph-wasm/pkg/
+src/wasm/pkg/
+
+# Keep the wasm directory structure
+!src/wasm/.gitkeep

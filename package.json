@@ -17,7 +17,14 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "dev:db": "docker run --rm --name musiqasik-db -v ./surrealdb-data:/data -p 8000:8000 surrealdb/surrealdb start --user root --pass root file:/data/musiqasik.db",
-    "dev:all": "concurrently -n db,web -c blue,green \"npm run dev:db\" \"npm run dev\""
+    "dev:all": "concurrently -n db,web -c blue,green \"npm run dev:db\" \"npm run dev\"",
+    "wasm:build": "cd rust/graph-wasm && chmod +x build.sh && ./build.sh",
+    "wasm:build:release": "cd rust/graph-wasm && wasm-pack build --target web --release --out-dir ../../src/wasm/pkg",
+    "wasm:clean": "rm -rf src/wasm/pkg",
+    "wasm:check": "cd rust/graph-wasm && cargo check",
+    "wasm:test": "cd rust/graph-wasm && cargo test",
+    "prebuild": "npm run wasm:build:release",
+    "dev:wasm": "VITE_USE_WASM_GRAPH=true VITE_WASM_DEBUG=true npm run dev"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
@@ -86,6 +93,8 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^7.0.0",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.16"
   }
