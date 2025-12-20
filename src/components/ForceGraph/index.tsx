@@ -247,7 +247,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
         linkSelectionRef.current = null;
         nodeSelectionRef.current = null;
       };
-    }, [centerArtist, dimensions, onNodeClick, showLabels, applyZoom, simulation, restart, graphNodes, links]);
+    }, [centerArtist, dimensions, onNodeClick, showLabels, applyZoom, simulation, restart, graphNodes, links, filteredNodes.length]);
 
     // Update labels visibility
     useEffect(() => {
