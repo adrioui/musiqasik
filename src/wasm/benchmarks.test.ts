@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import type { Artist } from '@/types/artist';
 
 // WASM benchmarks require the actual WASM module to be built and available.
 // These tests are skipped by default in the unit test environment because:
@@ -17,7 +18,7 @@ describeWasm('WASM Benchmarks', () => {
 
   beforeAll(async () => {
     wasm = await import('@/wasm/pkg');
-    await wasm.init();
+    await wasm.default();
   });
 
   it('benchmark_sum should be faster than JS for large numbers', () => {
@@ -109,6 +110,193 @@ describeWasm('WASM Benchmarks', () => {
   });
 });
 
+describeWasm('Graph Processing Benchmarks', () => {
+  let wasm: typeof import('@/wasm/pkg');
+
+  beforeAll(async () => {
+    wasm = await import('@/wasm/pkg');
+    await wasm.default();
+  });
+
+  // Generate large test data
+  function generateTestData(nodeCount: number, edgesPerNode: number) {
+    const artists: Artist[] = [];
+    const edges: { source: string; target: string; weight: number }[] = [];
+
+    for (let i = 0; i < nodeCount; i++) {
+      artists.push({
+        id: `${i}`,
+        name: `Artist ${i}`,
+        listeners: Math.floor(Math.random() * 1000000),
+      });
+    }
+
+    for (let i = 0; i < nodeCount; i++) {
+      for (let j = 0; j < edgesPerNode; j++) {
+        const target = Math.floor(Math.random() * nodeCount);
+        if (target !== i) {
+          edges.push({
+            source: `Artist ${i}`,
+            target: `Artist ${target}`,
+            weight: Math.random(),
+          });
+        }
+      }
+    }
+
+    return { artists, edges };
+  }
+
+  // JavaScript implementation for comparison
+  function processGraphDataJS(
+    nodes: Artist[],
+    edges: { source: string; target: string; weight: number }[],
+    centerArtist: string | null,
+    threshold: number
+  ) {
+    const filteredEdges = edges.filter((e) => e.weight >= threshold);
+    const connectedNodes = new Set<string>();
+    filteredEdges.forEach((e) => {
+      connectedNodes.add(e.source.toLowerCase());
+      connectedNodes.add(e.target.toLowerCase());
+    });
+    const filteredNodes = nodes
+      .filter(
+        (n) =>
+          connectedNodes.has(n.name.toLowerCase()) ||
+          n.name.toLowerCase() === centerArtist?.toLowerCase()
+      )
+      .map((node) => ({
+        ...node,
+        isCenter: node.name.toLowerCase() === centerArtist?.toLowerCase(),
+      }));
+    const nodeMap = new Map(filteredNodes.map((n) => [n.name.toLowerCase(), n]));
+    const graphLinks = filteredEdges
+      .map((edge) => {
+        const source = nodeMap.get(edge.source.toLowerCase());
+        const target = nodeMap.get(edge.target.toLowerCase());
+        if (source && target) {
+          return { source: edge.source, target: edge.target, weight: edge.weight };
+        }
+        return null;
+      })
+      .filter(Boolean);
+    return { nodes: filteredNodes, links: graphLinks };
+  }
+
+  const testCases = [
+    { nodes: 100, edgesPerNode: 5, name: 'Small (100 nodes, 500 edges)' },
+    { nodes: 500, edgesPerNode: 10, name: 'Medium (500 nodes, 5000 edges)' },
+    { nodes: 1000, edgesPerNode: 15, name: 'Large (1000 nodes, 15000 edges)' },
+  ];
+
+  testCases.forEach(({ nodes, edgesPerNode, name }) => {
+    it(`should benchmark ${name}`, () => {
+      const { artists, edges } = generateTestData(nodes, edgesPerNode);
+      const centerArtist = 'Artist 0';
+      const threshold = 0.5;
+      const iterations = 10;
+
+      // Warmup
+      processGraphDataJS(artists, edges, centerArtist, threshold);
+
+      // JS benchmark
+      const jsStart = performance.now();
+      for (let i = 0; i < iterations; i++) {
+        processGraphDataJS(artists, edges, centerArtist, threshold);
+      }
+      const jsTime = (performance.now() - jsStart) / iterations;
+
+      // WASM benchmark - warmup
+      wasm.process_graph_data(artists, edges, centerArtist, threshold);
+
+      const wasmStart = performance.now();
+      for (let i = 0; i < iterations; i++) {
+        wasm.process_graph_data(artists, edges, centerArtist, threshold);
+      }
+      const wasmTime = (performance.now() - wasmStart) / iterations;
+
+      const speedup = jsTime / wasmTime;
+
+      console.log(`\n${name}:`);
+      console.log(`  JS:   ${jsTime.toFixed(2)}ms`);
+      console.log(`  WASM: ${wasmTime.toFixed(2)}ms`);
+      console.log(`  Speedup: ${speedup.toFixed(2)}x`);
+
+      // WASM should be at least 1.5x faster for medium+ graphs
+      if (nodes >= 500) {
+        expect(speedup).toBeGreaterThan(1.5);
+      }
+    });
+  });
+
+  it('should correctly process graph data', () => {
+    const artists: Artist[] = [
+      { id: '1', name: 'The Beatles', listeners: 1000000 },
+      { id: '2', name: 'Radiohead', listeners: 500000 },
+      { id: '3', name: 'Pink Floyd', listeners: 800000 },
+    ];
+    const edges = [
+      { source: 'The Beatles', target: 'Radiohead', weight: 0.8 },
+      { source: 'The Beatles', target: 'Pink Floyd', weight: 0.3 },
+      { source: 'Radiohead', target: 'Pink Floyd', weight: 0.6 },
+    ];
+
+    const result = wasm.process_graph_data(artists, edges, 'The Beatles', 0.5);
+
+    // Should have nodes connected by edges >= 0.5 weight
+    expect(result.nodes.length).toBeGreaterThan(0);
+    // Should have links filtered by threshold
+    expect(result.links.length).toBe(2); // Only weight >= 0.5
+  });
+
+  it('should mark center artist correctly', () => {
+    const artists: Artist[] = [
+      { id: '1', name: 'The Beatles', listeners: 1000000 },
+      { id: '2', name: 'Radiohead', listeners: 500000 },
+    ];
+    const edges = [{ source: 'The Beatles', target: 'Radiohead', weight: 0.8 }];
+
+    const result = wasm.process_graph_data(artists, edges, 'The Beatles', 0);
+
+    const centerNode = result.nodes.find((n: { isCenter: boolean }) => n.isCenter);
+    expect(centerNode).toBeDefined();
+    expect(centerNode.name).toBe('The Beatles');
+  });
+
+  it('should resolve links to indices', () => {
+    const nodes = [
+      { name: 'The Beatles', isCenter: true },
+      { name: 'Radiohead', isCenter: false },
+    ];
+    const links = [{ source: 'The Beatles', target: 'Radiohead', weight: 0.8 }];
+
+    const result = wasm.resolve_links(nodes, links);
+
+    expect(result.length).toBe(1);
+    expect(typeof result[0].source).toBe('number');
+    expect(typeof result[0].target).toBe('number');
+    expect(result[0].source).toBe(0);
+    expect(result[0].target).toBe(1);
+  });
+
+  it('should process and resolve in single call', () => {
+    const artists: Artist[] = [
+      { id: '1', name: 'The Beatles', listeners: 1000000 },
+      { id: '2', name: 'Radiohead', listeners: 500000 },
+    ];
+    const edges = [{ source: 'The Beatles', target: 'Radiohead', weight: 0.8 }];
+
+    const result = wasm.process_and_resolve_graph(artists, edges, 'The Beatles', 0);
+
+    expect(result.nodes.length).toBe(2);
+    expect(result.links.length).toBe(1);
+    // Links should be resolved to indices
+    expect(typeof result.links[0].source).toBe('number');
+    expect(typeof result.links[0].target).toBe('number');
+  });
+});
+
 // Verify the module structure exists (mocked version)
 describe('WASM Module Structure', () => {
   it('should export the expected functions from the generated package', async () => {
@@ -124,6 +312,9 @@ describe('WASM Module Structure', () => {
       'benchmark_sum',
       'benchmark_normalize',
       'benchmark_batch_normalize',
+      'process_graph_data',
+      'resolve_links',
+      'process_and_resolve_graph',
     ];
 
     // In the test environment, we can at least verify the module can be imported
