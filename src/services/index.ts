@@ -19,6 +19,9 @@ export const ConfigLive = Layer.succeed(ConfigService, {
   surrealdbDatabase: import.meta.env.VITE_SURREALDB_DATABASE || 'main',
   surrealdbUser: import.meta.env.VITE_SURREALDB_USER || '',
   surrealdbPass: import.meta.env.VITE_SURREALDB_PASS || '',
+  // WASM config
+  useWasmGraph: import.meta.env.VITE_USE_WASM_GRAPH === 'true',
+  wasmDebug: import.meta.env.VITE_WASM_DEBUG === 'true',
 });
 
 // Re-export service implementations

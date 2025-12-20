@@ -49,6 +49,9 @@ export class ConfigService extends Context.Tag('ConfigService')<
     surrealdbDatabase: string;
     surrealdbUser: string;
     surrealdbPass: string;
+    // WASM config
+    useWasmGraph: boolean;
+    wasmDebug: boolean;
   }
 >() {}
 
