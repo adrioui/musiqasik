@@ -1,5 +1,11 @@
 use wasm_bindgen::prelude::*;
 
+mod graph_processor;
+mod types;
+
+pub use graph_processor::*;
+pub use types::*;
+
 // When the `small` feature is enabled, use `talc` as the global allocator.
 // talc is a modern WASM allocator that replaces the deprecated wee_alloc.
 // It provides better performance (~6.7 actions/µs vs 5.9 for dlmalloc) with
