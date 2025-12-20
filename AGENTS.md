@@ -65,11 +65,11 @@ musiqasik/
 
 Consult these files for detailed information:
 
-- `docs/development-workflow.md` - Setup, scripts, environment
-- `docs/architecture-patterns.md` - System design and data flow
-- `docs/code-conventions.md` - Patterns to follow (learn from existing code)
-- `docs/common-tasks.md` - Step-by-step guides for common operations
-- `docs/troubleshooting.md` - Debugging and common issues
+- `agent_docs/development-workflow.md` - Setup, scripts, environment
+- `agent_docs/architecture-patterns.md` - System design and data flow
+- `agent_docs/code-conventions.md` - Patterns to follow (learn from existing code)
+- `agent_docs/common-tasks.md` - Step-by-step guides for common operations
+- `agent_docs/troubleshooting.md` - Debugging and common issues
 
 ### Key Principles
 

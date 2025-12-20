@@ -1,10 +1,11 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { cn, isPlaceholderImage } from '@/lib/utils';
 import type { GraphNode } from '@/types/artist';
 import { useElementDimensions } from './hooks/useElementDimensions';
 import { useGraphData } from './hooks/useGraphData';
 import { useD3Zoom } from './hooks/useD3Zoom';
+import { useD3Simulation } from './hooks/useD3Simulation';
 import type { ForceGraphProps, ForceGraphHandle } from './types';
 
 // Internal type for D3 force simulation links (source/target are always GraphNode after simulation starts)
@@ -23,6 +24,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const tooltipRef = useRef<HTMLDivElement | null>(null);
 
+    // Refs for D3 selections that need to be updated on tick
+    const linkSelectionRef = useRef<d3.Selection<SVGLineElement, SimulationLink, SVGGElement, unknown> | null>(null);
+    const nodeSelectionRef = useRef<d3.Selection<SVGGElement, GraphNode, SVGGElement, unknown> | null>(null);
+
     // Use extracted hooks
     const dimensions = useElementDimensions(containerRef);
     const { filteredNodes, graphLinks } = useGraphData({
@@ -33,6 +38,50 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
     });
     const { zoomIn, zoomOut, reset, applyZoom } = useD3Zoom({ svgRef });
 
+    // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
+    const { graphNodes, links } = useMemo(() => {
+      const nodes: GraphNode[] = filteredNodes.map((node) => ({ ...node }));
+      const nodeMap = new Map(nodes.map((n) => [n.name.toLowerCase(), n]));
+
+      // Build links with resolved node references
+      const resolvedLinks: SimulationLink[] = [];
+      for (const link of graphLinks) {
+        const sourceName = typeof link.source === 'string' ? link.source : link.source.name;
+        const targetName = typeof link.target === 'string' ? link.target : link.target.name;
+        const source = nodeMap.get(sourceName.toLowerCase());
+        const target = nodeMap.get(targetName.toLowerCase());
+        if (source && target) {
+          resolvedLinks.push({ source, target, weight: link.weight });
+        }
+      }
+
+      return { graphNodes: nodes, links: resolvedLinks };
+    }, [filteredNodes, graphLinks]);
+
+    // Tick handler for simulation - updates D3 selections
+    const handleTick = useCallback(() => {
+      if (linkSelectionRef.current) {
+        linkSelectionRef.current
+          .attr('x1', (d) => d.source.x!)
+          .attr('y1', (d) => d.source.y!)
+          .attr('x2', (d) => d.target.x!)
+          .attr('y2', (d) => d.target.y!);
+      }
+
+      if (nodeSelectionRef.current) {
+        nodeSelectionRef.current.attr('transform', (d) => `translate(${d.x},${d.y})`);
+      }
+    }, []);
+
+    // Use the D3 simulation hook
+    const { simulation, restart } = useD3Simulation({
+      nodes: graphNodes,
+      links: links as unknown as import('@/types/artist').GraphLink[],
+      width: dimensions.width,
+      height: dimensions.height,
+      onTick: handleTick,
+    });
+
     // Expose zoom methods via ref
     useImperativeHandle(ref, () => ({
       zoomIn,
@@ -40,9 +89,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       reset,
     }), [zoomIn, zoomOut, reset]);
 
-    // Create and update the force simulation
+    // Create and update the D3 visualization (DOM elements only, simulation is handled by hook)
     useEffect(() => {
-      if (!svgRef.current || filteredNodes.length === 0) return;
+      if (!svgRef.current || filteredNodes.length === 0 || !simulation) return;
 
       const svg = d3.select(svgRef.current);
       const { width, height } = dimensions;
@@ -56,50 +105,21 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       // Apply zoom behavior
       applyZoom(g);
 
-      // Prepare graph data with mutable copies for D3
-      const graphNodes: GraphNode[] = filteredNodes.map((node) => ({ ...node }));
-      const nodeMap = new Map(graphNodes.map((n) => [n.name.toLowerCase(), n]));
-
-      // Build links with resolved node references
-      const links: SimulationLink[] = [];
-      for (const link of graphLinks) {
-        const sourceName = typeof link.source === 'string' ? link.source : link.source.name;
-        const targetName = typeof link.target === 'string' ? link.target : link.target.name;
-        const source = nodeMap.get(sourceName.toLowerCase());
-        const target = nodeMap.get(targetName.toLowerCase());
-        if (source && target) {
-          links.push({ source, target, weight: link.weight });
-        }
-      }
-
-      // Create simulation
-      const simulation = d3
-        .forceSimulation<GraphNode>(graphNodes)
-        .force(
-          'link',
-          d3
-            .forceLink<GraphNode, SimulationLink>(links)
-            .id((d) => d.name)
-            .distance((d) => 100 + (1 - d.weight) * 100)
-            .strength((d) => d.weight * 0.5)
-        )
-        .force('charge', d3.forceManyBody().strength(-400))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(40));
-
-      // Draw links
-      const link = g
+      // Draw links and store reference
+      const linkSelection = g
         .append('g')
         .attr('class', 'links')
-        .selectAll('line')
+        .selectAll<SVGLineElement, SimulationLink>('line')
         .data(links)
         .join('line')
         .attr('stroke', 'hsl(var(--graph-edge))')
         .attr('stroke-opacity', (d) => 0.2 + d.weight * 0.6)
         .attr('stroke-width', (d) => 1 + d.weight * 2);
 
-      // Draw nodes
-      const node = g
+      linkSelectionRef.current = linkSelection;
+
+      // Draw nodes and store reference
+      const nodeSelection = g
         .append('g')
         .attr('class', 'nodes')
         .selectAll<SVGGElement, GraphNode>('g')
@@ -111,7 +131,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
           d3
             .drag<SVGGElement, GraphNode>()
             .on('start', (event, d) => {
-              if (!event.active) simulation.alphaTarget(0.3).restart();
+              if (!event.active) restart();
               d.fx = d.x;
               d.fy = d.y;
             })
@@ -120,14 +140,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
               d.fy = event.y;
             })
             .on('end', (event, d) => {
-              if (!event.active) simulation.alphaTarget(0);
+              if (!event.active && simulation) simulation.alphaTarget(0);
               d.fx = null;
               d.fy = null;
             })
         );
 
+      nodeSelectionRef.current = nodeSelection;
+
       // Node circles
-      node
+      nodeSelection
         .append('circle')
         .attr('r', (d) => (d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8))
         .attr('fill', (d) => (d.isCenter ? 'hsl(var(--graph-center))' : 'hsl(var(--graph-node))'))
@@ -145,7 +167,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
         });
 
       // Node images (skip Last.fm placeholder images)
-      node.each(function (d) {
+      nodeSelection.each(function (d) {
         if (!isPlaceholderImage(d.image_url) && d.image_url) {
           const nodeG = d3.select(this);
           const radius = d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8;
@@ -172,7 +194,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       });
 
       // Node labels
-      node
+      nodeSelection
         .append('text')
         .text((d) => d.name)
         .attr('text-anchor', 'middle')
@@ -183,7 +205,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
         .style('transition', 'opacity 0.2s ease-out');
 
       // Node click handler
-      node.on('click', (event, d) => {
+      nodeSelection.on('click', (event, d) => {
         event.stopPropagation();
         onNodeClick(d);
       });
@@ -198,7 +220,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       }
       const tooltip = d3.select(tooltipRef.current);
 
-      node
+      nodeSelection
         .on('mouseenter', (event, d) => {
           tooltip
             .style('display', 'block')
@@ -220,22 +242,12 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
           tooltip.style('opacity', '0').style('display', 'none');
         });
 
-      // Update positions on tick
-      simulation.on('tick', () => {
-        link
-          .attr('x1', (d) => d.source.x!)
-          .attr('y1', (d) => d.source.y!)
-          .attr('x2', (d) => d.target.x!)
-          .attr('y2', (d) => d.target.y!);
-
-        node.attr('transform', (d) => `translate(${d.x},${d.y})`);
-      });
-
-      // Cleanup
+      // Cleanup refs on effect cleanup
       return () => {
-        simulation.stop();
+        linkSelectionRef.current = null;
+        nodeSelectionRef.current = null;
       };
-    }, [filteredNodes, graphLinks, centerArtist, dimensions, onNodeClick, showLabels, applyZoom]);
+    }, [centerArtist, dimensions, onNodeClick, showLabels, applyZoom, simulation, restart, graphNodes, links]);
 
     // Update labels visibility
     useEffect(() => {
