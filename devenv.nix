@@ -102,6 +102,19 @@
   enterShell = ''
     echo "🎵 MusiqasiQ development environment"
     echo ""
+
+    # Check if node_modules exists
+    if [ ! -d "node_modules" ]; then
+      echo "⚠️  node_modules not found. Run 'npm install' before starting development."
+      echo ""
+    fi
+
+    # Check if WASM module is built
+    if [ ! -d "src/wasm/pkg" ]; then
+      echo "⚠️  WASM module not built. Run 'npm run wasm:build' to build it."
+      echo ""
+    fi
+
     echo "Versions:"
     echo "  Node.js: $(node --version)"
     echo "  npm: $(npm --version)"
