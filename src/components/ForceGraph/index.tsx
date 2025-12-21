@@ -1,7 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { cn, isPlaceholderImage } from '@/lib/utils';
-import type { GraphNode, SimulationNode, SimulationLink } from './types';
+import type { SimulationNode, SimulationLink } from './types';
 import { useElementDimensions } from './hooks/useElementDimensions';
 import { useGraphData } from './hooks/useGraphData';
 import { useD3Zoom } from './hooks/useD3Zoom';
@@ -94,10 +94,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const handleTick = useCallback(() => {
     if (linkSelectionRef.current) {
       linkSelectionRef.current
-        .attr('x1', (d) => d.source.x!)
-        .attr('y1', (d) => d.source.y!)
-        .attr('x2', (d) => d.target.x!)
-        .attr('y2', (d) => d.target.y!);
+        .attr('x1', (d) => (d.source as SimulationNode).x)
+        .attr('y1', (d) => (d.source as SimulationNode).y)
+        .attr('x2', (d) => (d.target as SimulationNode).x)
+        .attr('y2', (d) => (d.target as SimulationNode).y);
     }
 
     if (nodeSelectionRef.current) {
@@ -130,7 +130,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     if (!svgRef.current || filteredNodes.length === 0 || !simulation) return;
 
     const svg = d3.select(svgRef.current);
-    const { width, height } = dimensions;
 
     // Clear previous content
     svg.selectAll('*').remove();
@@ -159,34 +158,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     const nodeSelection = g
       .append('g')
       .attr('class', 'nodes')
-      .selectAll<SVGGElement, GraphNode>('g')
+      .selectAll<SVGGElement, SimulationNode>('g')
       .data(graphNodes)
       .join('g')
       .attr('class', 'graph-node')
       .style('cursor', 'pointer')
-      .style('transition', 'opacity 0.15s ease-out')
-      .call(
-        d3
-          .drag<SVGGElement, GraphNode>()
-          .on('start', (event, d) => {
-            if (!event.active) restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on('drag', (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on('end', (event, d) => {
-            if (!event.active && simulation) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          })
-      );
+      .style('transition', 'opacity 0.15s ease-out');
 
     nodeSelectionRef.current = nodeSelection;
 
-    // Highlighting functions (pure D3, no React state)
+    // Hover highlighting function (pure D3, no React state)
     const applyHighlight = (highlightedName: string | null) => {
       if (!highlightedName) {
         // Reset all to normal
@@ -200,8 +181,8 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
       // Update links
       linkSelection.attr('stroke-opacity', (d) => {
-        const sourceKey = d.source.name.toLowerCase();
-        const targetKey = d.target.name.toLowerCase();
+        const sourceKey = (d.source as SimulationNode).name.toLowerCase();
+        const targetKey = (d.target as SimulationNode).name.toLowerCase();
         if (sourceKey === highlightKey || targetKey === highlightKey) {
           return 0.8;
         }
@@ -217,6 +198,26 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         return 0.2;
       });
     };
+
+    // Apply drag behavior
+    nodeSelection.call(
+      d3
+        .drag<SVGGElement, SimulationNode>()
+        .on('start', (event, d) => {
+          if (!event.active) restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on('end', (event, d) => {
+          if (!event.active && simulation) simulation.alphaTarget(0);
+          d.fx = undefined;
+          d.fy = undefined;
+        })
+    );
 
     // Node circles
     nodeSelection
@@ -266,9 +267,8 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       .style('opacity', showLabels ? 1 : 0)
       .style('transition', 'opacity 0.2s ease-out');
 
-    // Node click handler
-    nodeSelection.on('click', (event, d) => {
-      event.stopPropagation();
+    // Click handler for node selection (opens artist panel)
+    nodeSelection.on('click', (_event, d) => {
       onNodeClick(d);
     });
 
@@ -282,13 +282,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     }
     const tooltip = d3.select(tooltipRef.current);
 
-    // Combined mouseenter/mouseleave with highlighting and tooltip
+    // Hover highlighting and tooltip
     nodeSelection
       .on('mouseenter', function (event, d) {
-        // Apply highlighting
         applyHighlight(d.name);
-
-        // Change hovered node color
         d3.select(this).select('circle').attr('fill', 'hsl(var(--graph-node-hover))');
 
         // Show tooltip
@@ -309,10 +306,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         tooltip.style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`);
       })
       .on('mouseleave', function (_event, d) {
-        // Clear highlighting
         applyHighlight(null);
-
-        // Restore node color
         d3.select(this).select('circle').attr('fill', getNodeColor(d));
 
         // Hide tooltip
