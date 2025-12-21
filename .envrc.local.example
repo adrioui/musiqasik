@@ -1,0 +1,14 @@
+# Copy this file to .envrc.local and fill in your secrets
+# .envrc.local is gitignored - never commit secrets!
+
+# Last.fm API Key (required - get yours at https://www.last.fm/api)
+export VITE_LASTFM_API_KEY="your_lastfm_api_key_here"
+export LASTFM_API_KEY="your_lastfm_api_key_here"
+
+# SurrealDB Authentication (optional - defaults shown)
+# export VITE_SURREALDB_USER="root"
+# export VITE_SURREALDB_PASS="root"
+
+# WASM Feature Flags (optional)
+# export VITE_USE_WASM_GRAPH="true"
+# export VITE_WASM_DEBUG="true"

@@ -1,0 +1,13 @@
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  rust-overlay:
+    url: github:oxalica/rust-overlay
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+
+# NOTE:
+# - `devenv.yaml` pins inputs, but reproducibility also depends on committing `devenv.lock`.
+# - See `.gitignore` guidance in Phase 1.
+# - rust-overlay is required for `languages.rust.channel` with `targets` support.

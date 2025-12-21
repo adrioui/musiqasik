@@ -1,5 +1,46 @@
 # MusiqasiQ
 
+## Quick Start (Recommended)
+
+The recommended way to develop MusiqasiQ is using [devenv](https://devenv.sh/) for a reproducible environment.
+
+### Prerequisites
+
+- [Nix](https://nixos.org/download) with [devenv](https://devenv.sh/getting-started/)
+- [direnv](https://direnv.net/)
+- Docker (for SurrealDB; this plan uses `docker compose`, i.e. Compose v2 plugin syntax)
+
+### Setup
+
+```bash
+# 1. Clone and enter repo
+git clone <repository-url>
+cd musiqasik
+
+# 2. Allow direnv (activates devenv automatically)
+direnv allow
+
+# 3. Set up secrets
+cp .envrc.local.example .envrc.local
+# Edit .envrc.local and add your Last.fm API key
+
+# 4. Install dependencies
+npm install
+
+# 5. Start all services
+devenv up
+```
+
+Frontend will be available at http://localhost:8080.
+
+See [docs/devenv-setup.md](docs/devenv-setup.md) for detailed platform-specific instructions (MacOS, Fedora Silverblue).
+
+### Traditional Setup
+
+If you prefer not to use devenv, see the [Development](#development) section below.
+
+---
+
 ## Development
 
 This project uses standard React development tools. See [Development Workflow](docs/development-workflow.md) for setup instructions.

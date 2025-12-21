@@ -77,3 +77,16 @@ src/wasm/pkg/
 coverage/
 test-results/
 playwright-report/
+
+# Devenv
+.devenv/
+.devenv.flake.nix
+devenv.local.nix
+
+# IMPORTANT:
+# - Commit `devenv.lock` for reproducibility (treat it like `package-lock.json`).
+# - Do NOT add `devenv.lock` to `.gitignore`.
+
+# Direnv
+.envrc.local
+.direnv/
