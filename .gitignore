@@ -72,3 +72,8 @@ src/wasm/pkg/
 
 # Keep the wasm directory structure
 !src/wasm/.gitkeep
+
+# Test coverage & reports
+coverage/
+test-results/
+playwright-report/
