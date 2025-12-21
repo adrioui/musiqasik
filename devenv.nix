@@ -1,11 +1,9 @@
 { pkgs, lib, config, inputs, ... }:
 
 {
-  # Node.js for frontend (provides node + npm)
-  languages.javascript = {
-    enable = true;
-    package = pkgs.nodejs_20;
-  };
+  # Bun for frontend (replaces Node.js + npm)
+  # NOTE: We use Bun as package manager while keeping Vite as bundler
+  # This provides faster installs while maintaining Vite's mature ecosystem
 
   # Rust for WASM module
   #
@@ -18,8 +16,9 @@
     targets = [ "wasm32-unknown-unknown" ];
   };
 
-  # Required packages (do not duplicate node/npm here; `languages.javascript` provides them)
+  # Required packages
   packages = with pkgs; [
+    bun  # JavaScript runtime and package manager (replaces node + npm)
     wasm-pack
     # NOTE: `wasm-pack` vendors `wasm-bindgen`; installing `wasm-bindgen-cli` separately can cause version skew.
     binaryen  # Provides wasm-opt
@@ -72,7 +71,7 @@
     };
 
     vite = {
-      exec = "npm run dev";
+      exec = "bun run dev";
     };
   };
 
@@ -83,7 +82,7 @@
     eslint = {
       enable = true;
       name = "ESLint";
-      entry = "npm run lint -- --fix";
+      entry = "bun run lint -- --fix";
       files = "\\.(ts|tsx|js|jsx)$";
       pass_filenames = false;
     };
@@ -92,7 +91,7 @@
     prettier = {
       enable = true;
       name = "Prettier";
-      entry = "npx prettier --write --ignore-unknown";
+      entry = "bunx prettier --write --ignore-unknown";
       files = "\\.(ts|tsx|js|jsx|css|md|json)$";
       pass_filenames = true;
     };
@@ -105,28 +104,27 @@
 
     # Check if node_modules exists
     if [ ! -d "node_modules" ]; then
-      echo "⚠️  node_modules not found. Run 'npm install' before starting development."
+      echo "⚠️  node_modules not found. Run 'bun install' before starting development."
       echo ""
     fi
 
     # Check if WASM module is built
     if [ ! -d "src/wasm/pkg" ]; then
-      echo "⚠️  WASM module not built. Run 'npm run wasm:build' to build it."
+      echo "⚠️  WASM module not built. Run 'bun run wasm:build' to build it."
       echo ""
     fi
 
     echo "Versions:"
-    echo "  Node.js: $(node --version)"
-    echo "  npm: $(npm --version)"
+    echo "  Bun: $(bun --version)"
     echo "  Rust: $(rustc --version)"
     echo "  wasm-pack: $(wasm-pack --version)"
     echo "  Docker: $(docker --version 2>/dev/null || echo 'not available')"
     echo ""
     echo "Commands:"
     echo "  devenv up          - Start all services (SurrealDB + Vite)"
-    echo "  npm run dev        - Start Vite only"
-    echo "  npm run wasm:build - Build WASM module"
-    echo "  npm run test:e2e   - Run E2E tests (Playwright)"
+    echo "  bun run dev        - Start Vite only"
+    echo "  bun run wasm:build - Build WASM module"
+    echo "  bun run test:e2e   - Run E2E tests (Playwright)"
     echo "  ./scripts/dev-utils.sh   - Development utilities"
     echo ""
     echo "Service URLs:"

@@ -191,19 +191,19 @@ cp .envrc.local.example .envrc.local
 ### Step 4: Install dependencies
 
 ```bash
-npm install
+bun install
 ```
 
 ### Step 5: Verify WASM toolchain
 
 ```bash
-npm run wasm:build
+bun run wasm:build
 ```
 
 ### Step 6: Start development
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 ---
@@ -214,9 +214,9 @@ npm run dev
 
 Run `direnv allow` to allow the .envrc file.
 
-### Node.js version mismatch
+### Bun version mismatch
 
-Run `node --version` to verify Node.js 20 is being used.
+Run `bun --version` to verify Bun is being used from the devenv shell.
 
 ### wasm-pack not found
 
@@ -227,10 +227,11 @@ Ensure you're in the devenv shell. Run `devenv shell` or check that direnv is ac
 The devenv automatically adds wasm32-unknown-unknown target.
 
 Note:
+
 - Avoid running `rustup target add ...` inside the devenv environment.
 - The Rust toolchain is managed by Nix (fenix) and should align with `rust/graph-wasm/rust-toolchain.toml`.
 
-If you still see a target error, verify you're actually inside the devenv shell (`direnv` active), then re-enter the shell and retry `npm run wasm:build`.
+If you still see a target error, verify you're actually inside the devenv shell (`direnv` active), then re-enter the shell and retry `bun run wasm:build`.
 
 ### Permission denied on Fedora Silverblue
 
@@ -263,9 +264,11 @@ SurrealDB runs in a Docker container and starts on port 8000.
 ### Prerequisites
 
 Docker must be installed and running:
+
 - **macOS**: Install Docker Desktop from https://www.docker.com/products/docker-desktop
 - **Fedora Silverblue**: Podman is commonly used, and can be made Docker-compatible, but this is not automatic.
   - Ensure you have a working `docker` CLI compatibility layer and a Compose implementation.
+
   ```bash
   # One option: provide `docker` command compatibility
   rpm-ostree install podman-docker
@@ -327,6 +330,7 @@ devenv up
 ```
 
 This starts:
+
 - SurrealDB Docker container on port 8000
 - Vite frontend on port 8080 (port is configured by the project's Vite config; if you change it there, update this doc accordingly)
 
@@ -356,13 +360,13 @@ Playwright browsers are managed by Nix for consistent versions across developers
 ### Run E2E Tests
 
 ```bash
-npm run test:e2e
+bun run test:e2e
 ```
 
 ### Run E2E Tests with UI
 
 ```bash
-npm run test:e2e:ui
+bun run test:e2e:ui
 ```
 
 ### Troubleshooting Playwright
@@ -373,13 +377,14 @@ If browsers fail to launch, verify the Playwright environment:
 echo $PLAYWRIGHT_BROWSERS_PATH
 # Should point to Nix store path
 
-npx playwright --version
+bunx playwright --version
 ```
 
 Notes:
-- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` prevents npm from downloading browsers (they are provided by Nix).
-- Keep `@playwright/test` (and/or `playwright`) in `package.json`: npm provides the Playwright JS runtime and test runner.
-- In this setup, Nix provides *browsers*, not the Node test runner. This keeps browser versions consistent across machines.
+
+- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` prevents bun from downloading browsers (they are provided by Nix).
+- Keep `@playwright/test` (and/or `playwright`) in `package.json`: bun provides the Playwright JS runtime and test runner.
+- In this setup, Nix provides _browsers_, not the Node test runner. This keeps browser versions consistent across machines.
 
 ---
 
@@ -399,8 +404,8 @@ devenv `git-hooks` are not the Python `pre-commit` tool, so `pre-commit run ...`
 To exercise hooks, use regular Git workflows (they run on `git commit`), or run the underlying commands directly:
 
 ```bash
-npm run lint
-npm run typecheck
+bun run lint
+bun run typecheck
 ```
 
 ### Skip Hooks (not recommended)
@@ -419,16 +424,16 @@ Use the development utilities script for common tasks:
 ./scripts/dev-utils.sh <command>
 ```
 
-| Command | Description |
-|---------|-------------|
-| `lint` | Run ESLint |
-| `typecheck` | Run TypeScript type check |
-| `check` | Run all checks (lint + typecheck + services) |
-| `test` | Run unit tests |
-| `test:e2e` | Run E2E tests |
-| `wasm` | Build WASM module |
-| `clean` | Clean all build artifacts |
-| `reset-db` | Reset SurrealDB to clean state |
+| Command     | Description                                  |
+| ----------- | -------------------------------------------- |
+| `lint`      | Run ESLint                                   |
+| `typecheck` | Run TypeScript type check                    |
+| `check`     | Run all checks (lint + typecheck + services) |
+| `test`      | Run unit tests                               |
+| `test:e2e`  | Run E2E tests                                |
+| `wasm`      | Build WASM module                            |
+| `clean`     | Clean all build artifacts                    |
+| `reset-db`  | Reset SurrealDB to clean state               |
 
 ---
 
@@ -440,7 +445,7 @@ Use the development utilities script for common tasks:
 direnv allow
 cp .envrc.local.example .envrc.local
 # Edit .envrc.local with your Last.fm API key
-npm install
+bun install
 ```
 
 ### Daily Development
@@ -463,6 +468,6 @@ git commit -m "feat: add new feature"
 
 ```bash
 # Run full test suite
-npm run test
-npm run test:e2e
+bun run test
+bun run test:e2e
 ```

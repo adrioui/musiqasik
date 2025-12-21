@@ -4,31 +4,31 @@ set -e
 case "$1" in
   "lint")
     echo "Running ESLint..."
-    npm run lint
+    bun run lint
     ;;
   "typecheck")
     echo "Running TypeScript type check..."
-    npm run typecheck
+    bun run typecheck
     ;;
   "check")
     echo "Running all checks..."
-    npm run lint
-    npm run typecheck
+    bun run lint
+    bun run typecheck
     echo ""
     echo "Running service health check..."
     ./scripts/check-services.sh
     ;;
   "test")
     echo "Running unit tests..."
-    npm run test
+    bun run test
     ;;
   "test:e2e")
     echo "Running E2E tests..."
-    npm run test:e2e
+    bun run test:e2e
     ;;
   "wasm")
     echo "Building WASM module..."
-    npm run wasm:build
+    bun run wasm:build
     ;;
   "clean")
     echo "Cleaning development environment..."
@@ -36,7 +36,7 @@ case "$1" in
     rm -rf .devenv
     rm -rf dist
     rm -rf src/wasm/pkg
-    echo "Clean complete. Run 'npm install' to reinstall dependencies."
+    echo "Clean complete. Run 'bun install' to reinstall dependencies."
     ;;
   "reset-db")
     echo "Resetting SurrealDB..."

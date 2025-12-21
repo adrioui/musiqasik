@@ -4,13 +4,13 @@
 
 ### 1. Development Server Won't Start
 
-**Symptoms**: `npm run dev` fails or server doesn't start on port 8080.
+**Symptoms**: `bun run dev` fails or server doesn't start on port 8080.
 
 **Checklist**:
 
-1. **Dependencies installed**: Run `npm install` or `bun install`
+1. **Dependencies installed**: Run `bun install`
 2. **Port 8080 available**: Check if another process is using port 8080
-3. **Node.js version**: Ensure Node.js 18+ is installed (`node --version`)
+3. **Bun version**: Ensure Bun is installed (`bun --version`)
 4. **Environment variables**: Verify `.env` file exists with required variables
 5. **Vite configuration**: Check `vite.config.ts:8-11` for port configuration
 
@@ -18,7 +18,7 @@
 
 - Kill process on port 8080: `lsof -ti:8080 | xargs kill -9`
 - Use different port: Modify `vite.config.ts` port setting
-- Clear node_modules: `rm -rf node_modules && npm install`
+- Clear node_modules: `rm -rf node_modules && bun install`
 
 ### 2. Graph Not Loading
 
@@ -52,18 +52,18 @@
 
 **Solutions**:
 
-- Run `npm run lint` to identify issues
+- Run `bun run lint` to identify issues
 - Check `src/types/artist.ts` for data types
 - Use TypeScript's loose configuration (strict mode disabled)
 - Add type definitions for missing modules
 
 ### 4. Build Failures
 
-**Symptoms**: `npm run build` fails with errors.
+**Symptoms**: `bun run build` fails with errors.
 
 **Checklist**:
 
-1. **Type errors**: Run `npm run lint` first
+1. **Type errors**: Run `bun run lint` first
 2. **Missing dependencies**: Check `package.json` for all required packages
 3. **Environment variables**: All `VITE_` variables must be available at build time
 4. **Path issues**: Verify path aliases in `vite.config.ts:13-17`
@@ -72,7 +72,7 @@
 
 - Check build output for specific error messages
 - Ensure all environment variables are set
-- Clear build cache: `rm -rf dist && npm run build`
+- Clear build cache: `rm -rf dist && bun run build`
 - Check Vite configuration in `vite.config.ts:1-19`
 
 ### 5. Database Connection Issues (SurrealDB)
@@ -170,6 +170,7 @@ Effect.gen(function* () {
 #### Error Tracing
 
 Effect provides detailed error traces. Check browser console for:
+
 - Effect stack traces
 - Typed error information (NetworkError, LastFmApiError, DatabaseError)
 
@@ -323,7 +324,7 @@ console.log(result);
 
 #### ESLint Errors
 
-1. Run `npm run lint` to see all errors
+1. Run `bun run lint` to see all errors
 2. Check `eslint.config.js:1-27` for configuration
 3. Disable specific rules if needed (e.g., `@typescript-eslint/no-unused-vars` is disabled)
 
@@ -333,7 +334,7 @@ console.log(result);
 
 1. Check environment variables are set in build process
 2. Verify all dependencies are in `package.json`
-3. Test with `npm run build` first
+3. Test with `bun run build` first
 
 #### Runtime Errors
 
@@ -344,7 +345,7 @@ console.log(result);
 #### Performance Issues
 
 1. Enable production optimizations in Vite
-2. Check bundle size with `npm run build -- --report`
+2. Check bundle size with `bun run build -- --report`
 3. Implement code splitting if needed
 
 ## Database Issues (SurrealDB)

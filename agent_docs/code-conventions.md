@@ -220,7 +220,7 @@ export const LastFmServiceLive = Layer.effect(
   LastFmService,
   Effect.gen(function* () {
     const config = yield* ConfigService;
-    
+
     return {
       searchArtists: (query: string) =>
         Effect.gen(function* () {
@@ -252,12 +252,7 @@ export function useLastFm(params: UseLastFmParams) {
       return yield* service.searchArtists(params.query);
     });
 
-    Effect.runPromise(
-      program.pipe(
-        Effect.provide(LastFmServiceLive),
-        Effect.provide(ConfigLive)
-      )
-    )
+    Effect.runPromise(program.pipe(Effect.provide(LastFmServiceLive), Effect.provide(ConfigLive)))
       .then(setData)
       .catch(setError)
       .finally(() => setIsLoading(false));
@@ -290,7 +285,7 @@ export const DatabaseServiceLive = Layer.effect(
   DatabaseService,
   Effect.gen(function* () {
     const config = yield* ConfigService;
-    
+
     return {
       getArtist: (name: string) =>
         Effect.gen(function* () {
@@ -410,7 +405,7 @@ The project uses ESLint with specific rules. Check `eslint.config.js:1-27` for c
 - React Refresh plugin for fast refresh
 - `@typescript-eslint/no-unused-vars` disabled (loose configuration)
 
-Run `npm run lint` to check code quality.
+Run `bun run lint` to check code quality.
 
 ## Important Notes
 

@@ -33,10 +33,10 @@ musiqasik/
 ## Getting Started
 
 1. **Setup**: Copy `.env.example` to `.env` and add your Last.fm API key
-2. **Development**: `npm run dev` starts server on port 8080
-3. **Building**: `npm run build` for production
-4. **Testing**: `npm run test` for unit tests, `npm run test:e2e` for E2E tests
-5. **Linting**: `npm run lint` runs ESLint
+2. **Development**: `bun run dev` starts server on port 8080
+3. **Building**: `bun run build` for production
+4. **Testing**: `bun run test` for unit tests, `bun run test:e2e` for E2E tests
+5. **Linting**: `bun run lint` runs ESLint
 
 ## Architecture Overview
 
@@ -89,9 +89,9 @@ Consult these files for detailed information:
 
 ## Testing
 
-- **Unit tests**: `npm run test` - Tests for hooks, utilities, and services
-- **E2E tests**: `npm run test:e2e` - Playwright tests for user flows
-- **Coverage**: `npm run test:coverage` - Generate coverage report
+- **Unit tests**: `bun run test` - Tests for hooks, utilities, and services
+- **E2E tests**: `bun run test:e2e` - Playwright tests for user flows
+- **Coverage**: `bun run test:coverage` - Generate coverage report
 
 ## Related Files
 

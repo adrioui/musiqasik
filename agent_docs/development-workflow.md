@@ -4,18 +4,19 @@
 
 ### Prerequisites
 
-- Node.js 18+ or Bun
+- Bun (install from https://bun.sh/)
 - Last.fm API key (get at https://www.last.fm/api)
 - SurrealDB (optional - app works without it)
 
 ### Installation
 
-1. Install dependencies: `npm install` or `bun install`
+1. Install dependencies: `bun install`
 2. Copy `.env.example` to `.env` and configure:
+
    ```
    # Required
    VITE_LASTFM_API_KEY=your_lastfm_api_key
-   
+
    # Optional - SurrealDB (app works without these)
    VITE_SURREALDB_WS_URL=ws://localhost:8000/rpc
    VITE_SURREALDB_HTTP_URL=http://localhost:8000/rpc
@@ -24,13 +25,15 @@
    VITE_SURREALDB_USER=root
    VITE_SURREALDB_PASS=root
    ```
-3. Start development server: `npm run dev`
+
+3. Start development server: `bun run dev`
 
 ### Database Setup (Optional)
 
 SurrealDB is optional - the app works without it by fetching directly from Last.fm API.
 
 To enable caching:
+
 1. Start SurrealDB: `surreal start --user root --pass root file:./data/musiqasik.db`
 2. Apply schema: `surreal import --conn http://localhost:8000 --ns musiqasik --db main surrealdb/schema.surql`
 3. Configure environment variables in `.env`
@@ -39,23 +42,23 @@ To enable caching:
 
 ### Development
 
-- `npm run dev` - Start development server on port 8080
-- `npm run build:dev` - Build for development mode
-- `npm run preview` - Preview production build locally
+- `bun run dev` - Start development server on port 8080
+- `bun run build:dev` - Build for development mode
+- `bun run preview` - Preview production build locally
 
 ### Production
 
-- `npm run build` - Build for production (outputs to `dist/` directory)
+- `bun run build` - Build for production (outputs to `dist/` directory)
 
 ### Code Quality
 
-- `npm run lint` - Run ESLint with TypeScript and React rules
+- `bun run lint` - Run ESLint with TypeScript and React rules
 
 ### Testing
 
-- `npm run test` - Run unit tests with Vitest
-- `npm run test:e2e` - Run E2E tests with Playwright
-- `npm run test:coverage` - Generate test coverage report
+- `bun run test` - Run unit tests with Vitest
+- `bun run test:e2e` - Run E2E tests with Playwright
+- `bun run test:coverage` - Generate test coverage report
 
 ### Development Server
 
@@ -96,9 +99,11 @@ To enable caching:
 ### Frontend (`.env`)
 
 Required variables:
+
 - `VITE_LASTFM_API_KEY`: Your Last.fm API key
 
 Optional SurrealDB variables:
+
 - `VITE_SURREALDB_WS_URL`: WebSocket URL (e.g., `ws://localhost:8000/rpc`)
 - `VITE_SURREALDB_HTTP_URL`: HTTP URL (e.g., `http://localhost:8000/rpc`)
 - `VITE_SURREALDB_NAMESPACE`: Database namespace (default: `musiqasik`)
@@ -186,9 +191,10 @@ The database schema is defined in `surrealdb/schema.surql`:
 
 ### Unit Tests (Vitest)
 
-Run unit tests: `npm run test`
+Run unit tests: `bun run test`
 
 Test files:
+
 - `src/hooks/useLastFm.test.ts` - Last.fm hook tests
 - `src/hooks/useSimilarArtists.test.ts` - Similar artists hook tests
 - `src/lib/errors.test.ts` - Error handling tests
@@ -199,9 +205,10 @@ Configuration: `vitest.config.ts`
 
 ### E2E Tests (Playwright)
 
-Run E2E tests: `npm run test:e2e`
+Run E2E tests: `bun run test:e2e`
 
 Test files:
+
 - `e2e/home.spec.ts` - Homepage tests
 - `e2e/map-view.spec.ts` - Map view tests
 - `e2e/navigation.spec.ts` - Navigation tests
@@ -211,18 +218,18 @@ Configuration: `playwright.config.ts`
 
 ### Coverage
 
-Generate coverage report: `npm run test:coverage`
+Generate coverage report: `bun run test:coverage`
 Coverage output: `coverage/` directory
 
 ### Linting
 
-- Run `npm run lint` to check code quality
+- Run `bun run lint` to check code quality
 - ESLint configuration: `eslint.config.js:1-27`
 - TypeScript checking via Vite build
 
 ### Manual Testing
 
-- Development server: `npm run dev`
+- Development server: `bun run dev`
 - Browser console for errors
 - React DevTools for component inspection
 - Network tab for API calls
@@ -231,21 +238,24 @@ Coverage output: `coverage/` directory
 
 ### Production Build
 
-1. Run `npm run build`
+1. Run `bun run build`
 2. Output goes to `dist/` directory
 3. Deploy `dist/` contents to your hosting service
 
 ### Environment Variables
 
 Ensure all required environment variables are set in production:
+
 - `VITE_LASTFM_API_KEY`: Your Last.fm API key
 
 Optional (for caching):
+
 - SurrealDB configuration variables
 
 ### SurrealDB Deployment (Optional)
 
 If using SurrealDB for caching:
+
 1. Deploy SurrealDB instance
 2. Apply schema: `surrealdb/schema.surql`
 3. Configure environment variables to point to production database

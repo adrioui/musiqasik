@@ -25,7 +25,7 @@ cp .envrc.local.example .envrc.local
 # Edit .envrc.local and add your Last.fm API key
 
 # 4. Install dependencies
-npm install
+bun install
 
 # 5. Start all services
 devenv up
@@ -53,7 +53,7 @@ There are several ways of editing your application.
 
 If you want to work locally using your own IDE, you can clone this repo and push changes.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+The only requirement is having Bun installed - [install from bun.sh](https://bun.sh/)
 
 Follow these steps:
 
@@ -65,10 +65,10 @@ git clone <YOUR_GIT_URL>
 cd musiqasik
 
 # Step 3: Install the necessary dependencies
-npm i
+bun install
 
 # Step 4: Start the development server with auto-reloading and an instant preview
-npm run dev
+bun run dev
 ```
 
 **Edit a file directly in GitHub**
@@ -109,7 +109,7 @@ Refer to the documentation of your hosting provider for instructions on setting 
 
 This project uses progressive disclosure for documentation:
 
-- **`AGENTS.md`** - Concise onboarding for AI agents (64 lines)
+- **`CLAUDE.md`** - Concise onboarding for AI agents (64 lines)
 - **`agent_docs/` directory** - Detailed documentation organized by topic:
   - `development-workflow.md` - Setup, scripts, and development processes
   - `architecture-patterns.md` - System design and data flow
@@ -117,4 +117,4 @@ This project uses progressive disclosure for documentation:
   - `common-tasks.md` - Step-by-step guides for common operations
   - `troubleshooting.md` - Common issues and debugging approaches
 
-For AI agents working on this project, start with `AGENTS.md` and consult the `agent_docs/` files as needed for specific topics.
+For AI agents working on this project, start with `CLAUDE.md` and consult the `agent_docs/` files as needed for specific topics.

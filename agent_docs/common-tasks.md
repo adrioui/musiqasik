@@ -108,10 +108,7 @@ export interface NewServiceImpl {
   doSomething: (param: string) => Effect.Effect<Result, AppError>;
 }
 
-export class NewService extends Context.Tag('NewService')<
-  NewService,
-  NewServiceImpl
->() {}
+export class NewService extends Context.Tag('NewService')<NewService, NewServiceImpl>() {}
 ```
 
 ### 2. Implement Service
@@ -127,7 +124,7 @@ export const NewServiceLive = Layer.effect(
   NewService,
   Effect.gen(function* () {
     const config = yield* ConfigService;
-    
+
     return {
       doSomething: (param: string) =>
         Effect.gen(function* () {
@@ -165,12 +162,7 @@ export function useNewService(params: Params) {
     });
 
     setIsLoading(true);
-    Effect.runPromise(
-      program.pipe(
-        Effect.provide(NewServiceLive),
-        Effect.provide(ConfigLive)
-      )
-    )
+    Effect.runPromise(program.pipe(Effect.provide(NewServiceLive), Effect.provide(ConfigLive)))
       .then(setData)
       .catch(setError)
       .finally(() => setIsLoading(false));
@@ -197,7 +189,7 @@ describe('NewService', () => {
         return yield* service.doSomething('test');
       }).pipe(Effect.provide(NewServiceLive))
     );
-    
+
     expect(result).toBeDefined();
   });
 });
@@ -261,7 +253,7 @@ getNewTableItem: (name: string) =>
 If shadcn/ui is configured, use its CLI to add components:
 
 ```bash
-npx shadcn-ui@latest add button
+bunx shadcn-ui@latest add button
 ```
 
 ### 2. Manual Addition
@@ -387,42 +379,49 @@ Connect new features to existing state management in `MapView.tsx:19-53`.
 ### 1. Unit Tests (Vitest)
 
 Run all unit tests:
+
 ```bash
-npm run test
+bun run test
 ```
 
 Run specific test file:
+
 ```bash
-npm run test src/hooks/useLastFm.test.ts
+bun run test src/hooks/useLastFm.test.ts
 ```
 
 Run tests in watch mode:
+
 ```bash
-npm run test -- --watch
+bun run test -- --watch
 ```
 
 ### 2. E2E Tests (Playwright)
 
 Run all E2E tests:
+
 ```bash
-npm run test:e2e
+bun run test:e2e
 ```
 
 Run specific E2E test:
+
 ```bash
-npx playwright test e2e/home.spec.ts
+bunx playwright test e2e/home.spec.ts
 ```
 
 Run with UI:
+
 ```bash
-npx playwright test --ui
+bunx playwright test --ui
 ```
 
 ### 3. Coverage Report
 
 Generate coverage:
+
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 View report: Open `coverage/index.html` in browser
@@ -430,16 +429,18 @@ View report: Open `coverage/index.html` in browser
 ### 4. Linting
 
 Check code quality:
+
 ```bash
-npm run lint
+bun run lint
 ```
 
 ### 5. Build Verification
 
 Test production build:
+
 ```bash
-npm run build
-npm run preview
+bun run build
+bun run preview
 ```
 
 ## Styling Changes
@@ -517,11 +518,11 @@ Add type definitions if needed in `src/vite-env.d.ts`.
 
 Before deploying changes:
 
-1. **Run tests**: `npm run test`
-2. **Run E2E tests**: `npm run test:e2e`
-3. **Run linter**: `npm run lint`
-4. **Build test**: `npm run build`
-5. **Preview test**: `npm run preview`
+1. **Run tests**: `bun run test`
+2. **Run E2E tests**: `bun run test:e2e`
+3. **Run linter**: `bun run lint`
+4. **Build test**: `bun run build`
+5. **Preview test**: `bun run preview`
 6. **Database schema**: Apply if schema changed (SurrealDB)
 7. **Environment variables**: Verify all required variables are set
 8. **Browser testing**: Test in different browsers if needed
