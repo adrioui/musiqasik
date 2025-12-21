@@ -50,9 +50,9 @@ export function useD3Simulation({
           .distance((d) => 100 + (1 - d.weight) * 100)
           .strength((d) => d.weight * 0.5)
       )
-      .force('charge', d3.forceManyBody().strength(-400))
+      .force('charge', d3.forceManyBody().strength(-600))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(40))
+      .force('collision', d3.forceCollide().radius(55))
       .on('tick', () => {
         onTickRef.current();
       });
