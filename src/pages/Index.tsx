@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Music2, GitBranch, Zap, Database } from 'lucide-react';
 import { ArtistSearch } from '@/components/ArtistSearch';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Artist } from '@/types/artist';
 
 export default function Index() {
@@ -19,6 +20,9 @@ export default function Index() {
             <Music2 className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold">MusiqasiQ</span>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

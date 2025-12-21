@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Music2 } from 'lucide-react';
+import { ArrowLeft, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ForceGraph, ForceGraphHandle } from '@/components/ForceGraph';
 import { ArtistPanel } from '@/components/ArtistPanel';
 import { GraphControls } from '@/components/GraphControls';
 import { ArtistSearch } from '@/components/ArtistSearch';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { SkeletonGraph } from '@/components/SkeletonGraph';
 import { useLastFm } from '@/hooks/useLastFm';
 import { useSimilarArtists } from '@/hooks/useSimilarArtists';
 import { Artist, GraphData } from '@/types/artist';
@@ -96,15 +98,18 @@ export default function MapView() {
           <div className="ml-auto max-w-md flex-1">
             <ArtistSearch onSelect={handleSearchSelect} placeholder="Search another artist..." />
           </div>
+          <ThemeToggle />
         </header>
 
         {/* Graph */}
         <div className="flex-1 pt-20">
           {isLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading similarity graph...</p>
+            <div className="relative h-full">
+              <SkeletonGraph />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="rounded-lg bg-background/80 px-4 py-2 text-muted-foreground backdrop-blur-sm">
+                  Loading similarity graph...
+                </p>
               </div>
             </div>
           ) : (
