@@ -127,9 +127,7 @@ describe('WASM Graph Service', () => {
       { name: 'Radiohead', isCenter: false },
     ];
 
-    const mockLinks: GraphLink[] = [
-      { source: 'The Beatles', target: 'Radiohead', weight: 0.8 },
-    ];
+    const mockLinks: GraphLink[] = [{ source: 'The Beatles', target: 'Radiohead', weight: 0.8 }];
 
     it('should return null when WASM module is not available', () => {
       vi.mocked(getWasmModule).mockReturnValue(null);
@@ -160,10 +158,7 @@ describe('WASM Graph Service', () => {
       const result = resolveLinks(mockNodes, mockLinks);
 
       expect(result).toBeNull();
-      expect(consoleError).toHaveBeenCalledWith(
-        '[WASM] resolve_links failed:',
-        expect.any(Error)
-      );
+      expect(consoleError).toHaveBeenCalledWith('[WASM] resolve_links failed:', expect.any(Error));
     });
   });
 

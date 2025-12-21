@@ -1,5 +1,3 @@
-import { Effect } from 'effect';
-
 // Extend Window interface for WASM debugging properties
 declare global {
   interface Window {
@@ -75,14 +73,6 @@ export function isWasmLoaded(): boolean {
 export function getWasmError(): Error | null {
   return wasmLoadError;
 }
-
-/**
- * Effect-based WASM initialization.
- */
-export const initWasmEffect = Effect.tryPromise({
-  try: () => initWasm(),
-  catch: (error) => new Error(`WASM initialization failed: ${error}`),
-});
 
 /**
  * Reset the WASM module state.
