@@ -17,13 +17,11 @@ It is managed by the HumanLayer thoughts system and should not be committed to t
 The `searchable/` directory contains hard links to all thoughts files accessible in this repository. This allows search tools to find content without following symlinks.
 
 **IMPORTANT**:
-
 - Files in `thoughts/searchable/` are hard links to the original files (editing either updates both)
 - For clarity and consistency, always reference files by their canonical path (e.g., `thoughts/adrifadilah/todo.md`, not `thoughts/searchable/adrifadilah/todo.md`)
 - The `searchable/` directory is automatically updated when you run `humanlayer thoughts sync`
 
 This design ensures that:
-
 1. Search tools can find all your thoughts content easily
 2. The symlink structure remains intact for git operations
 3. Files remain editable while maintaining consistent path references
@@ -31,7 +29,6 @@ This design ensures that:
 ## Usage
 
 Create markdown files in these directories to document:
-
 - Architecture decisions
 - Design notes
 - TODO items
@@ -39,7 +36,6 @@ Create markdown files in these directories to document:
 - Any other development thoughts
 
 Quick access:
-
 - `thoughts/adrifadilah/` for your repo-specific notes (most common)
 - `thoughts/global/adrifadilah/` for your cross-repo notes
 
