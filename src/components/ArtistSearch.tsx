@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Loader2, Music2 } from 'lucide-react';
+import { Search, Loader2, Music2, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Artist } from '@/types/artist';
 import { useLastFm } from '@/hooks/useLastFm';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { cn, formatNumber } from '@/lib/utils';
 
 interface ArtistSearchProps {
@@ -20,7 +21,12 @@ export function ArtistSearch({
   const [results, setResults] = useState<Artist[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showRecent, setShowRecent] = useState(false);
   const { searchArtists, isLoading } = useLastFm();
+  const [recentSearches, setRecentSearches] = useLocalStorage<Artist[]>(
+    'musiqasiq-recent-searches',
+    []
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -89,13 +95,18 @@ export function ArtistSearch({
   };
 
   const handleSelect = (artist: Artist) => {
+    // Add to recent searches (max 5, no duplicates)
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((a) => a.name.toLowerCase() !== artist.name.toLowerCase());
+      return [artist, ...filtered].slice(0, 5);
+    });
+
     setQuery('');
     setResults([]);
     setIsOpen(false);
+    setShowRecent(false);
     onSelect(artist);
   };
-
-
 
   return (
     <div ref={containerRef} className={cn('relative w-full max-w-xl', className)}>
@@ -107,7 +118,17 @@ export function ArtistSearch({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => results.length > 0 && setIsOpen(true)}
+          onFocus={() => {
+            if (results.length > 0) {
+              setIsOpen(true);
+            } else if (query.trim() === '' && recentSearches.length > 0) {
+              setShowRecent(true);
+            }
+          }}
+          onBlur={() => {
+            // Delay to allow click on recent items
+            setTimeout(() => setShowRecent(false), 200);
+          }}
           placeholder={placeholder}
           className="h-14 rounded-2xl border-2 border-border bg-card pl-12 pr-12 text-lg shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"
         />
@@ -127,6 +148,45 @@ export function ArtistSearch({
                     'flex w-full items-center gap-4 px-4 py-3 text-left transition-colors',
                     index === selectedIndex ? 'bg-secondary' : 'hover:bg-secondary/50'
                   )}
+                >
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                    {artist.image_url ? (
+                      <img
+                        src={artist.image_url}
+                        alt={artist.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Music2 className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{artist.name}</p>
+                    {artist.listeners && (
+                      <p className="text-sm text-muted-foreground">
+                        {formatNumber(artist.listeners, 'listeners')}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {showRecent && query.trim() === '' && recentSearches.length > 0 && !isOpen && (
+        <div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Recent Searches</span>
+          </div>
+          <ul className="py-2">
+            {recentSearches.map((artist) => (
+              <li key={artist.name}>
+                <button
+                  onClick={() => handleSelect(artist)}
+                  className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
                 >
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
                     {artist.image_url ? (
