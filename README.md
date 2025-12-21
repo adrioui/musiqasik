@@ -43,7 +43,7 @@ If you prefer not to use devenv, see the [Development](#development) section bel
 
 ## Development
 
-This project uses standard React development tools. See [Development Workflow](docs/development-workflow.md) for setup instructions.
+This project uses standard React development tools. See [Development Workflow](agent_docs/development-workflow.md) for setup instructions.
 
 ## How can I edit this code?
 
@@ -110,11 +110,11 @@ Refer to the documentation of your hosting provider for instructions on setting 
 This project uses progressive disclosure for documentation:
 
 - **`AGENTS.md`** - Concise onboarding for AI agents (64 lines)
-- **`docs/` directory** - Detailed documentation organized by topic:
+- **`agent_docs/` directory** - Detailed documentation organized by topic:
   - `development-workflow.md` - Setup, scripts, and development processes
   - `architecture-patterns.md` - System design and data flow
   - `code-conventions.md` - Coding patterns and conventions
   - `common-tasks.md` - Step-by-step guides for common operations
   - `troubleshooting.md` - Common issues and debugging approaches
 
-For AI agents working on this project, start with `AGENTS.md` and consult the `docs/` files as needed for specific topics.
+For AI agents working on this project, start with `AGENTS.md` and consult the `agent_docs/` files as needed for specific topics.
