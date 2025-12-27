@@ -5,98 +5,100 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 220 14% 10%;
+    --foreground: 200 30% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 14% 10%;
+    --card-foreground: 200 30% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 10%;
+    --popover-foreground: 200 30% 8%;
 
-    --primary: 220 70% 50%;
+    --primary: 195 85% 50%; /* #13b6ec - cyan-blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 14% 10%;
+    --secondary: 195 15% 96%;
+    --secondary-foreground: 200 30% 8%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 195 15% 96%;
+    --muted-foreground: 200 30% 45%;
 
-    --accent: 262 83% 58%;
+    --accent: 212 85% 50%; /* #137fec - bright blue */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 70% 50%;
+    --border: 195 15% 90%;
+    --input: 195 15% 90%;
+    --ring: 195 85% 50%;
 
     --radius: 0.75rem;
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 262 83% 58%;
+    --chart-1: 195 85% 50%;
+    --chart-2: 212 85% 50%;
     --chart-3: 173 58% 39%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    --graph-node: 220 70% 50%;
-    --graph-node-hover: 262 83% 58%;
-    --graph-edge: 220 14% 80%;
-    --graph-center: 262 83% 58%;
+    /* Graph-specific */
+    --graph-node: 195 85% 50%;
+    --graph-node-hover: 212 85% 50%;
+    --graph-edge: 195 15% 75%;
+    --graph-center: 212 85% 50%;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 14% 10%;
-    --sidebar-primary: 220 70% 50%;
+    --sidebar-foreground: 200 30% 8%;
+    --sidebar-primary: 195 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 14% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 220 70% 50%;
+    --sidebar-accent: 195 15% 96%;
+    --sidebar-accent-foreground: 200 30% 8%;
+    --sidebar-border: 195 15% 90%;
+    --sidebar-ring: 195 85% 50%;
   }
 
   .dark {
-    --background: 220 14% 8%;
+    --background: 200 30% 8%; /* #101d22 */
     --foreground: 0 0% 98%;
 
-    --card: 220 14% 10%;
+    --card: 195 15% 12%; /* #1c2427 */
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 14% 10%;
+    --popover: 195 15% 12%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 220 70% 60%;
+    --primary: 195 85% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 16%;
+    --secondary: 195 15% 18%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 14% 16%;
-    --muted-foreground: 220 9% 60%;
+    --muted: 195 15% 18%;
+    --muted-foreground: 195 15% 65%;
 
-    --accent: 262 83% 68%;
+    --accent: 212 85% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 18%;
-    --input: 220 14% 18%;
-    --ring: 220 70% 60%;
+    --border: 195 15% 20%;
+    --input: 195 15% 20%;
+    --ring: 195 85% 50%;
 
-    --graph-node: 220 70% 60%;
-    --graph-node-hover: 262 83% 68%;
-    --graph-edge: 220 14% 30%;
-    --graph-center: 262 83% 68%;
+    /* Graph-specific */
+    --graph-node: 195 85% 55%;
+    --graph-node-hover: 212 85% 60%;
+    --graph-edge: 195 15% 35%;
+    --graph-center: 212 85% 60%;
 
-    --sidebar-background: 220 14% 10%;
+    --sidebar-background: 195 15% 12%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 220 70% 60%;
+    --sidebar-primary: 195 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 16%;
+    --sidebar-accent: 195 15% 18%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 14% 18%;
-    --sidebar-ring: 220 70% 60%;
+    --sidebar-border: 195 15% 20%;
+    --sidebar-ring: 195 85% 50%;
   }
 }
 
@@ -107,6 +109,77 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Material Symbols base configuration */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  @apply bg-[rgba(16,29,34,0.75)] backdrop-blur-xl border border-white/10 rounded-xl;
+}
+
+.glass-panel-light {
+  @apply bg-white/75 backdrop-blur-xl border border-black/5 rounded-xl;
+}
+
+/* Glow effects */
+.node-glow {
+  filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.3));
+}
+
+.node-glow-active {
+  filter: drop-shadow(0 0 12px hsl(var(--primary) / 0.5));
+}
+
+.edge-glow {
+  filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.5));
+}
+
+/* Float animation for satellite nodes */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Bubble-in animation */
+@keyframes bubble-in {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-bubble-in {
+  animation: bubble-in 0.4s ease-out forwards;
+}
+
+/* Slide-in animation for panels */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
 }
 
 @layer utilities {

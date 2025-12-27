@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Music2, GitBranch, Zap, Database } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { ArtistSearch } from '@/components/ArtistSearch';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Artist } from '@/types/artist';
@@ -17,7 +17,7 @@ export default function Index() {
       <header className="w-full px-6 py-6">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Music2 className="h-5 w-5 text-primary-foreground" />
+            <MaterialIcon name="hub" size="sm" className="text-primary-foreground" />
           </div>
           <span className="text-xl font-bold">MusiqasiQ</span>
           <div className="ml-auto">
@@ -50,7 +50,7 @@ export default function Index() {
               style={{ animationDelay: '0.1s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <GitBranch className="h-6 w-6 text-primary" />
+                <MaterialIcon name="account_tree" className="text-primary" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Visual Connections</h3>
               <p className="text-sm text-muted-foreground">
@@ -63,7 +63,7 @@ export default function Index() {
               style={{ animationDelay: '0.2s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
-                <Zap className="h-6 w-6 text-accent" />
+                <MaterialIcon name="bolt" className="text-accent" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Configurable Depth</h3>
               <p className="text-sm text-muted-foreground">
@@ -76,7 +76,7 @@ export default function Index() {
               style={{ animationDelay: '0.3s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <Database className="h-6 w-6 text-primary" />
+                <MaterialIcon name="database" className="text-primary" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Smart Caching</h3>
               <p className="text-sm text-muted-foreground">
