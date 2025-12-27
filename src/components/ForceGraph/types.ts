@@ -1,15 +1,24 @@
 import type { Artist, SimilarityEdge } from '@/types/artist';
-import type { GraphNode, GraphLink, ResolvedLink } from '@/wasm/graph-service';
+import type { GraphNode, GraphLink } from '@/wasm/graph-service';
 
-export type { GraphNode, GraphLink, ResolvedLink };
+export type { GraphNode, GraphLink };
+
+export interface EdgeClickInfo {
+  source: string;
+  target: string;
+  weight: number;
+  position: { x: number; y: number };
+  sharedTags?: string[];
+}
 
 export interface ForceGraphProps {
   nodes: Artist[];
   edges: SimilarityEdge[];
   centerArtist: string | null;
-  threshold: number;
-  showLabels: boolean;
+  threshold?: number;
+  showLabels?: boolean;
   onNodeClick: (artist: Artist) => void;
+  onEdgeClick?: (info: EdgeClickInfo) => void;
   className?: string;
 }
 

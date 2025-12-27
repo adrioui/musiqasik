@@ -7,11 +7,12 @@ import { useGraphData } from './hooks/useGraphData';
 import { useD3Zoom } from './hooks/useD3Zoom';
 import { useD3Simulation } from './hooks/useD3Simulation';
 import { useGenreColors } from './hooks/useGenreColors';
+import { useNodeAnimation } from './hooks/useNodeAnimation';
 import { GraphLegend } from './GraphLegend';
 import type { ForceGraphProps, ForceGraphHandle } from './types';
 
 export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function ForceGraph(
-  { nodes, edges, centerArtist, threshold, showLabels, onNodeClick, className },
+  { nodes, edges, centerArtist, threshold = 0, showLabels = true, onNodeClick, onEdgeClick, className },
   ref
 ) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -42,6 +43,12 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   });
   const { zoomIn, zoomOut, reset, applyZoom } = useD3Zoom({ svgRef });
   const { getNodeColor, genreColorMap } = useGenreColors({ nodes: filteredNodes });
+  const { animateNodesIn, resetAnimation } = useNodeAnimation({ enabled: true });
+
+  // Reset animation when center artist changes
+  useEffect(() => {
+    resetAnimation();
+  }, [centerArtist, resetAnimation]);
 
   // Build adjacency map for efficient neighbor lookups (used for highlighting)
   const adjacencyMap = useMemo(() => {
@@ -150,7 +157,39 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       .attr('stroke', 'hsl(var(--graph-edge))')
       .attr('stroke-opacity', (d) => 0.2 + d.weight * 0.6)
       .attr('stroke-width', (d) => 1 + d.weight * 2)
-      .style('transition', 'stroke-opacity 0.15s ease-out');
+      .attr('class', 'cursor-pointer')
+      .style('transition', 'stroke-opacity 0.15s ease-out, stroke 0.15s ease-out')
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        if (onEdgeClick) {
+          const source = d.source as SimulationNode;
+          const target = d.target as SimulationNode;
+          const midX = (source.x + target.x) / 2;
+          const midY = (source.y + target.y) / 2;
+
+          // Find shared tags
+          const sourceTags = new Set(source.tags || []);
+          const sharedTags = (target.tags || []).filter((tag) => sourceTags.has(tag));
+
+          onEdgeClick({
+            source: source.name,
+            target: target.name,
+            weight: d.weight,
+            position: { x: midX, y: midY },
+            sharedTags,
+          });
+        }
+      })
+      .on('mouseenter', function () {
+        d3.select(this)
+          .attr('stroke', 'hsl(var(--primary))')
+          .attr('stroke-opacity', 0.8);
+      })
+      .on('mouseleave', function (_, d) {
+        d3.select(this)
+          .attr('stroke', 'hsl(var(--graph-edge))')
+          .attr('stroke-opacity', 0.2 + d.weight * 0.6);
+      });
 
     linkSelectionRef.current = linkSelection;
 
@@ -219,21 +258,38 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         })
     );
 
-    // Node circles
+    // Outer glow ring for center nodes
+    nodeSelection
+      .filter((d) => d.isCenter)
+      .insert('circle', ':first-child')
+      .attr('r', 44)
+      .attr('fill', 'none')
+      .attr('stroke', 'hsl(var(--primary) / 0.3)')
+      .attr('stroke-width', 2)
+      .attr('class', 'graph-node-pulse');
+
+    // Node circles with enhanced sizing
+    const getNodeRadius = (d: SimulationNode) => {
+      if (d.isCenter) return 32;
+      const baseSize = 20;
+      const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 10;
+      return baseSize + listenersBonus;
+    };
+
     nodeSelection
       .append('circle')
-      .attr('r', (d) => (d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8))
+      .attr('r', getNodeRadius)
       .attr('fill', (d) => getNodeColor(d))
       .attr('stroke', 'hsl(var(--background))')
-      .attr('stroke-width', 3)
-      .attr('class', (d) => (d.isCenter ? 'graph-node-pulse' : ''))
-      .style('transition', 'fill 0.2s ease-out');
+      .attr('stroke-width', (d) => (d.isCenter ? 4 : 3))
+      .attr('class', (d) => (d.isCenter ? 'node-glow-active' : 'node-glow'))
+      .style('transition', 'fill 0.2s ease-out, filter 0.2s ease-out');
 
     // Node images (skip Last.fm placeholder images)
     nodeSelection.each(function (d) {
       if (!isPlaceholderImage(d.image_url) && d.image_url) {
         const nodeG = d3.select(this);
-        const radius = d.isCenter ? 28 : 18 + Math.min((d.listeners || 0) / 10000000, 1) * 8;
+        const radius = getNodeRadius(d);
 
         // Create clipPath
         const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, '-')}`;
@@ -256,16 +312,45 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       }
     });
 
-    // Node labels
-    nodeSelection
+    // Node labels with backdrop
+    const labelGroup = nodeSelection.append('g').attr('class', 'label-group');
+
+    // Text label
+    labelGroup
       .append('text')
       .text((d) => d.name)
       .attr('text-anchor', 'middle')
-      .attr('dy', (d) => (d.isCenter ? 45 : 35))
+      .attr('dy', (d) => (d.isCenter ? 50 : 42))
       .attr('class', 'fill-foreground text-xs font-medium')
       .style('pointer-events', 'none')
       .style('opacity', showLabels ? 1 : 0)
       .style('transition', 'opacity 0.2s ease-out');
+
+    // Add backdrop rect behind text (measure after text is created)
+    labelGroup.each(function () {
+      const group = d3.select(this);
+      const text = group.select('text');
+      const textNode = text.node() as SVGTextElement | null;
+
+      if (textNode) {
+        const bbox = textNode.getBBox();
+        group
+          .insert('rect', 'text')
+          .attr('class', 'label-backdrop')
+          .attr('rx', 4)
+          .attr('ry', 4)
+          .attr('x', bbox.x - 6)
+          .attr('y', bbox.y - 2)
+          .attr('width', bbox.width + 12)
+          .attr('height', bbox.height + 4)
+          .attr('fill', 'hsl(var(--card) / 0.85)')
+          .style('opacity', showLabels ? 0.9 : 0)
+          .style('transition', 'opacity 0.2s ease-out');
+      }
+    });
+
+    // Trigger bubble-in animation
+    animateNodesIn(nodeSelection);
 
     // Click handler for node selection (opens artist panel)
     nodeSelection.on('click', (_event, d) => {
@@ -322,6 +407,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     centerArtist,
     dimensions,
     onNodeClick,
+    onEdgeClick,
     showLabels,
     applyZoom,
     simulation,
@@ -331,14 +417,15 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     filteredNodes.length,
     getNodeColor,
     adjacencyMap,
+    animateNodesIn,
   ]);
 
   // Update labels visibility
   useEffect(() => {
     if (!svgRef.current) return;
-    d3.select(svgRef.current)
-      .selectAll('.nodes text')
-      .style('opacity', showLabels ? 1 : 0);
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('.label-group text').style('opacity', showLabels ? 1 : 0);
+    svg.selectAll('.label-backdrop').style('opacity', showLabels ? 0.9 : 0);
   }, [showLabels]);
 
   // Cleanup tooltip on unmount
