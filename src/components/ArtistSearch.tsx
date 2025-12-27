@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Loader2, Music2, Clock } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { Input } from '@/components/ui/input';
 import { Artist } from '@/types/artist';
 import { useLastFm } from '@/hooks/useLastFm';
@@ -10,12 +10,14 @@ interface ArtistSearchProps {
   onSelect: (artist: Artist) => void;
   className?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 export function ArtistSearch({
   onSelect,
   className,
   placeholder = 'Search for an artist...',
+  autoFocus = false,
 }: ArtistSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Artist[]>([]);
@@ -111,7 +113,7 @@ export function ArtistSearch({
   return (
     <div ref={containerRef} className={cn('relative w-full max-w-xl', className)}>
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <MaterialIcon name="search" size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
@@ -130,10 +132,11 @@ export function ArtistSearch({
             setTimeout(() => setShowRecent(false), 200);
           }}
           placeholder={placeholder}
+          autoFocus={autoFocus}
           className="h-14 rounded-2xl border-2 border-border bg-card pl-12 pr-12 text-lg shadow-sm transition-all duration-200 focus:border-primary focus:shadow-lg"
         />
         {isLoading && (
-          <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-muted-foreground" />
+          <MaterialIcon name="progress_activity" size="sm" className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
       </div>
 
@@ -157,7 +160,7 @@ export function ArtistSearch({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Music2 className="h-6 w-6 text-muted-foreground" />
+                      <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -178,7 +181,7 @@ export function ArtistSearch({
       {showRecent && query.trim() === '' && recentSearches.length > 0 && !isOpen && (
         <div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
           <div className="flex items-center gap-2 border-b border-border px-4 py-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <MaterialIcon name="schedule" size="xs" className="text-muted-foreground" />
             <span className="text-sm font-medium text-muted-foreground">Recent Searches</span>
           </div>
           <ul className="py-2">
@@ -196,7 +199,7 @@ export function ArtistSearch({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Music2 className="h-6 w-6 text-muted-foreground" />
+                      <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">

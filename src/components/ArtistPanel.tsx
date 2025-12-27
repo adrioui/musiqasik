@@ -1,4 +1,4 @@
-import { ExternalLink, Music2, Users, Disc3, Tag } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { Artist } from '@/types/artist';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatNumber } from '@/lib/utils';
@@ -24,7 +24,7 @@ export function ArtistPanel({
           className
         )}
       >
-        <Music2 className="mb-4 h-16 w-16 text-muted-foreground/30" />
+        <MaterialIcon name="graphic_eq" size="xl" className="mb-4 text-muted-foreground/30" />
         <h3 className="text-lg font-medium text-muted-foreground">No artist selected</h3>
         <p className="mt-1 text-sm text-muted-foreground/70">
           Search for an artist or click a node in the graph
@@ -55,9 +55,11 @@ export function ArtistPanel({
                 }}
               />
             ) : null}
-            <Music2
+            <MaterialIcon
+              name="graphic_eq"
+              size="lg"
               className={cn(
-                'fallback-icon h-10 w-10 text-primary/60',
+                'fallback-icon text-primary/60',
                 artist.image_url &&
                   !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') &&
                   'hidden'
@@ -74,7 +76,7 @@ export function ArtistPanel({
                 className="mt-1 inline-flex items-center gap-1 text-sm text-primary hover:underline"
               >
                 View on Last.fm
-                <ExternalLink className="h-3 w-3" />
+                <MaterialIcon name="open_in_new" size="xs" />
               </a>
             )}
           </div>
@@ -83,14 +85,14 @@ export function ArtistPanel({
         {/* Stats */}
         <div className="mt-6 grid grid-cols-2 gap-4">
           <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
-            <Users className="h-5 w-5 text-primary" />
+            <MaterialIcon name="group" size="sm" className="text-primary" />
             <div>
               <p className="text-xs text-muted-foreground">Listeners</p>
               <p className="font-semibold">{formatNumber(artist.listeners)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-3">
-            <Disc3 className="h-5 w-5 text-accent" />
+            <MaterialIcon name="album" size="sm" className="text-accent" />
             <div>
               <p className="text-xs text-muted-foreground">Plays</p>
               <p className="font-semibold">{formatNumber(artist.playcount)}</p>
@@ -102,7 +104,7 @@ export function ArtistPanel({
         {artist.tags && artist.tags.length > 0 && (
           <div className="mt-4">
             <div className="mb-2 flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
+              <MaterialIcon name="sell" size="xs" className="text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Genres</span>
             </div>
             <div className="flex flex-wrap gap-2">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Palette } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -22,11 +22,11 @@ export function GraphLegend({ colorMap, className }: GraphLegendProps) {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Palette className="h-4 w-4" />
+          <MaterialIcon name="palette" size="xs" />
           <span>Genres</span>
         </div>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          {isOpen ? <MaterialIcon name="expand_more" size="xs" /> : <MaterialIcon name="expand_less" size="xs" />}
         </Button>
       </div>
 

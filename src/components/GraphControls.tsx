@@ -1,4 +1,4 @@
-import { Minus, Plus, RotateCcw, ZoomIn, ZoomOut, Layers, Tag } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -43,7 +43,7 @@ export function GraphControls({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-primary" />
+            <MaterialIcon name="layers" size="xs" className="text-primary" />
             <Label className="text-sm font-medium">Depth</Label>
           </div>
           <span className="rounded bg-secondary px-2 py-0.5 font-mono text-sm">
@@ -58,7 +58,7 @@ export function GraphControls({
             onClick={() => onDepthChange(Math.max(1, depth - 1))}
             disabled={depth <= 1 || isLoading}
           >
-            <Minus className="h-4 w-4" />
+            <MaterialIcon name="remove" size="xs" />
           </Button>
           <Slider
             value={[depth]}
@@ -76,7 +76,7 @@ export function GraphControls({
             onClick={() => onDepthChange(Math.min(3, depth + 1))}
             disabled={depth >= 3 || isLoading}
           >
-            <Plus className="h-4 w-4" />
+            <MaterialIcon name="add" size="xs" />
           </Button>
         </div>
       </div>
@@ -85,7 +85,7 @@ export function GraphControls({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-accent" />
+            <MaterialIcon name="sell" size="xs" className="text-accent" />
             <Label className="text-sm font-medium">Min Match</Label>
           </div>
           <span className="rounded bg-secondary px-2 py-0.5 font-mono text-sm">
@@ -113,18 +113,18 @@ export function GraphControls({
       {/* Zoom Controls */}
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" className="flex-1" onClick={onZoomIn}>
-          <ZoomIn className="mr-1 h-4 w-4" />
+          <MaterialIcon name="zoom_in" size="xs" className="mr-1" />
           Zoom In
         </Button>
         <Button variant="outline" size="sm" className="flex-1" onClick={onZoomOut}>
-          <ZoomOut className="mr-1 h-4 w-4" />
+          <MaterialIcon name="zoom_out" size="xs" className="mr-1" />
           Zoom Out
         </Button>
       </div>
 
       {/* Reset Button */}
       <Button variant="secondary" size="sm" onClick={onReset} className="w-full">
-        <RotateCcw className="mr-2 h-4 w-4" />
+        <MaterialIcon name="refresh" size="xs" className="mr-2" />
         Reset View
       </Button>
     </div>

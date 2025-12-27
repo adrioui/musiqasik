@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { MaterialIcon } from '@/components/ui/material-icon';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -12,7 +12,7 @@ export function ThemeToggle() {
     setTheme(themes[nextIndex]);
   };
 
-  const Icon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
+  const iconName = theme === 'dark' ? 'dark_mode' : theme === 'light' ? 'light_mode' : 'desktop_windows';
 
   return (
     <Button
@@ -22,7 +22,7 @@ export function ThemeToggle() {
       className="shrink-0"
       title={`Theme: ${theme}`}
     >
-      <Icon className="h-5 w-5" />
+      <MaterialIcon name={iconName} size="sm" />
     </Button>
   );
 }
