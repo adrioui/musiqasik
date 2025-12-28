@@ -110,14 +110,21 @@ export function LensesTray({
             size="icon"
             onClick={onZoomIn}
             className="h-8 w-8 rounded-b-none border-b border-border"
+            aria-label="Zoom in"
           >
             <MaterialIcon name="add" size="sm" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onZoomOut} className="h-8 w-8 rounded-t-none">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onZoomOut}
+            className="h-8 w-8 rounded-t-none"
+            aria-label="Zoom out"
+          >
             <MaterialIcon name="remove" size="sm" />
           </Button>
         </div>
-        <Button variant="ghost" size="icon" onClick={onReset} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={onReset} className="h-8 w-8" aria-label="Reset view">
           <MaterialIcon name="my_location" size="sm" />
         </Button>
       </div>

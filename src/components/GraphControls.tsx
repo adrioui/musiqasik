@@ -57,6 +57,7 @@ export function GraphControls({
             className="h-8 w-8"
             onClick={() => onDepthChange(Math.max(1, depth - 1))}
             disabled={depth <= 1 || isLoading}
+            aria-label="Decrease depth"
           >
             <MaterialIcon name="remove" size="xs" />
           </Button>
@@ -75,6 +76,7 @@ export function GraphControls({
             className="h-8 w-8"
             onClick={() => onDepthChange(Math.min(3, depth + 1))}
             disabled={depth >= 3 || isLoading}
+            aria-label="Increase depth"
           >
             <MaterialIcon name="add" size="xs" />
           </Button>
