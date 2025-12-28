@@ -21,6 +21,7 @@ export function ThemeToggle() {
       onClick={cycleTheme}
       className="shrink-0"
       title={`Theme: ${theme}`}
+      aria-label="Toggle theme"
     >
       <MaterialIcon name={iconName} size="sm" />
     </Button>
