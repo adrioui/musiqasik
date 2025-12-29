@@ -1,6 +1,6 @@
 import { Context, Layer } from 'effect';
 
-export class ServerConfig extends Context.Tag('ServerConfig')<
+export class ServerConfig extends Context.Tag('musiqasik/ServerConfig')<
   ServerConfig,
   {
     readonly port: number;

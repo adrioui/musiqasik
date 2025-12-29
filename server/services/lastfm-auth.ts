@@ -2,14 +2,14 @@ import { Context, Effect, Layer, Data } from 'effect';
 import * as crypto from 'crypto';
 import { ServerConfig } from '../config';
 
-// Error types
-export class LastFmAuthError extends Data.TaggedError('LastFmAuthError')<{
+// Error types with unique tag identifier
+export class LastFmAuthError extends Data.TaggedError('musiqasik/LastFmAuthError')<{
   readonly message: string;
   readonly code?: number;
 }> {}
 
-// Service interface
-export class LastFmAuthService extends Context.Tag('LastFmAuthService')<
+// Service interface with unique tag identifier
+export class LastFmAuthService extends Context.Tag('musiqasik/LastFmAuthService')<
   LastFmAuthService,
   {
     readonly getSession: (
@@ -67,11 +67,12 @@ const makeLastFmAuthService = Effect.gen(function* () {
       }
 
       const data = yield* Effect.tryPromise({
-        try: () => response.json() as Promise<{
-          session?: { key: string; name: string };
-          error?: number;
-          message?: string;
-        }>,
+        try: () =>
+          response.json() as Promise<{
+            session?: { key: string; name: string };
+            error?: number;
+            message?: string;
+          }>,
         catch: () => new LastFmAuthError({ message: 'Failed to parse response' }),
       });
 
