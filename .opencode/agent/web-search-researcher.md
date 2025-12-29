@@ -1,7 +1,7 @@
 ---
 description: Researches modern information discoverable on the web. Use when you need information that requires web research to find answers.
 mode: subagent
-model: google/gemini-claude-sonnet-4-5-thinking-high
+model: google/gemini-claude-opus-4-5-thinking-low
 tools:
   webfetch: true
   read: true
