@@ -3,11 +3,22 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { ServerConfig, ServerConfigLive } from './config';
 import { LastFmAuthService, LastFmAuthServiceLive, LastFmAuthError } from './services/lastfm-auth';
 
-// Parse JSON body from request
+// Parse JSON body from request with size limit (1MB)
 function parseBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk) => (body += chunk));
+    let size = 0;
+    const MAX_SIZE = 1024 * 1024; // 1MB
+
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > MAX_SIZE) {
+        req.destroy(); // Stop receiving data
+        reject(new Error('Payload too large'));
+        return;
+      }
+      body += chunk;
+    });
     req.on('end', () => {
       try {
         resolve(body ? JSON.parse(body) : {});
@@ -19,14 +30,22 @@ function parseBody(req: IncomingMessage): Promise<unknown> {
   });
 }
 
-// Send JSON response
+// Send JSON response with security headers
 function sendJson(res: ServerResponse, data: unknown, status = 200) {
-  res.writeHead(status, {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': '*', // Relaxed for this app
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-  });
+    // Security Headers
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
+    'Referrer-Policy': 'no-referrer',
+    'Content-Security-Policy': "default-src 'self'",
+  };
+
+  res.writeHead(status, headers);
   res.end(JSON.stringify(data));
 }
 
@@ -69,7 +88,16 @@ function createHandler(config: ConfigType, authService: AuthServiceType) {
     // Last.fm session exchange
     if (req.method === 'POST' && url.pathname === '/api/lastfm/session') {
       try {
-        const body = (await parseBody(req)) as { token?: string };
+        let body;
+        try {
+          body = (await parseBody(req)) as { token?: string };
+        } catch (error: any) {
+          if (error.message === 'Payload too large') {
+            sendJson(res, { error: 'Payload too large' }, 413);
+            return;
+          }
+          throw error;
+        }
 
         if (!body.token) {
           sendJson(res, { error: 'No token provided' }, 400);
