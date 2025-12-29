@@ -1,3 +1,5 @@
+<!-- SYNC NOTE: AGENTS.md and CLAUDE.md must be kept identical. Edit AGENTS.md first, then copy to CLAUDE.md -->
+
 # MusiqasiQ - Agent Documentation
 
 ## What is MusiqasiQ?
@@ -70,6 +72,7 @@ Consult these files for detailed information:
 - `agent_docs/code-conventions.md` - Patterns to follow (learn from existing code)
 - `agent_docs/common-tasks.md` - Step-by-step guides for common operations
 - `agent_docs/troubleshooting.md` - Debugging and common issues
+- `agent_docs/effect.md` - Effect library patterns and API reference
 
 ### Key Principles
 
@@ -89,16 +92,6 @@ Consult these files for detailed information:
 
 ## Testing
 
-- **Unit tests**: `bun run test` - Tests for hooks, utilities, and services
-- **E2E tests**: `bun run test:e2e` - Playwright tests for user flows
-- **Coverage**: `bun run test:coverage` - Generate coverage report
-
-## Related Files
-
-- `package.json` - Dependencies and scripts
-- `vite.config.ts` - Build configuration
-- `tailwind.config.ts` - Styling configuration
-- `tsconfig.json` - TypeScript configuration
-- `eslint.config.js` - Linting rules
-- `vitest.config.ts` - Test configuration
-- `playwright.config.ts` - E2E test configuration
+- `bun run test` - Unit tests (hooks, utilities, services)
+- `bun run test:e2e` - E2E tests (Playwright)
+- `bun run test:coverage` - Coverage report
