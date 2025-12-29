@@ -8,6 +8,7 @@ import { LensesTray } from '@/components/LensesTray';
 import { ArtistDetailSheet } from '@/components/ArtistDetailSheet';
 import { ArtistSearch } from '@/components/ArtistSearch';
 import { EdgeCard } from '@/components/EdgeCard';
+import { ShareModal } from '@/components/ShareModal';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export default function MapView() {
   const [showLabels, setShowLabels] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [edgeInfo, setEdgeInfo] = useState<EdgeClickInfo | null>(null);
 
   const similarArtists = useSimilarArtists(selectedArtist, graphData);
@@ -175,9 +177,7 @@ export default function MapView() {
             variant="outline"
             size="icon"
             className="bg-card/75 backdrop-blur-sm"
-            onClick={() => {
-              toast({ title: 'Share feature coming soon!' });
-            }}
+            onClick={() => setShareOpen(true)}
           >
             <MaterialIcon name="share" size="sm" />
             <span className="sr-only">Share</span>
@@ -234,6 +234,18 @@ export default function MapView() {
           }
         }}
         onExploreClick={handleRecenter}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        graphState={{
+          artist: artistName ? decodeURIComponent(artistName) : '',
+          depth,
+          threshold,
+        }}
+        onExportImage={() => graphRef.current?.exportImage() ?? Promise.resolve(null)}
       />
     </div>
   );

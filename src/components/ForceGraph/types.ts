@@ -26,6 +26,7 @@ export interface ForceGraphHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   reset: () => void;
+  exportImage: () => Promise<Blob | null>;
 }
 
 /**

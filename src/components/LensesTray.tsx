@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { MaterialIcon } from '@/components/ui/material-icon';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Slider } from '@/components/ui/slider';

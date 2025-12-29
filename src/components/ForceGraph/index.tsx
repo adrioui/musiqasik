@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { cn, isPlaceholderImage } from '@/lib/utils';
+import { svgToPng } from '@/lib/graph-export';
 import type { SimulationNode, SimulationLink } from './types';
 import { useElementDimensions } from './hooks/useElementDimensions';
 import { useGraphData } from './hooks/useGraphData';
@@ -128,6 +129,12 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       zoomIn,
       zoomOut,
       reset,
+      exportImage: async () => {
+        if (svgRef.current) {
+          return svgToPng(svgRef.current);
+        }
+        return null;
+      },
     }),
     [zoomIn, zoomOut, reset]
   );

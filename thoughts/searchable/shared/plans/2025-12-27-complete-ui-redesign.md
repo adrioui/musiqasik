@@ -2033,9 +2033,9 @@ import { ConnectLastFmButton } from '@/components/ConnectLastFmButton';
 ### Success Criteria
 
 #### Automated Verification
-- [ ] TypeScript compiles: `bun run build`
-- [ ] Linting passes: `bun run lint`
-- [ ] Unit tests pass: `bun run test`
+- [x] TypeScript compiles: `bun run build`
+- [x] Linting passes: `bun run lint`
+- [x] Unit tests pass: `bun run test`
 
 #### Manual Verification
 - [ ] "Connect Last.fm" button visible in FloatingNav
@@ -2327,9 +2327,9 @@ const [shareOpen, setShareOpen] = useState(false);
 ### Success Criteria
 
 #### Automated Verification
-- [ ] TypeScript compiles: `bun run build`
-- [ ] Linting passes: `bun run lint`
-- [ ] Unit tests pass: `bun run test`
+- [x] TypeScript compiles: `bun run build`
+- [x] Linting passes: `bun run lint`
+- [x] Unit tests pass: `bun run test`
 - [ ] E2E tests pass: `bun run test:e2e`
 
 #### Manual Verification
