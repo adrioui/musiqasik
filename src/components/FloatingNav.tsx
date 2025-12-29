@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MaterialIcon } from '@/components/ui/material-icon';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
+import { ConnectLastFmButton } from '@/components/ConnectLastFmButton';
 
 interface FloatingNavProps {
   onSearchClick?: () => void;
@@ -25,6 +26,8 @@ export function FloatingNav({ onSearchClick }: FloatingNavProps) {
         <MaterialIcon name="search" size="sm" />
         <span className="sr-only">Search</span>
       </Button>
+      <div className="h-6 w-px bg-border" />
+      <ConnectLastFmButton variant="outline" className="bg-card/50 backdrop-blur-sm" />
     </GlassCard>
   );
 }
