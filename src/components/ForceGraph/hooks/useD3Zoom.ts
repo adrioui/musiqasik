@@ -1,5 +1,5 @@
-import { useRef, useCallback } from 'react';
-import * as d3 from 'd3';
+import * as d3 from "d3";
+import { useCallback, useRef } from "react";
 
 interface UseD3ZoomProps {
   svgRef: React.RefObject<SVGSVGElement>;
@@ -26,14 +26,14 @@ export function useD3Zoom({
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent(scaleExtent)
-        .on('zoom', (event) => {
-          g.attr('transform', event.transform);
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
         });
 
       d3.select(svgRef.current).call(zoom);
       zoomRef.current = zoom;
     },
-    [svgRef, scaleExtent]
+    [svgRef, scaleExtent],
   );
 
   const zoomIn = useCallback(() => {

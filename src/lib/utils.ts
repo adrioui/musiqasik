@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
  * Formats a number with K/M suffix for display
  */
 export function formatNumber(num?: number | null, suffix?: string): string {
-  if (num === undefined || num === null) return 'N/A';
+  if (num === undefined || num === null) return "N/A";
 
   let value: string;
   if (num >= 1_000_000) {
@@ -29,9 +29,9 @@ export function formatNumber(num?: number | null, suffix?: string): string {
 export function isPlaceholderImage(url?: string | null): boolean {
   if (!url) return true;
   return (
-    url.includes('2a96cbd8b46e442fc41c2b86b821562f') ||
-    url.includes('star') ||
-    url === '' ||
-    url.endsWith('/noimage/')
+    url.includes("2a96cbd8b46e442fc41c2b86b821562f") ||
+    url.includes("star") ||
+    url === "" ||
+    url.endsWith("/noimage/")
   );
 }

@@ -1,13 +1,16 @@
-import { useLastFmAuth } from '@/contexts/LastFmAuthContext';
-import { Button } from '@/components/ui/button';
-import { MaterialIcon } from '@/components/ui/material-icon';
+import { Button } from "@/components/ui/button";
+import { MaterialIcon } from "@/components/ui/material-icon";
+import { useLastFmAuth } from "@/contexts/LastFmAuthContext";
 
 interface ConnectLastFmButtonProps {
-  variant?: 'default' | 'outline';
+  variant?: "default" | "outline";
   className?: string;
 }
 
-export function ConnectLastFmButton({ variant = 'outline', className }: ConnectLastFmButtonProps) {
+export function ConnectLastFmButton({
+  variant = "outline",
+  className,
+}: ConnectLastFmButtonProps) {
   const { isAuthenticated, username, connect, disconnect } = useLastFmAuth();
 
   if (isAuthenticated) {

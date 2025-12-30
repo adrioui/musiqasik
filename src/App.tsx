@@ -1,18 +1,14 @@
-import { Toaster } from '@/components/ui/toaster';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { LastFmAuthProvider } from '@/contexts/LastFmAuthContext';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Index from './pages/Index';
-import MapView from './pages/MapView';
-import AuthCallback from './pages/AuthCallback';
-import NotFound from './pages/NotFound';
-import { useWasmFeature } from './hooks/useWasmFeature';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { LastFmAuthProvider } from "@/contexts/LastFmAuthContext";
+import AuthCallback from "./pages/AuthCallback";
+import Index from "./pages/Index";
+import MapView from "./pages/MapView";
+import NotFound from "./pages/NotFound";
 
 const App = () => {
-  // Initialize WASM module if enabled via VITE_USE_WASM_GRAPH=true
-  useWasmFeature();
-
   return (
     <LastFmAuthProvider>
       <ThemeProvider defaultTheme="system">

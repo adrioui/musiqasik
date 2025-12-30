@@ -1,7 +1,7 @@
-import { MaterialIcon } from '@/components/ui/material-icon';
-import { Artist } from '@/types/artist';
-import { Badge } from '@/components/ui/badge';
-import { cn, formatNumber } from '@/lib/utils';
+import { Badge } from "@/components/ui/badge";
+import { MaterialIcon } from "@/components/ui/material-icon";
+import { cn, formatNumber } from "@/lib/utils";
+import type { Artist } from "@/types/artist";
 
 interface ArtistPanelProps {
   artist: Artist | null;
@@ -20,12 +20,18 @@ export function ArtistPanel({
     return (
       <div
         className={cn(
-          'flex h-full flex-col items-center justify-center p-6 text-center',
-          className
+          "flex h-full flex-col items-center justify-center p-6 text-center",
+          className,
         )}
       >
-        <MaterialIcon name="graphic_eq" size="xl" className="mb-4 text-muted-foreground/30" />
-        <h3 className="text-lg font-medium text-muted-foreground">No artist selected</h3>
+        <MaterialIcon
+          name="graphic_eq"
+          size="xl"
+          className="mb-4 text-muted-foreground/30"
+        />
+        <h3 className="text-lg font-medium text-muted-foreground">
+          No artist selected
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground/70">
           Search for an artist or click a node in the graph
         </p>
@@ -33,25 +39,24 @@ export function ArtistPanel({
     );
   }
 
-
-
   return (
-    <div className={cn('flex h-full flex-col overflow-hidden', className)}>
+    <div className={cn("flex h-full flex-col overflow-hidden", className)}>
       {/* Artist Header */}
       <div className="border-b border-border p-6">
         <div className="flex items-start gap-4">
           <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-accent/20">
-            {artist.image_url && !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') ? (
+            {artist.image_url &&
+            !artist.image_url.includes("2a96cbd8b46e442fc41c2b86b821562f") ? (
               <img
                 src={artist.image_url}
                 alt={artist.name}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   // Hide broken images
-                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.style.display = "none";
                   e.currentTarget.parentElement
-                    ?.querySelector('.fallback-icon')
-                    ?.classList.remove('hidden');
+                    ?.querySelector(".fallback-icon")
+                    ?.classList.remove("hidden");
                 }}
               />
             ) : null}
@@ -59,10 +64,12 @@ export function ArtistPanel({
               name="graphic_eq"
               size="lg"
               className={cn(
-                'fallback-icon text-primary/60',
+                "fallback-icon text-primary/60",
                 artist.image_url &&
-                  !artist.image_url.includes('2a96cbd8b46e442fc41c2b86b821562f') &&
-                  'hidden'
+                  !artist.image_url.includes(
+                    "2a96cbd8b46e442fc41c2b86b821562f",
+                  ) &&
+                  "hidden",
               )}
             />
           </div>
@@ -104,7 +111,11 @@ export function ArtistPanel({
         {artist.tags && artist.tags.length > 0 && (
           <div className="mt-4">
             <div className="mb-2 flex items-center gap-2">
-              <MaterialIcon name="sell" size="xs" className="text-muted-foreground" />
+              <MaterialIcon
+                name="sell"
+                size="xs"
+                className="text-muted-foreground"
+              />
               <span className="text-sm text-muted-foreground">Genres</span>
             </div>
             <div className="flex flex-wrap gap-2">

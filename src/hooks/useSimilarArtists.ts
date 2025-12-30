@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import type { Artist, GraphData } from '@/types/artist';
+import { useMemo } from "react";
+import type { Artist, GraphData } from "@/types/artist";
 
 interface SimilarArtist {
   name: string;
@@ -8,7 +8,7 @@ interface SimilarArtist {
 
 export function useSimilarArtists(
   selectedArtist: Artist | null,
-  graphData: GraphData | null
+  graphData: GraphData | null,
 ): SimilarArtist[] {
   return useMemo(() => {
     if (!selectedArtist || !graphData) return [];

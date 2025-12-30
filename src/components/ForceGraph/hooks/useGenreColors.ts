@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import type { GraphNode } from '../types';
+import { useMemo } from "react";
+import type { GraphNode } from "../types";
 
 interface UseGenreColorsProps {
   nodes: GraphNode[];
@@ -12,20 +12,20 @@ interface UseGenreColorsResult {
 
 // Use a vibrant, distinguishable color palette
 const COLOR_PALETTE = [
-  '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#f43f5e', // rose
-  '#f97316', // orange
-  '#eab308', // yellow
-  '#22c55e', // green
-  '#14b8a6', // teal
-  '#06b6d4', // cyan
-  '#6366f1', // indigo
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#ec4899", // pink
+  "#f43f5e", // rose
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#14b8a6", // teal
+  "#06b6d4", // cyan
+  "#6366f1", // indigo
 ];
 
-const DEFAULT_COLOR = 'hsl(var(--graph-node))';
-const CENTER_COLOR = 'hsl(var(--graph-center))';
+const DEFAULT_COLOR = "hsl(var(--graph-node))";
+const CENTER_COLOR = "hsl(var(--graph-center))";
 
 // Simple hash function for stable color assignment
 function hashString(str: string): number {
@@ -38,7 +38,9 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-export function useGenreColors({ nodes }: UseGenreColorsProps): UseGenreColorsResult {
+export function useGenreColors({
+  nodes,
+}: UseGenreColorsProps): UseGenreColorsResult {
   return useMemo(() => {
     // Collect unique primary tags
     const uniqueTags = new Set<string>();

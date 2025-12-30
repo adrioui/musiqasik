@@ -1,16 +1,17 @@
-import { useState, useCallback } from 'react';
-import { Effect, Layer, ManagedRuntime } from 'effect';
-import type { Artist, GraphData } from '@/types/artist';
+import { Effect, Layer, ManagedRuntime } from "effect";
+import { useCallback, useState } from "react";
+import { SurrealLive } from "@/integrations/surrealdb/client";
 import {
-  LastFmService,
-  LastFmServiceLive,
+  ConfigLive,
   DatabaseService,
   DatabaseServiceLive,
   GraphService,
+  GraphServiceLastFmOnlyLive,
   GraphServiceLive,
-  ConfigLive,
-} from '@/services';
-import { SurrealLive } from '@/integrations/surrealdb/client';
+  LastFmService,
+  LastFmServiceLive,
+} from "@/services";
+import type { Artist, GraphData } from "@/types/artist";
 
 // Build layers with proper dependency order
 // LastFm only needs Config (for API key)
@@ -28,6 +29,12 @@ const FullLive = Layer.mergeAll(LastFmLayer, DatabaseLayer, GraphLayer);
 
 // Minimal layer for search (only needs LastFm, no DB required)
 const SearchLive = LastFmLayer;
+
+// Layer for LastFm-only graph building (no DB required)
+const LastFmOnlyGraphLayer = Layer.provide(
+  GraphServiceLastFmOnlyLive,
+  LastFmLayer,
+);
 
 // Lazy runtime initialization - separate runtimes for different needs
 type SearchRuntimeType = ManagedRuntime.ManagedRuntime<LastFmService, unknown>;
@@ -53,7 +60,7 @@ const getSearchRuntime = async (): Promise<SearchRuntimeType | null> => {
         searchRuntime = ManagedRuntime.make(SearchLive);
         return searchRuntime;
       } catch (err) {
-        console.warn('Search runtime initialization failed:', err);
+        console.warn("Search runtime initialization failed:", err);
         return null;
       }
     })();
@@ -74,7 +81,10 @@ const getFullRuntime = async (): Promise<FullRuntimeType | null> => {
         fullRuntime = ManagedRuntime.make(FullLive);
         return fullRuntime;
       } catch (err) {
-        console.warn('Full runtime initialization failed (DB may not be available):', err);
+        console.warn(
+          "Full runtime initialization failed (DB may not be available):",
+          err,
+        );
         return null;
       }
     })();
@@ -98,7 +108,9 @@ export function useLastFm() {
         const runtime = await getSearchRuntime();
 
         if (!runtime) {
-          throw new Error('Search service not available. Check your API key configuration.');
+          throw new Error(
+            "Search service not available. Check your API key configuration.",
+          );
         }
 
         const effect = Effect.gen(function* () {
@@ -110,49 +122,68 @@ export function useLastFm() {
         if (signal) {
           return await new Promise<Artist[]>((resolve, reject) => {
             const abortHandler = () => {
-              reject(new DOMException('Aborted', 'AbortError'));
+              reject(new DOMException("Aborted", "AbortError"));
             };
-            signal.addEventListener('abort', abortHandler);
+            signal.addEventListener("abort", abortHandler);
             runtime
               .runPromise(effect)
               .then(resolve)
               .catch(reject)
               .finally(() => {
-                signal.removeEventListener('abort', abortHandler);
+                signal.removeEventListener("abort", abortHandler);
               });
           });
         }
 
         return await runtime.runPromise(effect);
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
+        if (err instanceof DOMException && err.name === "AbortError") {
           throw err;
         }
-        const message = err instanceof Error ? err.message : 'Search failed';
-        console.error('Search error:', err);
+        const message = err instanceof Error ? err.message : "Search failed";
+        console.error("Search error:", err);
         setError(message);
         return [];
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   const getGraph = useCallback(
-    async (artistName: string, depth: number = 1): Promise<GraphData | null> => {
+    async (
+      artistName: string,
+      depth: number = 1,
+    ): Promise<GraphData | null> => {
       if (!artistName.trim()) return null;
 
       setIsLoading(true);
       setError(null);
 
+      // Helper to build graph with LastFm-only fallback
+      const buildWithFallback = async (): Promise<GraphData | null> => {
+        console.warn(
+          "Database not available, building graph from Last.fm only",
+        );
+        const fallbackRuntime = ManagedRuntime.make(LastFmOnlyGraphLayer);
+
+        const effect = Effect.gen(function* () {
+          const graph = yield* GraphService;
+          return yield* graph.buildGraphFromLastFmOnly(
+            artistName,
+            Math.min(depth, 2),
+          );
+        });
+
+        return await fallbackRuntime.runPromise(effect);
+      };
+
       try {
         const runtime = await getFullRuntime();
 
         if (!runtime) {
-          // Fall back to search-only mode: build a simple graph from similar artists
-          console.warn('Database not available, building graph from Last.fm only');
-          return await buildGraphFromLastFmOnly(artistName, Math.min(depth, 2));
+          return await buildWithFallback();
         }
 
         const effect = Effect.gen(function* () {
@@ -160,70 +191,84 @@ export function useLastFm() {
           return yield* graph.buildGraph(artistName, Math.min(depth, 3));
         });
 
-        const result = await runtime.runPromise(effect);
-        return result;
+        try {
+          const result = await runtime.runPromise(effect);
+          return result;
+        } catch (dbErr) {
+          // If DB operation fails, try the LastFm-only fallback
+          console.warn(
+            "Database operation failed, falling back to Last.fm only:",
+            dbErr,
+          );
+          return await buildWithFallback();
+        }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch graph';
-        console.error('Graph error:', err);
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch graph";
+        console.error("Graph error:", err);
         setError(message);
         return null;
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
-  const getArtist = useCallback(async (name: string): Promise<Artist | null> => {
-    if (!name.trim()) return null;
+  const getArtist = useCallback(
+    async (name: string): Promise<Artist | null> => {
+      if (!name.trim()) return null;
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      // Try full runtime first (with DB caching)
-      const runtime = await getFullRuntime();
+      try {
+        // Try full runtime first (with DB caching)
+        const runtime = await getFullRuntime();
 
-      if (runtime) {
-        const effect = Effect.gen(function* () {
-          const db = yield* DatabaseService;
-          const lastFm = yield* LastFmService;
+        if (runtime) {
+          const effect = Effect.gen(function* () {
+            const db = yield* DatabaseService;
+            const lastFm = yield* LastFmService;
 
-          // Try database first
-          let artist = yield* db.getArtist(name);
-          if (!artist) {
-            // Fetch from Last.fm and cache
-            const artistInfo = yield* lastFm.getArtistInfo(name);
-            if (artistInfo) {
-              artist = yield* db.upsertArtist(artistInfo);
+            // Try database first
+            let artist = yield* db.getArtist(name);
+            if (!artist) {
+              // Fetch from Last.fm and cache
+              const artistInfo = yield* lastFm.getArtistInfo(name);
+              if (artistInfo) {
+                artist = yield* db.upsertArtist(artistInfo);
+              }
             }
-          }
-          return artist;
-        });
+            return artist;
+          });
 
-        return await runtime.runPromise(effect);
+          return await runtime.runPromise(effect);
+        }
+
+        // Fall back to search runtime (just Last.fm, no caching)
+        const searchRt = await getSearchRuntime();
+        if (searchRt) {
+          const effect = Effect.gen(function* () {
+            const lastFm = yield* LastFmService;
+            return yield* lastFm.getArtistInfo(name);
+          });
+          return await searchRt.runPromise(effect);
+        }
+
+        throw new Error("No runtime available");
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch artist";
+        console.error("Get artist error:", err);
+        setError(message);
+        return null;
+      } finally {
+        setIsLoading(false);
       }
-
-      // Fall back to search runtime (just Last.fm, no caching)
-      const searchRt = await getSearchRuntime();
-      if (searchRt) {
-        const effect = Effect.gen(function* () {
-          const lastFm = yield* LastFmService;
-          return yield* lastFm.getArtistInfo(name);
-        });
-        return await searchRt.runPromise(effect);
-      }
-
-      throw new Error('No runtime available');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch artist';
-      console.error('Get artist error:', err);
-      setError(message);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     searchArtists,
@@ -232,71 +277,4 @@ export function useLastFm() {
     isLoading,
     error,
   };
-}
-
-// Fallback graph builder using only Last.fm (no database)
-async function buildGraphFromLastFmOnly(
-  artistName: string,
-  maxDepth: number
-): Promise<GraphData | null> {
-  const runtime = await getSearchRuntime();
-  if (!runtime) return null;
-
-  const visited = new Set<string>();
-  const nodes: Artist[] = [];
-  const edges: Array<{ source: string; target: string; weight: number }> = [];
-  let center: Artist | null = null;
-
-  const queue: Array<{ name: string; depth: number }> = [{ name: artistName, depth: 0 }];
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const normalizedName = current.name.toLowerCase();
-
-    if (visited.has(normalizedName)) continue;
-    visited.add(normalizedName);
-
-    try {
-      // Get artist info
-      const artistEffect = Effect.gen(function* () {
-        const lastFm = yield* LastFmService;
-        return yield* lastFm.getArtistInfo(current.name);
-      });
-
-      const artist = await runtime.runPromise(artistEffect);
-      if (!artist) continue;
-
-      nodes.push(artist);
-      if (current.depth === 0) {
-        center = artist;
-      }
-
-      // Get similar artists if not at max depth
-      if (current.depth < maxDepth) {
-        const similarEffect = Effect.gen(function* () {
-          const lastFm = yield* LastFmService;
-          return yield* lastFm.getSimilarArtists(current.name);
-        });
-
-        const similar = await runtime.runPromise(similarEffect);
-
-        for (const sim of similar.slice(0, 10)) {
-          edges.push({
-            source: artist.name,
-            target: sim.name,
-            weight: sim.match,
-          });
-
-          if (!visited.has(sim.name.toLowerCase())) {
-            queue.push({ name: sim.name, depth: current.depth + 1 });
-          }
-        }
-      }
-    } catch (err) {
-      console.warn(`Failed to fetch artist ${current.name}:`, err);
-      continue;
-    }
-  }
-
-  return { nodes, edges, center };
 }

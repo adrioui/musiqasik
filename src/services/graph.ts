@@ -1,12 +1,12 @@
-import { Effect, Layer, pipe } from 'effect';
-import { LastFmService, DatabaseService, GraphService } from './tags';
-import type { Artist } from '@/types/artist';
+import { Effect, Layer, pipe } from "effect";
+import type { Artist } from "@/types/artist";
+import { DatabaseService, GraphService, LastFmService } from "./tags";
 
 // Concurrency limiter for parallel API calls
 const parallelMapWithLimit = <T, U, E>(
   items: T[],
   mapper: (item: T) => Effect.Effect<U | null, E>,
-  concurrency: number
+  concurrency: number,
 ): Effect.Effect<(U | null)[], E> => {
   // Process in batches
   const batches: T[][] = [];
@@ -14,14 +14,11 @@ const parallelMapWithLimit = <T, U, E>(
     batches.push(items.slice(i, i + concurrency));
   }
 
-  return Effect.reduce(
-    batches,
-    [] as (U | null)[],
-    (acc, batch) =>
-      pipe(
-        Effect.all(batch.map(mapper), { concurrency }),
-        Effect.map((results) => [...acc, ...results])
-      )
+  return Effect.reduce(batches, [] as (U | null)[], (acc, batch) =>
+    pipe(
+      Effect.all(batch.map(mapper), { concurrency }),
+      Effect.map((results) => [...acc, ...results]),
+    ),
   );
 };
 
@@ -30,13 +27,68 @@ const makeGraphService = Effect.gen(function* () {
   const db = yield* DatabaseService;
 
   return GraphService.of({
+    buildGraphFromLastFmOnly: (artistName: string, maxDepth: number) =>
+      Effect.gen(function* () {
+        const visited = new Set<string>();
+        const nodes: Artist[] = [];
+        const edges: Array<{ source: string; target: string; weight: number }> =
+          [];
+        let center: Artist | null = null;
+
+        const queue: Array<{ name: string; depth: number }> = [
+          { name: artistName, depth: 0 },
+        ];
+
+        while (queue.length > 0) {
+          const current = queue.shift()!;
+          const normalizedName = current.name.toLowerCase();
+
+          if (visited.has(normalizedName)) continue;
+          visited.add(normalizedName);
+
+          const artistResult = yield* lastFm
+            .getArtistInfo(current.name)
+            .pipe(Effect.catchAll(() => Effect.succeed(null)));
+
+          if (!artistResult) continue;
+
+          nodes.push(artistResult);
+          if (current.depth === 0) {
+            center = artistResult;
+          }
+
+          if (current.depth < maxDepth) {
+            const similar = yield* lastFm
+              .getSimilarArtists(current.name)
+              .pipe(Effect.catchAll(() => Effect.succeed([])));
+
+            for (const sim of similar.slice(0, 10)) {
+              edges.push({
+                source: artistResult.name,
+                target: sim.name,
+                weight: sim.match,
+              });
+
+              if (!visited.has(sim.name.toLowerCase())) {
+                queue.push({ name: sim.name, depth: current.depth + 1 });
+              }
+            }
+          }
+        }
+
+        return { nodes, edges, center };
+      }),
+
     buildGraph: (artistName: string, maxDepth: number) =>
       Effect.gen(function* () {
         const startTime = Date.now();
         const visited = new Set<string>();
-        const queue: Array<{ name: string; depth: number }> = [{ name: artistName, depth: 0 }];
+        const queue: Array<{ name: string; depth: number }> = [
+          { name: artistName, depth: 0 },
+        ];
         const nodes: Artist[] = [];
-        const edges: Array<{ source: string; target: string; weight: number }> = [];
+        const edges: Array<{ source: string; target: string; weight: number }> =
+          [];
         let center: Artist | null = null;
 
         // Per-request cache
@@ -90,7 +142,10 @@ const makeGraphService = Effect.gen(function* () {
                     });
 
                     if (!visited.has(edge.target.name.toLowerCase())) {
-                      queue.push({ name: edge.target.name, depth: current.depth + 1 });
+                      queue.push({
+                        name: edge.target.name,
+                        depth: current.depth + 1,
+                      });
                     }
                   }
                 }
@@ -112,7 +167,9 @@ const makeGraphService = Effect.gen(function* () {
                         (yield* db.getArtist(sim.name));
 
                       if (!targetArtist) {
-                        const targetInfo = yield* lastFm.getArtistInfo(sim.name);
+                        const targetInfo = yield* lastFm.getArtistInfo(
+                          sim.name,
+                        );
                         if (targetInfo) {
                           targetArtist = yield* db.upsertArtist(targetInfo);
                         }
@@ -137,7 +194,7 @@ const makeGraphService = Effect.gen(function* () {
                       }
                       return null;
                     }).pipe(Effect.catchAll(() => Effect.succeed(null))),
-                  5 // Limit to 5 concurrent requests
+                  5, // Limit to 5 concurrent requests
                 );
 
                 // Collect edges to upsert
@@ -190,3 +247,75 @@ const makeGraphService = Effect.gen(function* () {
 });
 
 export const GraphServiceLive = Layer.effect(GraphService, makeGraphService);
+
+// Separate layer for LastFm-only graph building (no DB dependency)
+const makeGraphServiceLastFmOnly = Effect.gen(function* () {
+  const lastFm = yield* LastFmService;
+
+  return GraphService.of({
+    buildGraphFromLastFmOnly: (artistName: string, maxDepth: number) =>
+      Effect.gen(function* () {
+        const visited = new Set<string>();
+        const nodes: Artist[] = [];
+        const edges: Array<{ source: string; target: string; weight: number }> =
+          [];
+        let center: Artist | null = null;
+
+        const queue: Array<{ name: string; depth: number }> = [
+          { name: artistName, depth: 0 },
+        ];
+
+        while (queue.length > 0) {
+          const current = queue.shift()!;
+          const normalizedName = current.name.toLowerCase();
+
+          if (visited.has(normalizedName)) continue;
+          visited.add(normalizedName);
+
+          const artistResult = yield* lastFm
+            .getArtistInfo(current.name)
+            .pipe(Effect.catchAll(() => Effect.succeed(null)));
+
+          if (!artistResult) continue;
+
+          nodes.push(artistResult);
+          if (current.depth === 0) {
+            center = artistResult;
+          }
+
+          if (current.depth < maxDepth) {
+            const similar = yield* lastFm
+              .getSimilarArtists(current.name)
+              .pipe(Effect.catchAll(() => Effect.succeed([])));
+
+            for (const sim of similar.slice(0, 10)) {
+              edges.push({
+                source: artistResult.name,
+                target: sim.name,
+                weight: sim.match,
+              });
+
+              if (!visited.has(sim.name.toLowerCase())) {
+                queue.push({ name: sim.name, depth: current.depth + 1 });
+              }
+            }
+          }
+        }
+
+        return { nodes, edges, center };
+      }),
+
+    // Stub implementation - throws if called without DB
+    buildGraph: () =>
+      Effect.fail(
+        new Error(
+          "buildGraph requires DatabaseService - use buildGraphFromLastFmOnly instead",
+        ),
+      ) as Effect.Effect<never, never>,
+  });
+});
+
+export const GraphServiceLastFmOnlyLive = Layer.effect(
+  GraphService,
+  makeGraphServiceLastFmOnly,
+);

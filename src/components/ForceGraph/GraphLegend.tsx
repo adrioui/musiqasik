@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { MaterialIcon } from '@/components/ui/material-icon';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { MaterialIcon } from "@/components/ui/material-icon";
+import { cn } from "@/lib/utils";
 
 interface GraphLegendProps {
   colorMap: Map<string, string>;
@@ -16,8 +16,8 @@ export function GraphLegend({ colorMap, className }: GraphLegendProps) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-2 rounded-lg border border-border bg-background/80 p-2 shadow-sm backdrop-blur-sm',
-        className
+        "flex flex-col gap-2 rounded-lg border border-border bg-background/80 p-2 shadow-sm backdrop-blur-sm",
+        className,
       )}
     >
       <div className="flex items-center justify-between gap-4">
@@ -25,8 +25,17 @@ export function GraphLegend({ colorMap, className }: GraphLegendProps) {
           <MaterialIcon name="palette" size="xs" />
           <span>Genres</span>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <MaterialIcon name="expand_more" size="xs" /> : <MaterialIcon name="expand_less" size="xs" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? (
+            <MaterialIcon name="expand_more" size="xs" />
+          ) : (
+            <MaterialIcon name="expand_less" size="xs" />
+          )}
         </Button>
       </div>
 

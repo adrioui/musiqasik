@@ -1,32 +1,32 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface MaterialIconProps extends React.HTMLAttributes<HTMLSpanElement> {
   name: string;
   filled?: boolean;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
 }
 
 const sizeClasses = {
-  xs: 'text-[16px]',
-  sm: 'text-[20px]',
-  md: 'text-[24px]',
-  lg: 'text-[32px]',
-  xl: 'text-[48px]',
+  xs: "text-[16px]",
+  sm: "text-[20px]",
+  md: "text-[24px]",
+  lg: "text-[32px]",
+  xl: "text-[48px]",
 };
 
 export function MaterialIcon({
   name,
   filled = false,
-  size = 'md',
+  size = "md",
   className,
   ...props
 }: MaterialIconProps) {
   return (
     <span
       className={cn(
-        'material-symbols-outlined select-none',
+        "material-symbols-outlined select-none",
         sizeClasses[size],
-        className
+        className,
       )}
       style={{
         fontVariationSettings: filled ? "'FILL' 1" : "'FILL' 0",

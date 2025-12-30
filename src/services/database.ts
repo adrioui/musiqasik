@@ -1,8 +1,8 @@
-import { Effect, Layer } from 'effect';
-import { DatabaseError } from '@/lib/errors';
-import { DatabaseService } from '@/services';
-import { SurrealClient } from '@/integrations/surrealdb/client';
-import type { Artist } from '@/types/artist';
+import { Effect, Layer } from "effect";
+import { SurrealClient } from "@/integrations/surrealdb/client";
+import { DatabaseError } from "@/lib/errors";
+import { DatabaseService } from "@/services";
+import type { Artist } from "@/types/artist";
 
 const makeDatabaseService = Effect.gen(function* () {
   const db = yield* SurrealClient;
@@ -14,15 +14,19 @@ const makeDatabaseService = Effect.gen(function* () {
           try: () =>
             db.query<[Artist[]]>(
               `SELECT * FROM artists WHERE name_lower = string::lowercase($name) LIMIT 1`,
-              { name: artistName }
+              { name: artistName },
             ),
-          catch: (error) => new DatabaseError({ message: 'Failed to query artist', cause: error }),
+          catch: (error) =>
+            new DatabaseError({
+              message: "Failed to query artist",
+              cause: error,
+            }),
         });
 
         return result[0]?.[0] || null;
       }),
 
-    upsertArtist: (artist: Omit<Artist, 'id'>) =>
+    upsertArtist: (artist: Omit<Artist, "id">) =>
       Effect.gen(function* () {
         const result = yield* Effect.tryPromise({
           try: () =>
@@ -52,9 +56,13 @@ const makeDatabaseService = Effect.gen(function* () {
                 playcount: artist.playcount || null,
                 tags: artist.tags || [],
                 lastfm_url: artist.lastfm_url || null,
-              }
+              },
             ),
-          catch: (error) => new DatabaseError({ message: 'Failed to upsert artist', cause: error }),
+          catch: (error) =>
+            new DatabaseError({
+              message: "Failed to upsert artist",
+              cause: error,
+            }),
         });
 
         return result[0]?.[0] as Artist;
@@ -66,10 +74,13 @@ const makeDatabaseService = Effect.gen(function* () {
           try: () =>
             db.query<[Array<{ out: Artist; match_score: number }>]>(
               `SELECT out.*, match_score FROM similarity_edges WHERE in = $artistId`,
-              { artistId }
+              { artistId },
             ),
           catch: (error) =>
-            new DatabaseError({ message: 'Failed to fetch cached edges', cause: error }),
+            new DatabaseError({
+              message: "Failed to fetch cached edges",
+              cause: error,
+            }),
         });
 
         return (result[0] || []).map((edge) => ({
@@ -86,9 +97,9 @@ const makeDatabaseService = Effect.gen(function* () {
         const relateStatements = edges
           .map(
             (_, i) =>
-              `RELATE $source${i}->similarity_edges->$target${i} SET match_score = $score${i}, depth = $depth${i};`
+              `RELATE $source${i}->similarity_edges->$target${i} SET match_score = $score${i}, depth = $depth${i};`,
           )
-          .join('\n');
+          .join("\n");
 
         const params: Record<string, unknown> = {};
         edges.forEach((edge, i) => {
@@ -100,7 +111,11 @@ const makeDatabaseService = Effect.gen(function* () {
 
         yield* Effect.tryPromise({
           try: () => db.query(relateStatements, params),
-          catch: (error) => new DatabaseError({ message: 'Failed to upsert edges', cause: error }),
+          catch: (error) =>
+            new DatabaseError({
+              message: "Failed to upsert edges",
+              cause: error,
+            }),
         });
       }),
 
@@ -111,10 +126,13 @@ const makeDatabaseService = Effect.gen(function* () {
           try: () =>
             db.query<[Artist[]]>(
               `SELECT * FROM artists WHERE name_lower = string::lowercase($name) LIMIT 1`,
-              { name: artistName }
+              { name: artistName },
             ),
           catch: (error) =>
-            new DatabaseError({ message: 'Failed to query center artist', cause: error }),
+            new DatabaseError({
+              message: "Failed to query center artist",
+              cause: error,
+            }),
         });
 
         const center = centerResult[0]?.[0] || null;
@@ -130,10 +148,13 @@ const makeDatabaseService = Effect.gen(function* () {
               `SELECT in.*, out.*, match_score
              FROM similarity_edges
              WHERE in = $centerId OR depth <= $maxDepth`,
-              { centerId: center.id, maxDepth }
+              { centerId: center.id, maxDepth },
             ),
           catch: (error) =>
-            new DatabaseError({ message: 'Failed to traverse graph', cause: error }),
+            new DatabaseError({
+              message: "Failed to traverse graph",
+              cause: error,
+            }),
         });
 
         const edgesData = graphResult[0] || [];
@@ -150,8 +171,8 @@ const makeDatabaseService = Effect.gen(function* () {
         return {
           nodes: Array.from(nodesMap.values()),
           edges: edgesData.map((edge) => ({
-            source: edge.in?.name || '',
-            target: edge.out?.name || '',
+            source: edge.in?.name || "",
+            target: edge.out?.name || "",
             weight: edge.match_score,
           })),
           center,
@@ -160,4 +181,7 @@ const makeDatabaseService = Effect.gen(function* () {
   });
 });
 
-export const DatabaseServiceLive = Layer.effect(DatabaseService, makeDatabaseService);
+export const DatabaseServiceLive = Layer.effect(
+  DatabaseService,
+  makeDatabaseService,
+);

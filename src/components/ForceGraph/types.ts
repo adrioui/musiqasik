@@ -1,5 +1,5 @@
-import type { Artist, SimilarityEdge } from '@/types/artist';
-import type { GraphNode, GraphLink } from '@/wasm/graph-service';
+import type { Artist, SimilarityEdge } from "@/types/artist";
+import type { GraphLink, GraphNode } from "./hooks/useGraphData";
 
 export type { GraphNode, GraphLink };
 

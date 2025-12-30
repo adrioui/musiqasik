@@ -1,4 +1,13 @@
-import { createContext, useContext, useCallback, useState, useEffect, ReactNode } from 'react';
+import { Effect } from "effect";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { NetworkError } from "@/lib/errors";
 
 interface LastFmAuthState {
   isAuthenticated: boolean;
@@ -14,8 +23,41 @@ interface LastFmAuthContextValue extends LastFmAuthState {
 
 const LastFmAuthContext = createContext<LastFmAuthContextValue | null>(null);
 
-const STORAGE_KEY = 'lastfm_auth';
+const STORAGE_KEY = "lastfm_auth";
 const API_KEY = import.meta.env.VITE_LASTFM_API_KEY;
+
+// Effect-based API call for token exchange
+const exchangeToken = (token: string) =>
+  Effect.gen(function* () {
+    const response = yield* Effect.tryPromise({
+      try: () =>
+        fetch("/api/lastfm/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        }),
+      catch: (error) =>
+        new NetworkError({
+          message: "Failed to connect to server",
+          cause: error,
+        }),
+    });
+
+    if (!response.ok) {
+      return yield* Effect.fail(
+        new NetworkError({ message: `Server error: ${response.status}` }),
+      );
+    }
+
+    const data = yield* Effect.tryPromise({
+      try: () =>
+        response.json() as Promise<{ sessionKey: string; username: string }>,
+      catch: (error) =>
+        new NetworkError({ message: "Invalid server response", cause: error }),
+    });
+
+    return data;
+  });
 
 export function LastFmAuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<LastFmAuthState>(() => {
@@ -50,30 +92,36 @@ export function LastFmAuthProvider({ children }: { children: ReactNode }) {
     setState({ isAuthenticated: false, username: null, sessionKey: null });
   }, []);
 
-  const handleCallback = useCallback(async (token: string): Promise<boolean> => {
-    try {
-      // Exchange token for session via backend
-      const response = await fetch('/api/lastfm/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
+  const handleCallback = useCallback(
+    async (token: string): Promise<boolean> => {
+      const result = await Effect.runPromise(
+        exchangeToken(token).pipe(
+          Effect.map((data) => ({ success: true as const, data })),
+          Effect.catchAll((error) =>
+            Effect.succeed({ success: false as const, error: error.message }),
+          ),
+        ),
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to authenticate');
+      if (result.success) {
+        setState({
+          isAuthenticated: true,
+          username: result.data.username,
+          sessionKey: result.data.sessionKey,
+        });
+        return true;
       }
 
-      const { sessionKey, username } = await response.json();
-      setState({ isAuthenticated: true, username, sessionKey });
-      return true;
-    } catch (error) {
-      console.error('Last.fm auth error:', error);
+      console.error("Last.fm auth error:", result.error);
       return false;
-    }
-  }, []);
+    },
+    [],
+  );
 
   return (
-    <LastFmAuthContext.Provider value={{ ...state, connect, disconnect, handleCallback }}>
+    <LastFmAuthContext.Provider
+      value={{ ...state, connect, disconnect, handleCallback }}
+    >
       {children}
     </LastFmAuthContext.Provider>
   );
@@ -82,7 +130,7 @@ export function LastFmAuthProvider({ children }: { children: ReactNode }) {
 export function useLastFmAuth() {
   const context = useContext(LastFmAuthContext);
   if (!context) {
-    throw new Error('useLastFmAuth must be used within LastFmAuthProvider');
+    throw new Error("useLastFmAuth must be used within LastFmAuthProvider");
   }
   return context;
 }
