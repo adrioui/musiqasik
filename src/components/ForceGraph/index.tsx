@@ -384,15 +384,28 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         tooltip
           .style('display', 'block')
           .style('opacity', '1')
-          .html(
-            `
-            <div class="font-semibold">${d.name}</div>
-            ${d.listeners ? `<div class="text-sm text-muted-foreground">${(d.listeners / 1000000).toFixed(1)}M listeners</div>` : ''}
-            ${d.tags && d.tags.length > 0 ? `<div class="text-xs text-muted-foreground mt-1">${d.tags.slice(0, 3).join(', ')}</div>` : ''}
-          `
-          )
+          .html('') // Clear content
           .style('left', `${event.pageX + 15}px`)
           .style('top', `${event.pageY - 10}px`);
+
+        // Safely build tooltip content
+        const content = tooltip.append('div').attr('class', 'flex flex-col gap-0.5');
+
+        content.append('div').attr('class', 'font-semibold').text(d.name);
+
+        if (d.listeners) {
+          content
+            .append('div')
+            .attr('class', 'text-sm text-muted-foreground')
+            .text(`${(d.listeners / 1000000).toFixed(1)}M listeners`);
+        }
+
+        if (d.tags && d.tags.length > 0) {
+          content
+            .append('div')
+            .attr('class', 'text-xs text-muted-foreground mt-1')
+            .text(d.tags.slice(0, 3).join(', '));
+        }
       })
       .on('mousemove', (event) => {
         tooltip.style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`);
