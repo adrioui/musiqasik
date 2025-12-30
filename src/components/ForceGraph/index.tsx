@@ -181,28 +181,70 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       [zoomIn, zoomOut, reset],
     );
 
-    // Create and update the D3 visualization (DOM elements only, simulation is handled by hook)
+    // Initialize SVG container structure - runs once
     useEffect(() => {
-      if (!svgRef.current || filteredNodes.length === 0 || !simulation) return;
-
+      if (!svgRef.current) return;
       const svg = d3.select(svgRef.current);
 
-      // Clear previous content
+      // Clear previous content (safety check for HMR)
       svg.selectAll("*").remove();
 
-      // Create container group for zoom
       const g = svg.append("g").attr("class", "graph-container");
+      g.append("g").attr("class", "links");
+      g.append("g").attr("class", "nodes");
+
+      // Initialize tooltip if needed
+      if (!tooltipRef.current) {
+        tooltipRef.current = document.createElement("div");
+        tooltipRef.current.className = "graph-tooltip";
+        tooltipRef.current.style.opacity = "0";
+        tooltipRef.current.style.display = "none";
+        document.body.appendChild(tooltipRef.current);
+      }
+
+      // Cleanup tooltip on unmount
+      return () => {
+        if (tooltipRef.current) {
+          tooltipRef.current.remove();
+          tooltipRef.current = null;
+        }
+      };
+    }, []);
+
+    // Update graph elements
+    useEffect(() => {
+      if (!svgRef.current || !simulation) return;
+
+      const svg = d3.select(svgRef.current);
+      const g = svg.select(".graph-container");
 
       // Apply zoom behavior
-      applyZoom(g);
+      applyZoom(g as d3.Selection<SVGGElement, unknown, null, undefined>);
 
-      // Draw links and store reference
-      const linkSelection = g
-        .append("g")
-        .attr("class", "links")
+      // ----------------- LINKS -----------------
+      const linkGroup = g.select(".links");
+
+      // DATA JOIN
+      const link = linkGroup
         .selectAll<SVGLineElement, SimulationLink>("line")
-        .data(links)
-        .join("line")
+        .data(links, (d) => {
+          // Use a unique ID for links if possible, otherwise composite key
+          const sourceId = (d.source as SimulationNode).name || (d.source as string);
+          const targetId = (d.target as SimulationNode).name || (d.target as string);
+          return `${sourceId}-${targetId}`;
+        });
+
+      // EXIT
+      link.exit().remove();
+
+      // UPDATE
+      const linkUpdate = link
+        .attr("stroke-opacity", (d) => 0.2 + d.weight * 0.6)
+        .attr("stroke-width", (d) => 1 + d.weight * 2);
+
+      // ENTER
+      const linkEnter = link.enter()
+        .append("line")
         .attr("stroke", "hsl(var(--graph-edge))")
         .attr("stroke-opacity", (d) => 0.2 + d.weight * 0.6)
         .attr("stroke-width", (d) => 1 + d.weight * 2)
@@ -245,20 +287,270 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
             .attr("stroke-opacity", 0.2 + d.weight * 0.6);
         });
 
+      // MERGE
+      const linkSelection = linkEnter.merge(linkUpdate);
       linkSelectionRef.current = linkSelection;
 
-      // Draw nodes and store reference
-      const nodeSelection = g
-        .append("g")
-        .attr("class", "nodes")
+      // ----------------- NODES -----------------
+      const nodeGroup = g.select(".nodes");
+
+      // DATA JOIN
+      const node = nodeGroup
         .selectAll<SVGGElement, SimulationNode>("g")
-        .data(graphNodes)
-        .join("g")
+        .data(graphNodes, (d) => d.name);
+
+      // EXIT
+      node.exit()
+        .style("opacity", 0)
+        .transition()
+        .duration(300)
+        .remove();
+
+      // UPDATE
+      const nodeUpdate = node
         .attr("class", "graph-node")
         .style("cursor", "pointer")
         .style("transition", "opacity 0.15s ease-out");
 
+      // Update existing nodes visual properties that might change
+      nodeUpdate
+        .select("circle:not(.node-glow-active):not(.node-glow)")
+        .attr("fill", (d) => getNodeColor(d));
+
+      // Update isCenter glow ring (add if missing, remove if present but not center)
+      nodeUpdate.each(function (d) {
+        const group = d3.select(this);
+        const hasPulse = !group.select(".graph-node-pulse").empty();
+
+        if (d.isCenter && !hasPulse) {
+          group
+            .insert("circle", ":first-child")
+            .attr("r", 44)
+            .attr("fill", "none")
+            .attr("stroke", "hsl(var(--primary) / 0.3)")
+            .attr("stroke-width", 2)
+            .attr("class", "graph-node-pulse");
+
+          // Update main circle stroke for center
+           group.select(".node-glow")
+             .attr("class", "node-glow-active")
+             .attr("stroke-width", 4);
+        } else if (!d.isCenter && hasPulse) {
+          group.select(".graph-node-pulse").remove();
+
+          // Revert main circle stroke
+          group.select(".node-glow-active")
+             .attr("class", "node-glow")
+             .attr("stroke-width", 3);
+        }
+
+        // Update images if changed (re-check logic or update href)
+        if (!isPlaceholderImage(d.image_url) && d.image_url) {
+           let image = group.select("image");
+           if (image.empty()) {
+             // Add image if it didn't exist before
+              const radius = getNodeRadius(d);
+              const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, "-")}`;
+
+              let defs = svg.select("defs");
+              if (defs.empty()) defs = svg.append("defs");
+              if (defs.select(`#${clipId}`).empty()) {
+                 defs.append("clipPath")
+                .attr("id", clipId)
+                .append("circle")
+                .attr("r", radius - 2);
+              }
+
+              group
+                .insert("image", "circle")
+                .attr("xlink:href", d.image_url)
+                .attr("x", -(radius - 2))
+                .attr("y", -(radius - 2))
+                .attr("width", (radius - 2) * 2)
+                .attr("height", (radius - 2) * 2)
+                .attr("clip-path", `url(#${clipId})`)
+                .style("pointer-events", "none");
+           } else {
+             // Update href
+             image.attr("xlink:href", d.image_url);
+           }
+        }
+      });
+
+      // Update labels
+      nodeUpdate.select(".label-group text").text((d) => d.name);
+
+      // ENTER
+      const nodeEnter = node.enter()
+        .append("g")
+        .attr("class", "graph-node")
+        .style("cursor", "pointer")
+        .style("transition", "opacity 0.15s ease-out")
+        .style("opacity", 0) // Start invisible for bubble-in
+        .attr("transform", (d) => `translate(${d.x || 0},${d.y || 0})`); // Initial position
+
+      // Apply drag behavior to merged selection later, but enter needs it?
+      // Actually merge is better.
+
+      // Outer glow ring for center nodes
+      nodeEnter
+        .filter((d) => d.isCenter)
+        .insert("circle", ":first-child")
+        .attr("r", 44)
+        .attr("fill", "none")
+        .attr("stroke", "hsl(var(--primary) / 0.3)")
+        .attr("stroke-width", 2)
+        .attr("class", "graph-node-pulse");
+
+      // Node circles with enhanced sizing
+      const getNodeRadius = (d: SimulationNode) => {
+        if (d.isCenter) return 32;
+        const baseSize = 20;
+        const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 10;
+        return baseSize + listenersBonus;
+      };
+
+      nodeEnter
+        .append("circle")
+        .attr("r", getNodeRadius)
+        .attr("fill", (d) => getNodeColor(d))
+        .attr("stroke", "hsl(var(--background))")
+        .attr("stroke-width", (d) => (d.isCenter ? 4 : 3))
+        .attr("class", (d) => (d.isCenter ? "node-glow-active" : "node-glow"))
+        .style("transition", "fill 0.2s ease-out, filter 0.2s ease-out");
+
+      // Node images (skip Last.fm placeholder images)
+      nodeEnter.each(function (d) {
+        if (!isPlaceholderImage(d.image_url) && d.image_url) {
+          const nodeG = d3.select(this);
+          const radius = getNodeRadius(d);
+
+          // Create clipPath
+          const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, "-")}`;
+          // Note: Defs should be in root svg, but here we append to svg directly.
+          // Ideally defs are created once. But unique IDs avoid collision.
+          // Just appending to SVG defs again is fine if ID is unique.
+          let defs = svg.select("defs");
+          if (defs.empty()) defs = svg.append("defs");
+
+          // Check if clipPath exists
+          if (defs.select(`#${clipId}`).empty()) {
+             defs.append("clipPath")
+            .attr("id", clipId)
+            .append("circle")
+            .attr("r", radius - 2);
+          }
+
+          nodeG
+            .insert("image", "circle")
+            .attr("xlink:href", d.image_url)
+            .attr("x", -(radius - 2))
+            .attr("y", -(radius - 2))
+            .attr("width", (radius - 2) * 2)
+            .attr("height", (radius - 2) * 2)
+            .attr("clip-path", `url(#${clipId})`)
+            .style("pointer-events", "none");
+        }
+      });
+
+      // Node labels with backdrop
+      const labelGroup = nodeEnter.append("g").attr("class", "label-group");
+
+      // Text label
+      labelGroup
+        .append("text")
+        .text((d) => d.name)
+        .attr("text-anchor", "middle")
+        .attr("dy", (d) => (d.isCenter ? 50 : 42))
+        .attr("class", "fill-foreground text-xs font-medium")
+        .style("pointer-events", "none")
+        .style("opacity", showLabels ? 1 : 0)
+        .style("transition", "opacity 0.2s ease-out");
+
+      // Add backdrop rect behind text (measure after text is created)
+      labelGroup.each(function () {
+        const group = d3.select(this);
+        const text = group.select("text");
+        const textNode = text.node() as SVGTextElement | null;
+
+        if (textNode) {
+          const bbox = textNode.getBBox();
+          group
+            .insert("rect", "text")
+            .attr("class", "label-backdrop")
+            .attr("rx", 4)
+            .attr("ry", 4)
+            .attr("x", bbox.x - 6)
+            .attr("y", bbox.y - 2)
+            .attr("width", bbox.width + 12)
+            .attr("height", bbox.height + 4)
+            .attr("fill", "hsl(var(--card) / 0.85)")
+            .style("opacity", showLabels ? 0.9 : 0)
+            .style("transition", "opacity 0.2s ease-out");
+        }
+      });
+
+      // Click handler for node selection (opens artist panel)
+      // Bind to merged selection to ensure closure freshness
+      // Actually we bind to enter + update later via nodeSelection, but simple click handler
+      // is often bound on enter. If onNodeClick changes, we need to re-bind.
+
+      const tooltip = d3.select(tooltipRef.current);
+
+      // Hover highlighting and tooltip
+      // biome-ignore lint/suspicious/noExplicitAny: d3 selection types are complex
+      const addHoverInteractions = (selection: any) => {
+         selection
+        .on("mouseenter", function (event: MouseEvent, d: SimulationNode) {
+          applyHighlight(d.name);
+          d3.select(this)
+            .select("circle")
+            .attr("fill", "hsl(var(--graph-node-hover))");
+
+          // Show tooltip
+          tooltip
+            .style("display", "block")
+            .style("opacity", "1")
+            .html(
+              `
+            <div class="font-semibold">${d.name}</div>
+            ${d.listeners ? `<div class="text-sm text-muted-foreground">${(d.listeners / 1000000).toFixed(1)}M listeners</div>` : ""}
+            ${d.tags && d.tags.length > 0 ? `<div class="text-xs text-muted-foreground mt-1">${d.tags.slice(0, 3).join(", ")}</div>` : ""}
+          `,
+            )
+            .style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 10}px`);
+        })
+        .on("mousemove", (event: MouseEvent) => {
+          tooltip
+            .style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 10}px`);
+        })
+        // biome-ignore lint/suspicious/noExplicitAny: d3 event type
+        .on("mouseleave", function (_event: any, d: SimulationNode) {
+          applyHighlight(null);
+          // Restore color
+          d3.select(this).select("circle").attr("fill", getNodeColor(d));
+
+          // Hide tooltip
+          tooltip.style("opacity", "0").style("display", "none");
+        });
+      };
+
+      addHoverInteractions(nodeEnter);
+      addHoverInteractions(nodeUpdate);
+
+      // MERGE
+      const nodeSelection = nodeEnter.merge(nodeUpdate);
       nodeSelectionRef.current = nodeSelection;
+
+      // Re-bind click handler to ensure fresh onNodeClick
+      nodeSelection.on("click", (_event, d) => {
+        onNodeClick(d);
+      });
+
+      // Trigger bubble-in animation for NEW nodes
+      animateNodesIn(nodeEnter);
 
       // Hover highlighting function (pure D3, no React state)
       const applyHighlight = (highlightedName: string | null) => {
@@ -312,150 +604,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
           }),
       );
 
-      // Outer glow ring for center nodes
-      nodeSelection
-        .filter((d) => d.isCenter)
-        .insert("circle", ":first-child")
-        .attr("r", 44)
-        .attr("fill", "none")
-        .attr("stroke", "hsl(var(--primary) / 0.3)")
-        .attr("stroke-width", 2)
-        .attr("class", "graph-node-pulse");
-
-      // Node circles with enhanced sizing
-      const getNodeRadius = (d: SimulationNode) => {
-        if (d.isCenter) return 32;
-        const baseSize = 20;
-        const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 10;
-        return baseSize + listenersBonus;
-      };
-
-      nodeSelection
-        .append("circle")
-        .attr("r", getNodeRadius)
-        .attr("fill", (d) => getNodeColor(d))
-        .attr("stroke", "hsl(var(--background))")
-        .attr("stroke-width", (d) => (d.isCenter ? 4 : 3))
-        .attr("class", (d) => (d.isCenter ? "node-glow-active" : "node-glow"))
-        .style("transition", "fill 0.2s ease-out, filter 0.2s ease-out");
-
-      // Node images (skip Last.fm placeholder images)
-      nodeSelection.each(function (d) {
-        if (!isPlaceholderImage(d.image_url) && d.image_url) {
-          const nodeG = d3.select(this);
-          const radius = getNodeRadius(d);
-
-          // Create clipPath
-          const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, "-")}`;
-          svg
-            .append("defs")
-            .append("clipPath")
-            .attr("id", clipId)
-            .append("circle")
-            .attr("r", radius - 2);
-
-          nodeG
-            .insert("image", "circle")
-            .attr("xlink:href", d.image_url)
-            .attr("x", -(radius - 2))
-            .attr("y", -(radius - 2))
-            .attr("width", (radius - 2) * 2)
-            .attr("height", (radius - 2) * 2)
-            .attr("clip-path", `url(#${clipId})`)
-            .style("pointer-events", "none");
-        }
-      });
-
-      // Node labels with backdrop
-      const labelGroup = nodeSelection.append("g").attr("class", "label-group");
-
-      // Text label
-      labelGroup
-        .append("text")
-        .text((d) => d.name)
-        .attr("text-anchor", "middle")
-        .attr("dy", (d) => (d.isCenter ? 50 : 42))
-        .attr("class", "fill-foreground text-xs font-medium")
-        .style("pointer-events", "none")
-        .style("opacity", showLabels ? 1 : 0)
-        .style("transition", "opacity 0.2s ease-out");
-
-      // Add backdrop rect behind text (measure after text is created)
-      labelGroup.each(function () {
-        const group = d3.select(this);
-        const text = group.select("text");
-        const textNode = text.node() as SVGTextElement | null;
-
-        if (textNode) {
-          const bbox = textNode.getBBox();
-          group
-            .insert("rect", "text")
-            .attr("class", "label-backdrop")
-            .attr("rx", 4)
-            .attr("ry", 4)
-            .attr("x", bbox.x - 6)
-            .attr("y", bbox.y - 2)
-            .attr("width", bbox.width + 12)
-            .attr("height", bbox.height + 4)
-            .attr("fill", "hsl(var(--card) / 0.85)")
-            .style("opacity", showLabels ? 0.9 : 0)
-            .style("transition", "opacity 0.2s ease-out");
-        }
-      });
-
-      // Trigger bubble-in animation
-      animateNodesIn(nodeSelection);
-
-      // Click handler for node selection (opens artist panel)
-      nodeSelection.on("click", (_event, d) => {
-        onNodeClick(d);
-      });
-
-      // Tooltip
-      if (!tooltipRef.current) {
-        tooltipRef.current = document.createElement("div");
-        tooltipRef.current.className = "graph-tooltip";
-        tooltipRef.current.style.opacity = "0";
-        tooltipRef.current.style.display = "none";
-        document.body.appendChild(tooltipRef.current);
-      }
-      const tooltip = d3.select(tooltipRef.current);
-
-      // Hover highlighting and tooltip
-      nodeSelection
-        .on("mouseenter", function (event, d) {
-          applyHighlight(d.name);
-          d3.select(this)
-            .select("circle")
-            .attr("fill", "hsl(var(--graph-node-hover))");
-
-          // Show tooltip
-          tooltip
-            .style("display", "block")
-            .style("opacity", "1")
-            .html(
-              `
-            <div class="font-semibold">${d.name}</div>
-            ${d.listeners ? `<div class="text-sm text-muted-foreground">${(d.listeners / 1000000).toFixed(1)}M listeners</div>` : ""}
-            ${d.tags && d.tags.length > 0 ? `<div class="text-xs text-muted-foreground mt-1">${d.tags.slice(0, 3).join(", ")}</div>` : ""}
-          `,
-            )
-            .style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 10}px`);
-        })
-        .on("mousemove", (event) => {
-          tooltip
-            .style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 10}px`);
-        })
-        .on("mouseleave", function (_event, d) {
-          applyHighlight(null);
-          d3.select(this).select("circle").attr("fill", getNodeColor(d));
-
-          // Hide tooltip
-          tooltip.style("opacity", "0").style("display", "none");
-        });
-
       // Cleanup refs on effect cleanup
       return () => {
         linkSelectionRef.current = null;
@@ -470,7 +618,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(
       restart,
       graphNodes,
       links,
-      filteredNodes.length,
       getNodeColor,
       adjacencyMap,
       animateNodesIn,
