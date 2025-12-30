@@ -1,0 +1,3 @@
+[test]
+preload = ["./server/test/setup.ts"]
+coverage = false

@@ -1,8 +1,0 @@
-node_modules
-dist
-build
-.output
-*.lockb
-package-lock.json
-public
-coverage
