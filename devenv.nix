@@ -5,23 +5,9 @@
   # NOTE: We use Bun as package manager while keeping Vite as bundler
   # This provides faster installs while maintaining Vite's mature ecosystem
 
-  # Rust for WASM module
-  #
-  # NOTE: This repository already contains `rust/graph-wasm/rust-toolchain.toml`.
-  # Keep that file as the source of truth for the Rust version to avoid mismatches.
-  # The channel must be explicitly set when using targets (nixpkgs channel doesn't support cross-compiling).
-  languages.rust = {
-    enable = true;
-    channel = "stable";
-    targets = [ "wasm32-unknown-unknown" ];
-  };
-
   # Required packages
   packages = with pkgs; [
     bun  # JavaScript runtime and package manager (replaces node + npm)
-    wasm-pack
-    # NOTE: `wasm-pack` vendors `wasm-bindgen`; installing `wasm-bindgen-cli` separately can cause version skew.
-    binaryen  # Provides wasm-opt
     curl
 
     # Docker client tools
@@ -49,10 +35,6 @@
     VITE_SURREALDB_WS_URL = "ws://localhost:8000/rpc";
     VITE_SURREALDB_HTTP_URL = "http://localhost:8000/rpc";
 
-    # WASM defaults
-    VITE_USE_WASM_GRAPH = "false";
-    VITE_WASM_DEBUG = "false";
-
     # Playwright configuration
     PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
     PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
@@ -76,23 +58,13 @@
   };
 
   # Git hooks (replaces husky + lint-staged)
-  # Note: Using only custom hooks as built-in hooks have compatibility issues with current devenv version
   git-hooks.hooks = {
-    # Custom ESLint hook
-    eslint = {
+    # Biome for linting and formatting
+    biome = {
       enable = true;
-      name = "ESLint";
-      entry = "bun run lint -- --fix";
-      files = "\\.(ts|tsx|js|jsx)$";
-      pass_filenames = false;
-    };
-
-    # Custom Prettier hook
-    prettier = {
-      enable = true;
-      name = "Prettier";
-      entry = "bunx prettier --write --ignore-unknown";
-      files = "\\.(ts|tsx|js|jsx|css|md|json)$";
+      name = "Biome";
+      entry = "bunx biome check --write";
+      files = "\\.(ts|tsx|js|jsx|json)$";
       pass_filenames = true;
     };
   };
@@ -108,22 +80,13 @@
       echo ""
     fi
 
-    # Check if WASM module is built
-    if [ ! -d "src/wasm/pkg" ]; then
-      echo "⚠️  WASM module not built. Run 'bun run wasm:build' to build it."
-      echo ""
-    fi
-
     echo "Versions:"
     echo "  Bun: $(bun --version)"
-    echo "  Rust: $(rustc --version)"
-    echo "  wasm-pack: $(wasm-pack --version)"
     echo "  Docker: $(docker --version 2>/dev/null || echo 'not available')"
     echo ""
     echo "Commands:"
     echo "  devenv up          - Start all services (SurrealDB + Vite)"
     echo "  bun run dev        - Start Vite only"
-    echo "  bun run wasm:build - Build WASM module"
     echo "  bun run test:e2e   - Run E2E tests (Playwright)"
     echo "  ./scripts/dev-utils.sh   - Development utilities"
     echo ""
