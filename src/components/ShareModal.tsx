@@ -87,8 +87,16 @@ export function ShareModal({ open, onOpenChange, graphState, onExportImage }: Sh
             <label className="text-sm font-medium">Share Link</label>
             <div className="flex gap-2">
               <Input value={shareUrlString} readOnly className="flex-1 text-xs" />
-              <Button onClick={handleCopyLink} variant="outline">
-                <MaterialIcon name={copied ? 'check' : 'content_copy'} size="sm" />
+              <Button
+                onClick={handleCopyLink}
+                variant="outline"
+                aria-label={copied ? 'Link copied' : 'Copy share link'}
+              >
+                <MaterialIcon
+                  name={copied ? 'check' : 'content_copy'}
+                  size="sm"
+                  aria-hidden="true"
+                />
               </Button>
             </div>
           </div>
