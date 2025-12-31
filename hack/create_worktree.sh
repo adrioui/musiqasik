@@ -87,6 +87,12 @@ if [ -d ".claude" ]; then
     cp -r .claude "$WORKTREE_PATH/"
 fi
 
+# Copy .opencode directory if it exists
+if [ -d ".opencode" ]; then
+    echo "📋 Copying .opencode directory..."
+    cp -r .opencode "$WORKTREE_PATH/"
+fi
+
 # Change to worktree directory
 cd "$WORKTREE_PATH"
 

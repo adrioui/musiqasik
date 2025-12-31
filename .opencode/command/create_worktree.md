@@ -2,40 +2,56 @@
 description: Create worktree and launch implementation session for a plan
 ---
 
-2. set up worktree for implementation:
-   2a. read `hack/create_worktree.sh` and create a new worktree with the Linear branch name: `./hack/create_worktree.sh ENG-XXXX BRANCH_NAME`
+# Create Worktree
 
-3. determine required data:
+Create a new git worktree and launch an OpenCode implementation session.
 
-branch name
-path to plan file (use relative path only)
-launch prompt
-command to run
+## Process:
 
-**IMPORTANT PATH USAGE:**
+1. **Gather information from user:**
+   - Branch name (required)
+   - Path to plan file (relative path starting with `thoughts/shared/...`)
+   - Base branch (optional, defaults to current branch)
 
-- The thoughts/ directory is synced between the main repo and worktrees
-- Always use ONLY the relative path starting with `thoughts/shared/...` without any directory prefix
-- Example: `thoughts/shared/plans/fix-mcp-keepalive-proper.md` (not the full absolute path)
-- This works because thoughts are synced and accessible from the worktree
+2. **Set up worktree:**
+   Read `hack/create_worktree.sh` and create a new worktree:
+   ```bash
+   ./hack/create_worktree.sh BRANCH_NAME [BASE_BRANCH]
+   ```
 
-3a. confirm with the user by sending a message to the Human
+3. **Determine required data:**
+   - branch name
+   - path to plan file (use relative path only)
+   - launch prompt
+   - command to run
 
-```
-based on the input, I plan to create a worktree with the following details:
+   **IMPORTANT PATH USAGE:**
+   - The thoughts/ directory is synced between the main repo and worktrees
+   - Always use ONLY the relative path starting with `thoughts/shared/...`
+   - Example: `thoughts/shared/plans/2025-12-31-feature-name.md`
 
-worktree path: ~/wt/humanlayer/ENG-XXXX
-branch name: BRANCH_NAME
-path to plan file: $FILEPATH
-launch prompt:
+4. **Confirm with user:**
 
-    /implement_plan at $FILEPATH and when you are done implementing and all tests pass, read ./claude/commands/commit.md and create a commit, then read ./claude/commands/describe_pr.md and create a PR, then add a comment to the Linear ticket with the PR link
+   ```
+   Based on the input, I plan to create a worktree with the following details:
 
-command to run:
+   worktree path: ~/wt/musiqasik/BRANCH_NAME
+   branch name: BRANCH_NAME
+   path to plan file: $FILEPATH
+   launch prompt:
 
-    humanlayer launch --model opus -w ~/wt/humanlayer/ENG-XXXX "/implement_plan at $FILEPATH and when you are done implementing and all tests pass, read ./claude/commands/commit.md and create a commit, then read ./claude/commands/describe_pr.md and create a PR, then add a comment to the Linear ticket with the PR link"
-```
+       /implement_plan at $FILEPATH and when you are done implementing and all tests pass, read ./.opencode/command/commit.md and create a commit, then read ./.opencode/command/describe_pr.md and create a PR
 
-incorporate any user feedback then:
+   command to run:
 
-4. launch implementation session: `humanlayer launch --model opus -w ~/wt/humanlayer/ENG-XXXX "/implement_plan at $FILEPATH and when you are done implementing and all tests pass, read ./claude/commands/commit.md and create a commit, then read ./claude/commands/describe_pr.md and create a PR, then add a comment to the Linear ticket with the PR link"`
+        cd ~/wt/musiqasik/BRANCH_NAME && opencode run -m google/gemini-claude-opus-4-5-thinking-high "/implement_plan at $FILEPATH and when you are done implementing and all tests pass, read ./.opencode/command/commit.md and create a commit, then read ./.opencode/command/describe_pr.md and create a PR"
+
+   Alternative (Interactive TUI):
+
+       opencode ~/wt/musiqasik/BRANCH_NAME
+   ```
+
+   Incorporate any user feedback.
+
+5. **Launch implementation session:**
+   Execute the command shown above to start the OpenCode session in the worktree.
