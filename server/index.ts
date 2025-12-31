@@ -20,9 +20,16 @@ const ServicesLive = Layer.mergeAll(
 // Get port from environment
 const port = parseInt(process.env.PORT || "3001", 10);
 
+// Get allowed origins from environment
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:4173"
+)
+  .split(",")
+  .map((origin) => origin.trim());
+
 // Create the server layer with CORS
 const ServerLive = HttpApiBuilder.serve().pipe(
-  Layer.provide(HttpApiBuilder.middlewareCors({ allowedOrigins: ["*"] })),
+  Layer.provide(HttpApiBuilder.middlewareCors({ allowedOrigins })),
   Layer.provide(ApiLive),
   Layer.provide(ServicesLive),
   Layer.provide(BunHttpServer.layer({ port })),
