@@ -10,9 +10,13 @@ export default defineConfig(() => ({
     strictPort: false,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:8787',
         changeOrigin: true,
       },
+    },
+    watch: {
+      // Prevent ELOOP errors from nix-darwin's Apple SDK symlinks
+      ignored: ['**/.devenv/**', '**/node_modules/**', '/nix/**'],
     },
   },
   plugins: [react()],

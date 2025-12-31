@@ -1,0 +1,6 @@
+# Local development secrets for wrangler dev
+# Copy to .dev.vars and fill in your values
+# NEVER commit .dev.vars to git!
+
+LASTFM_API_KEY=your_lastfm_api_key
+LASTFM_SHARED_SECRET=your_shared_secret

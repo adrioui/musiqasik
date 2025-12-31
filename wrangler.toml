@@ -1,0 +1,27 @@
+name = "musiqasik"
+main = "worker/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Static assets (React SPA)
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-application"
+
+# Local development
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Environment-specific settings
+[env.staging]
+name = "musiqasik-staging"
+workers_dev = true
+
+[env.production]
+name = "musiqasik-prod"
+workers_dev = false
+# Uncomment when custom domain is ready:
+# route = { pattern = "musiqasik.com/*", zone_name = "musiqasik.com" }

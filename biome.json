@@ -60,6 +60,7 @@
       "src/**/*.ts",
       "src/**/*.tsx",
       "server/**/*.ts",
+      "worker/**/*.ts",
       "e2e/**/*.ts",
       "scripts/**/*.sh",
       "*.ts",
