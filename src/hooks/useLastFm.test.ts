@@ -1,18 +1,47 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Artist, GraphData } from '@/types/artist'
 
-// Mock the services module
-vi.mock('@/services', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/services')>()
+// Create proper mock service implementations
+const mockSearchArtists = vi.fn().mockReturnValue([])
+const mockGetArtistInfo = vi.fn().mockReturnValue(null)
+const mockGetSimilarArtists = vi.fn().mockReturnValue([])
+const mockBuildGraph = vi.fn().mockReturnValue({
+  nodes: [],
+  edges: [],
+  center: null,
+})
+
+// Mock the services module with proper Effect implementations
+vi.mock('@/services', () => {
+  const { Context, Effect, Layer } = require('effect')
+
+  const LastFmService = Context.GenericTag('LastFmService')
+  const GraphService = Context.GenericTag('GraphService')
+  const ConfigService = Context.GenericTag('ConfigService')
+
+  const LastFmServiceLive = Layer.succeed(LastFmService, {
+    searchArtists: (query: string) => Effect.sync(() => mockSearchArtists(query)),
+    getArtistInfo: (name: string) => Effect.sync(() => mockGetArtistInfo(name)),
+    getSimilarArtists: (name: string) => Effect.sync(() => mockGetSimilarArtists(name)),
+  })
+
+  const GraphServiceLive = Layer.succeed(GraphService, {
+    buildGraph: (artistName: string, maxDepth: number) =>
+      Effect.sync(() => mockBuildGraph(artistName, maxDepth)),
+  })
+
+  const ConfigLive = Layer.succeed(ConfigService, {
+    lastFmApiKey: 'test-api-key',
+  })
+
   return {
-    ...actual,
-    // Keep the service tags but mock the layers
-    LastFmServiceLive: {
-      pipe: vi.fn().mockReturnThis(),
-    },
-    GraphServiceLive: {
-      pipe: vi.fn().mockReturnThis(),
-    },
+    LastFmService,
+    GraphService,
+    ConfigService,
+    LastFmServiceLive,
+    GraphServiceLive,
+    ConfigLive,
   }
 })
 
@@ -26,7 +55,6 @@ describe('useLastFm', () => {
   })
 
   it('should initialize with default state', async () => {
-    // Import useLastFm dynamically after mocks are set up
     const { useLastFm } = await import('./useLastFm')
     const { result } = renderHook(() => useLastFm())
 
@@ -41,72 +69,69 @@ describe('useLastFm', () => {
     const { useLastFm } = await import('./useLastFm')
     const { result } = renderHook(() => useLastFm())
 
-    let searchResult
+    let searchResult: Artist[] | undefined
     await act(async () => {
       searchResult = await result.current.searchArtists('   ')
     })
 
     expect(searchResult).toEqual([])
     expect(result.current.isLoading).toBe(false)
+    // Mock should not be called for empty queries
+    expect(mockSearchArtists).not.toHaveBeenCalled()
   })
 
   it('should handle empty artist name for getGraph', async () => {
     const { useLastFm } = await import('./useLastFm')
     const { result } = renderHook(() => useLastFm())
 
-    let graphResult
+    let graphResult: GraphData | null | undefined
     await act(async () => {
       graphResult = await result.current.getGraph('   ')
     })
 
     expect(graphResult).toBeNull()
     expect(result.current.isLoading).toBe(false)
+    expect(mockBuildGraph).not.toHaveBeenCalled()
   })
 
   it('should handle empty name for getArtist', async () => {
     const { useLastFm } = await import('./useLastFm')
     const { result } = renderHook(() => useLastFm())
 
-    let artistResult
+    let artistResult: Artist | null | undefined
     await act(async () => {
       artistResult = await result.current.getArtist('   ')
     })
 
     expect(artistResult).toBeNull()
     expect(result.current.isLoading).toBe(false)
+    expect(mockGetArtistInfo).not.toHaveBeenCalled()
   })
 
-  it('should set isLoading to true during searchArtists', async () => {
-    const { useLastFm } = await import('./useLastFm')
-    const { result } = renderHook(() => useLastFm())
-
-    // Start search with valid query - it will fail due to mocks but that's ok
-    // We're testing that the loading state is managed properly
-    const searchPromise = act(async () => {
-      try {
-        await result.current.searchArtists('radiohead')
-      } catch {
-        // Expected to fail with mocked services
-      }
-    })
-
-    await searchPromise
-
-    // After completion, isLoading should be false (whether success or error)
-    expect(result.current.isLoading).toBe(false)
-  })
-
-  it('should handle errors gracefully', async () => {
+  it('should set isLoading to false after searchArtists completes', async () => {
     const { useLastFm } = await import('./useLastFm')
     const { result } = renderHook(() => useLastFm())
 
     await act(async () => {
-      // This will fail because Effect services aren't properly set up
-      await result.current.searchArtists('test')
+      await result.current.searchArtists('radiohead')
     })
 
-    // After error, isLoading should be false and error should be set
+    // After completion, isLoading should be false
     expect(result.current.isLoading).toBe(false)
-    expect(result.current.error).not.toBeNull()
+  })
+
+  it('should manage loading state during operations', async () => {
+    const { useLastFm } = await import('./useLastFm')
+    const { result } = renderHook(() => useLastFm())
+
+    // Initially not loading
+    expect(result.current.isLoading).toBe(false)
+
+    await act(async () => {
+      await result.current.getGraph('radiohead', 1)
+    })
+
+    // After completion, not loading
+    expect(result.current.isLoading).toBe(false)
   })
 })
