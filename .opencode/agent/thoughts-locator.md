@@ -1,7 +1,7 @@
 ---
 description: Discovers relevant documents in thoughts/ directory. Use when you need to figure out if we have random thoughts written down that are relevant to your current research task.
 mode: subagent
-model: google/gemini-claude-opus-4-5-thinking-low
+model: google/gemini-claude-sonnet-4-5-thinking-high
 tools:
   grep: true
   glob: true

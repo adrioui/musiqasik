@@ -1,7 +1,7 @@
 ---
 description: Extracts high-value insights from thoughts documents. Use this subagent when wanting to deep dive on a research topic.
 mode: subagent
-model: google/gemini-claude-opus-4-5-thinking-low
+model: google/gemini-claude-sonnet-4-5-thinking-high
 tools:
   read: true
   grep: true

@@ -8,7 +8,6 @@ The recommended way to develop MusiqasiQ is using [devenv](https://devenv.sh/) f
 
 - [Nix](https://nixos.org/download) with [devenv](https://devenv.sh/getting-started/)
 - [direnv](https://direnv.net/)
-- Docker (for SurrealDB; this plan uses `docker compose`, i.e. Compose v2 plugin syntax)
 
 ### Setup
 
@@ -24,6 +23,9 @@ direnv allow
 cp .envrc.local.example .envrc.local
 # Edit .envrc.local and add your Last.fm API key
 
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars and add your Last.fm API key and shared secret (for worker)
+
 # 4. Install dependencies
 bun install
 
@@ -31,7 +33,8 @@ bun install
 devenv up
 ```
 
-Frontend will be available at http://localhost:8080.
+- Frontend (Vite): http://localhost:8080
+- API (Wrangler): http://localhost:8787
 
 See [docs/devenv-setup.md](docs/devenv-setup.md) for detailed platform-specific instructions (MacOS, Fedora Silverblue).
 
@@ -94,10 +97,25 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Hono (API framework)
+- CloudFlare Workers (edge deployment)
+- Effect (typed service architecture)
 
 ## How can I deploy this project?
 
-Deploy using your preferred hosting platform (Vercel, Netlify, etc.).
+This project deploys to CloudFlare Workers:
+
+```bash
+# Deploy to staging
+bun run deploy:staging
+
+# Deploy to production
+bun run deploy:prod
+```
+
+Required secrets in CloudFlare:
+- `LASTFM_API_KEY` - Last.fm API key
+- `LASTFM_SHARED_SECRET` - Last.fm shared secret
 
 ## Can I connect a custom domain?
 

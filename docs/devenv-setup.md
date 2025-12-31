@@ -4,7 +4,6 @@ This guide covers setting up the MusiqasiQ development environment using devenv 
 
 ## Prerequisites
 
-- Docker (for SurrealDB)
 - Git
 
 ## MacOS Installation
@@ -194,13 +193,7 @@ cp .envrc.local.example .envrc.local
 bun install
 ```
 
-### Step 5: Verify WASM toolchain
-
-```bash
-bun run wasm:build
-```
-
-### Step 6: Start development
+### Step 5: Start development
 
 ```bash
 bun run dev
@@ -218,21 +211,6 @@ Run `direnv allow` to allow the .envrc file.
 
 Run `bun --version` to verify Bun is being used from the devenv shell.
 
-### wasm-pack not found
-
-Ensure you're in the devenv shell. Run `devenv shell` or check that direnv is active.
-
-### Rust target missing
-
-The devenv automatically adds wasm32-unknown-unknown target.
-
-Note:
-
-- Avoid running `rustup target add ...` inside the devenv environment.
-- The Rust toolchain is managed by Nix (fenix) and should align with `rust/graph-wasm/rust-toolchain.toml`.
-
-If you still see a target error, verify you're actually inside the devenv shell (`direnv` active), then re-enter the shell and retry `bun run wasm:build`.
-
 ### Permission denied on Fedora Silverblue
 
 Ensure SELinux contexts are correct:
@@ -244,80 +222,6 @@ sudo restorecon -RF /nix
 ### Slow first run
 
 The first `devenv shell` or `direnv allow` can take 40+ seconds as it fetches nixpkgs. Subsequent runs will be much faster (~9s).
-
-### Docker not available
-
-On Fedora Silverblue, you may need to install podman-docker for compatibility:
-
-```bash
-rpm-ostree install podman-docker
-```
-
-Or create an alias: `alias docker=podman`
-
----
-
-## SurrealDB Service (Docker)
-
-SurrealDB runs in a Docker container and starts on port 8000.
-
-### Prerequisites
-
-Docker must be installed and running:
-
-- **macOS**: Install Docker Desktop from https://www.docker.com/products/docker-desktop
-- **Fedora Silverblue**: Podman is commonly used, and can be made Docker-compatible, but this is not automatic.
-  - Ensure you have a working `docker` CLI compatibility layer and a Compose implementation.
-
-  ```bash
-  # One option: provide `docker` command compatibility
-  rpm-ostree install podman-docker
-
-  # Compose is a separate concern. Verify you have one of:
-  # - docker-compose (standalone)
-  # - docker compose (plugin)
-  # - podman-compose
-  # This plan standardizes on `docker compose` (v2 plugin). If you're on Podman, ensure your `docker` compatibility and Compose support match this.
-  docker compose version
-  ```
-
-### Start SurrealDB
-
-```bash
-docker compose up -d surrealdb
-```
-
-### Verify Database
-
-```bash
-./scripts/check-surrealdb.sh
-```
-
-### Access Database CLI
-
-```bash
-docker exec -it musiqasik-surrealdb /surreal sql --conn http://localhost:8000 --user root --pass root --ns musiqasik --db main
-```
-
-### View Logs
-
-```bash
-docker logs -f musiqasik-surrealdb
-```
-
-### Stop Database
-
-```bash
-docker compose stop surrealdb
-```
-
-### Import Schema
-
-```bash
-docker exec -i musiqasik-surrealdb /surreal import --conn http://localhost:8000 --user root --pass root --ns musiqasik --db main < ./surrealdb/schema.surql
-```
-
-Note: this plan uses `docker compose` (v2 plugin syntax) consistently. Avoid mixing in `docker-compose` (v1) to reduce drift and compatibility surprises.
 
 ---
 
@@ -331,8 +235,8 @@ devenv up
 
 This starts:
 
-- SurrealDB Docker container on port 8000
-- Vite frontend on port 8080 (port is configured by the project's Vite config; if you change it there, update this doc accordingly)
+- Wrangler API server on port 8787
+- Vite frontend on port 8080
 
 All logs are displayed in a unified terminal with service prefixes.
 
@@ -344,12 +248,7 @@ All logs are displayed in a unified terminal with service prefixes.
 
 ### Stop Services
 
-Press `Ctrl+C` in the terminal where `devenv up` is running, or:
-
-```bash
-devenv down
-docker compose stop surrealdb
-```
+Press `Ctrl+C` in the terminal where `devenv up` is running.
 
 ---
 
@@ -394,8 +293,7 @@ Pre-commit hooks automatically run on `git commit` to ensure code quality. These
 
 ### Enabled Hooks
 
-- **ESLint**: Lints and fixes TypeScript/JavaScript files (`*.ts`, `*.tsx`, `*.js`, `*.jsx`)
-- **Prettier**: Formats code files (`*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.css`, `*.md`, `*.json`)
+- **Biome**: Lints and formats TypeScript/JavaScript files (`*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.json`)
 
 ### Run Hooks Manually
 
@@ -426,14 +324,12 @@ Use the development utilities script for common tasks:
 
 | Command     | Description                                  |
 | ----------- | -------------------------------------------- |
-| `lint`      | Run ESLint                                   |
+| `lint`      | Run Biome linter                             |
 | `typecheck` | Run TypeScript type check                    |
 | `check`     | Run all checks (lint + typecheck + services) |
 | `test`      | Run unit tests                               |
 | `test:e2e`  | Run E2E tests                                |
-| `wasm`      | Build WASM module                            |
 | `clean`     | Clean all build artifacts                    |
-| `reset-db`  | Reset SurrealDB to clean state               |
 
 ---
 

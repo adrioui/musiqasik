@@ -4,13 +4,13 @@
 
 ## What is MusiqasiQ?
 
-A React-based web application that visualizes artist similarity relationships through interactive force-directed graphs. Integrates with Last.fm API, optionally caches data in SurrealDB, and provides an engaging interface for exploring music artist connections.
+A React-based web application that visualizes artist similarity relationships through interactive force-directed graphs. Integrates with Last.fm API and provides an engaging interface for exploring music artist connections.
 
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + D3.js
 - **Services**: Effect library for typed, composable service architecture
-- **Database**: SurrealDB (optional - app works without it using Last.fm directly)
+- **API Caching**: Cloudflare Workers (optional local development)
 - **State**: React hooks for local state, Effect runtime for service operations
 - **Routing**: React Router DOM
 
@@ -24,7 +24,7 @@ musiqasik/
 │   │   └── ui/             # shadcn/ui components
 │   ├── hooks/              # React hooks (useLastFm, useSimilarArtists, etc.)
 │   ├── services/           # Effect services (LastFm, Database, Graph, Config)
-│   ├── integrations/       # SurrealDB client
+│   ├── integrations/       # External service clients
 │   ├── lib/                # Utilities and error types
 │   ├── pages/              # Route pages
 │   └── types/              # TypeScript type definitions
@@ -38,13 +38,13 @@ musiqasik/
 2. **Development**: `bun run dev` starts server on port 8080
 3. **Building**: `bun run build` for production
 4. **Testing**: `bun run test` for unit tests, `bun run test:e2e` for E2E tests
-5. **Linting**: `bun run lint` runs ESLint
+5. **Linting**: `bun run lint` runs Biome
 
 ## Architecture Overview
 
 - **Data Flow**: Search → useLastFm hook → Effect runtime → LastFmService → Last.fm API → Graph
 - **Graph Visualization**: D3.js force simulation with modular hooks (`ForceGraph/hooks/`)
-- **Caching**: Optional SurrealDB caching with BFS traversal in GraphService
+- **Caching**: Optional Cloudflare Workers caching
 - **State**: URL params for shareable graphs, React hooks for UI state
 - **Service Layer**: Effect-based services with proper dependency injection
 
@@ -52,7 +52,7 @@ musiqasik/
 
 - **ConfigService**: Environment configuration (API keys, DB URLs)
 - **LastFmService**: Last.fm API integration (search, artist info, similar artists)
-- **DatabaseService**: SurrealDB operations (artist caching, edge storage)
+- **DatabaseService**: Cloudflare KV operations (artist caching)
 - **GraphService**: BFS graph building algorithm
 
 ## How to Work on This Project
@@ -88,7 +88,7 @@ Consult these files for detailed information:
 - **TypeScript strict mode is disabled** (`tsconfig.app.json`)
 - **Path aliases**: `@/` maps to `./src/` (`vite.config.ts`)
 - **Environment variables**: Must be prefixed with `VITE_` for client-side access
-- **Database optional**: App works without SurrealDB using Last.fm directly
+- **Caching optional**: App works without Cloudflare Workers using Last.fm directly
 
 ## Testing
 
