@@ -113,7 +113,9 @@ bun run deploy:staging
 bun run deploy:prod
 ```
 
-Required secrets in CloudFlare:
+Required secrets in CloudFlare / GitHub Actions:
+- `CLOUDFLARE_API_TOKEN` - API token with Workers deploy permissions
+- `CLOUDFLARE_ACCOUNT_ID` - Cloudflare account ID for the target account
 - `LASTFM_API_KEY` - Last.fm API key
 - `LASTFM_SHARED_SECRET` - Last.fm shared secret
 
