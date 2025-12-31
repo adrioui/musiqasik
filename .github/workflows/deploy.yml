@@ -46,6 +46,8 @@ jobs:
 
       - name: Build
         run: bun run build
+        env:
+          VITE_LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
 
       - name: Deploy to Staging
         uses: cloudflare/wrangler-action@v3
@@ -88,6 +90,8 @@ jobs:
 
       - name: Build
         run: bun run build
+        env:
+          VITE_LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
 
       - name: Deploy to Production
         uses: cloudflare/wrangler-action@v3
@@ -101,4 +105,3 @@ jobs:
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
-          VITE_LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
