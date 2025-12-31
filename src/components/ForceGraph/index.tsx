@@ -429,7 +429,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   }, [
     onNodeClick,
     onEdgeClick,
-    showLabels,
     applyZoom,
     simulation,
     restart,
@@ -439,6 +438,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     getNodeColor,
     adjacencyMap,
     animateNodesIn,
+    // We intentionally exclude showLabels from dependencies because we handle its updates
+    // in a separate effect to avoid full graph rebuilds when toggling visibility.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ])
 
   // Update labels visibility
