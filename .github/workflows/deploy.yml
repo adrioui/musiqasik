@@ -101,3 +101,4 @@ jobs:
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
+          VITE_LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
