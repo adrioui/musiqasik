@@ -1,17 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Mock the Effect runtime before importing useLastFm
-// The hook uses Effect services, so we need to mock at that layer
-vi.mock('@/integrations/surrealdb/client', () => ({
-  SurrealClient: {
-    of: vi.fn(),
-  },
-  SurrealLive: {
-    pipe: vi.fn().mockReturnThis(),
-  },
-}))
-
 // Mock the services module
 vi.mock('@/services', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services')>()
@@ -19,9 +8,6 @@ vi.mock('@/services', async (importOriginal) => {
     ...actual,
     // Keep the service tags but mock the layers
     LastFmServiceLive: {
-      pipe: vi.fn().mockReturnThis(),
-    },
-    DatabaseServiceLive: {
       pipe: vi.fn().mockReturnThis(),
     },
     GraphServiceLive: {
