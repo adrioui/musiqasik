@@ -21,7 +21,7 @@ name = "musiqasik-staging"
 workers_dev = true
 
 [env.production]
-name = "musiqasik-prod"
+name = "musiqasik"
 workers_dev = false
 # Uncomment when custom domain is ready:
 # route = { pattern = "musiqasik.com/*", zone_name = "musiqasik.com" }
