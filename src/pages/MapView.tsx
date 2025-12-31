@@ -1,122 +1,122 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArtistDetailSheet } from "@/components/ArtistDetailSheet";
-import { ArtistSearch } from "@/components/ArtistSearch";
-import { EdgeCard } from "@/components/EdgeCard";
-import { FloatingNav } from "@/components/FloatingNav";
-import { ForceGraph, type ForceGraphHandle } from "@/components/ForceGraph";
-import type { EdgeClickInfo } from "@/components/ForceGraph/types";
-import { LensesTray } from "@/components/LensesTray";
-import { ShareModal } from "@/components/ShareModal";
-import { SkeletonGraph } from "@/components/SkeletonGraph";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { FloatingPanel } from "@/components/ui/floating-panel";
-import { GlassCard } from "@/components/ui/glass-card";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import { useToast } from "@/hooks/use-toast";
-import { useLastFm } from "@/hooks/useLastFm";
-import { useSimilarArtists } from "@/hooks/useSimilarArtists";
-import type { Artist, GraphData } from "@/types/artist";
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ArtistDetailSheet } from '@/components/ArtistDetailSheet'
+import { ArtistSearch } from '@/components/ArtistSearch'
+import { EdgeCard } from '@/components/EdgeCard'
+import { FloatingNav } from '@/components/FloatingNav'
+import { ForceGraph, type ForceGraphHandle } from '@/components/ForceGraph'
+import type { EdgeClickInfo } from '@/components/ForceGraph/types'
+import { LensesTray } from '@/components/LensesTray'
+import { ShareModal } from '@/components/ShareModal'
+import { SkeletonGraph } from '@/components/SkeletonGraph'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { Button } from '@/components/ui/button'
+import { FloatingPanel } from '@/components/ui/floating-panel'
+import { GlassCard } from '@/components/ui/glass-card'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { useToast } from '@/hooks/use-toast'
+import { useLastFm } from '@/hooks/useLastFm'
+import { useSimilarArtists } from '@/hooks/useSimilarArtists'
+import type { Artist, GraphData } from '@/types/artist'
 
 export default function MapView() {
-  const { artistName } = useParams<{ artistName: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { getGraph, isLoading, error } = useLastFm();
-  const graphRef = useRef<ForceGraphHandle>(null);
+  const { artistName } = useParams<{ artistName: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const { getGraph, isLoading, error } = useLastFm()
+  const graphRef = useRef<ForceGraphHandle>(null)
 
   // State
-  const [graphData, setGraphData] = useState<GraphData | null>(null);
-  const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null);
+  const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const [selectedArtist, setSelectedArtist] = useState<Artist | null>(null)
   const [depth, setDepth] = useState(() => {
-    const d = searchParams.get("depth");
-    return d ? parseInt(d, 10) : 1;
-  });
+    const d = searchParams.get('depth')
+    return d ? parseInt(d, 10) : 1
+  })
   const [threshold, setThreshold] = useState(() => {
-    const t = searchParams.get("threshold");
-    return t ? parseFloat(t) : 0;
-  });
-  const [showLabels, setShowLabels] = useState(true);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [edgeInfo, setEdgeInfo] = useState<EdgeClickInfo | null>(null);
+    const t = searchParams.get('threshold')
+    return t ? parseFloat(t) : 0
+  })
+  const [showLabels, setShowLabels] = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [edgeInfo, setEdgeInfo] = useState<EdgeClickInfo | null>(null)
 
-  const similarArtists = useSimilarArtists(selectedArtist, graphData);
+  const similarArtists = useSimilarArtists(selectedArtist, graphData)
 
   // Load graph data
   const loadGraph = useCallback(
     async (name: string, graphDepth: number) => {
-      const data = await getGraph(name, graphDepth);
+      const data = await getGraph(name, graphDepth)
       if (data) {
-        setGraphData(data);
-        setSelectedArtist(data.center);
+        setGraphData(data)
+        setSelectedArtist(data.center)
       }
     },
     [getGraph],
-  );
+  )
 
   useEffect(() => {
     if (artistName) {
-      loadGraph(decodeURIComponent(artistName), depth);
+      loadGraph(decodeURIComponent(artistName), depth)
     }
-  }, [artistName, depth, loadGraph]);
+  }, [artistName, depth, loadGraph])
 
   // Sync state to URL
   useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("depth", depth.toString());
-    params.set("threshold", threshold.toString());
-    setSearchParams(params, { replace: true });
-  }, [depth, threshold, setSearchParams]);
+    const params = new URLSearchParams()
+    params.set('depth', depth.toString())
+    params.set('threshold', threshold.toString())
+    setSearchParams(params, { replace: true })
+  }, [depth, threshold, setSearchParams])
 
   // Error handling
   useEffect(() => {
     if (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error,
-        variant: "destructive",
-      });
+        variant: 'destructive',
+      })
     }
-  }, [error, toast]);
+  }, [error, toast])
 
   // Callbacks
   const handleNodeClick = useCallback((artist: Artist) => {
-    setSelectedArtist(artist);
-    setSheetOpen(true);
-    setEdgeInfo(null);
-  }, []);
+    setSelectedArtist(artist)
+    setSheetOpen(true)
+    setEdgeInfo(null)
+  }, [])
 
   const handleEdgeClick = useCallback((info: EdgeClickInfo) => {
-    setEdgeInfo(info);
-    setSheetOpen(false);
-  }, []);
+    setEdgeInfo(info)
+    setSheetOpen(false)
+  }, [])
 
   const handleRecenter = useCallback(
     (name: string) => {
-      navigate(`/artist/${encodeURIComponent(name)}`);
-      setSheetOpen(false);
-      setEdgeInfo(null);
+      navigate(`/artist/${encodeURIComponent(name)}`)
+      setSheetOpen(false)
+      setEdgeInfo(null)
     },
     [navigate],
-  );
+  )
 
   const handleSearchSelect = useCallback(
     (artist: Artist) => {
-      navigate(`/artist/${encodeURIComponent(artist.name)}`);
-      setSearchOpen(false);
+      navigate(`/artist/${encodeURIComponent(artist.name)}`)
+      setSearchOpen(false)
     },
     [navigate],
-  );
+  )
 
   // Close overlays when clicking graph background
   const handleBackgroundClick = useCallback(() => {
-    setEdgeInfo(null);
-    if (searchOpen) setSearchOpen(false);
-  }, [searchOpen]);
+    setEdgeInfo(null)
+    if (searchOpen) setSearchOpen(false)
+  }, [searchOpen])
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -133,9 +133,7 @@ export default function MapView() {
                     size="sm"
                     className="animate-spin text-primary"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    Loading similarity graph...
-                  </span>
+                  <span className="text-sm text-muted-foreground">Loading similarity graph...</span>
                 </div>
               </GlassCard>
             </div>
@@ -233,9 +231,9 @@ export default function MapView() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onArtistClick={(name) => {
-          const artist = graphData?.nodes.find((n) => n.name === name);
+          const artist = graphData?.nodes.find((n) => n.name === name)
           if (artist) {
-            setSelectedArtist(artist);
+            setSelectedArtist(artist)
           }
         }}
         onExploreClick={handleRecenter}
@@ -246,14 +244,12 @@ export default function MapView() {
         open={shareOpen}
         onOpenChange={setShareOpen}
         graphState={{
-          artist: artistName ? decodeURIComponent(artistName) : "",
+          artist: artistName ? decodeURIComponent(artistName) : '',
           depth,
           threshold,
         }}
-        onExportImage={() =>
-          graphRef.current?.exportImage() ?? Promise.resolve(null)
-        }
+        onExportImage={() => graphRef.current?.exportImage() ?? Promise.resolve(null)}
       />
     </div>
-  );
+  )
 }

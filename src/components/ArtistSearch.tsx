@@ -1,130 +1,117 @@
-import { useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import { useLastFm } from "@/hooks/useLastFm";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { cn, formatNumber } from "@/lib/utils";
-import type { Artist } from "@/types/artist";
+import { useEffect, useRef, useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { useLastFm } from '@/hooks/useLastFm'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { cn, formatNumber } from '@/lib/utils'
+import type { Artist } from '@/types/artist'
 
 interface ArtistSearchProps {
-  onSelect: (artist: Artist) => void;
-  className?: string;
-  placeholder?: string;
-  autoFocus?: boolean;
+  onSelect: (artist: Artist) => void
+  className?: string
+  placeholder?: string
+  autoFocus?: boolean
 }
 
 export function ArtistSearch({
   onSelect,
   className,
-  placeholder = "Search for an artist...",
+  placeholder = 'Search for an artist...',
   autoFocus = false,
 }: ArtistSearchProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Artist[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [showRecent, setShowRecent] = useState(false);
-  const { searchArtists, isLoading } = useLastFm();
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Artist[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [showRecent, setShowRecent] = useState(false)
+  const { searchArtists, isLoading } = useLastFm()
   const [recentSearches, setRecentSearches] = useLocalStorage<Artist[]>(
-    "musiqasiq-recent-searches",
+    'musiqasiq-recent-searches',
     [],
-  );
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  )
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const abortController = new AbortController();
+    const abortController = new AbortController()
 
     const handler = setTimeout(async () => {
       if (query.trim().length >= 2) {
         try {
-          const searchResults = await searchArtists(
-            query,
-            abortController.signal,
-          );
+          const searchResults = await searchArtists(query, abortController.signal)
           if (!abortController.signal.aborted) {
-            setResults(searchResults);
-            setIsOpen(true);
-            setSelectedIndex(-1);
+            setResults(searchResults)
+            setIsOpen(true)
+            setSelectedIndex(-1)
           }
         } catch (error) {
-          if (error instanceof Error && error.name !== "AbortError") {
-            console.error("Search failed:", error);
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('Search failed:', error)
           }
         }
       } else {
-        setResults([]);
-        setIsOpen(false);
+        setResults([])
+        setIsOpen(false)
       }
-    }, 300);
+    }, 300)
 
     return () => {
-      clearTimeout(handler);
-      abortController.abort();
-    };
-  }, [query, searchArtists]);
+      clearTimeout(handler)
+      abortController.abort()
+    }
+  }, [query, searchArtists])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || results.length === 0) return;
+    if (!isOpen || results.length === 0) return
 
     switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < results.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-        break;
-      case "Enter":
-        e.preventDefault();
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev))
+        break
+      case 'Enter':
+        e.preventDefault()
         if (selectedIndex >= 0 && selectedIndex < results.length) {
-          handleSelect(results[selectedIndex]);
+          handleSelect(results[selectedIndex])
         }
-        break;
-      case "Escape":
-        setIsOpen(false);
-        break;
+        break
+      case 'Escape':
+        setIsOpen(false)
+        break
     }
-  };
+  }
 
   const handleSelect = (artist: Artist) => {
     // Add to recent searches (max 5, no duplicates)
     setRecentSearches((prev) => {
-      const filtered = prev.filter(
-        (a) => a.name.toLowerCase() !== artist.name.toLowerCase(),
-      );
-      return [artist, ...filtered].slice(0, 5);
-    });
+      const filtered = prev.filter((a) => a.name.toLowerCase() !== artist.name.toLowerCase())
+      return [artist, ...filtered].slice(0, 5)
+    })
 
-    setQuery("");
-    setResults([]);
-    setIsOpen(false);
-    setShowRecent(false);
-    onSelect(artist);
-  };
+    setQuery('')
+    setResults([])
+    setIsOpen(false)
+    setShowRecent(false)
+    onSelect(artist)
+  }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("relative w-full max-w-xl", className)}
-    >
+    <div ref={containerRef} className={cn('relative w-full max-w-xl', className)}>
       <div className="relative">
         <MaterialIcon
           name="search"
@@ -139,14 +126,14 @@ export function ArtistSearch({
           onKeyDown={handleKeyDown}
           onFocus={() => {
             if (results.length > 0) {
-              setIsOpen(true);
-            } else if (query.trim() === "" && recentSearches.length > 0) {
-              setShowRecent(true);
+              setIsOpen(true)
+            } else if (query.trim() === '' && recentSearches.length > 0) {
+              setShowRecent(true)
             }
           }}
           onBlur={() => {
             // Delay to allow click on recent items
-            setTimeout(() => setShowRecent(false), 200);
+            setTimeout(() => setShowRecent(false), 200)
           }}
           placeholder={placeholder}
           autoFocus={autoFocus}
@@ -169,10 +156,8 @@ export function ArtistSearch({
                 <button
                   onClick={() => handleSelect(artist)}
                   className={cn(
-                    "flex w-full items-center gap-4 px-4 py-3 text-left transition-colors",
-                    index === selectedIndex
-                      ? "bg-secondary"
-                      : "hover:bg-secondary/50",
+                    'flex w-full items-center gap-4 px-4 py-3 text-left transition-colors',
+                    index === selectedIndex ? 'bg-secondary' : 'hover:bg-secondary/50',
                   )}
                 >
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
@@ -183,18 +168,14 @@ export function ArtistSearch({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <MaterialIcon
-                        name="graphic_eq"
-                        size="lg"
-                        className="text-muted-foreground"
-                      />
+                      <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{artist.name}</p>
                     {artist.listeners && (
                       <p className="text-sm text-muted-foreground">
-                        {formatNumber(artist.listeners, "listeners")}
+                        {formatNumber(artist.listeners, 'listeners')}
                       </p>
                     )}
                   </div>
@@ -205,57 +186,44 @@ export function ArtistSearch({
         </div>
       )}
 
-      {showRecent &&
-        query.trim() === "" &&
-        recentSearches.length > 0 &&
-        !isOpen && (
-          <div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
-            <div className="flex items-center gap-2 border-b border-border px-4 py-2">
-              <MaterialIcon
-                name="schedule"
-                size="xs"
-                className="text-muted-foreground"
-              />
-              <span className="text-sm font-medium text-muted-foreground">
-                Recent Searches
-              </span>
-            </div>
-            <ul className="py-2">
-              {recentSearches.map((artist) => (
-                <li key={artist.name}>
-                  <button
-                    onClick={() => handleSelect(artist)}
-                    className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
-                  >
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
-                      {artist.image_url ? (
-                        <img
-                          src={artist.image_url}
-                          alt={artist.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <MaterialIcon
-                          name="graphic_eq"
-                          size="lg"
-                          className="text-muted-foreground"
-                        />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{artist.name}</p>
-                      {artist.listeners && (
-                        <p className="text-sm text-muted-foreground">
-                          {formatNumber(artist.listeners, "listeners")}
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
+      {showRecent && query.trim() === '' && recentSearches.length > 0 && !isOpen && (
+        <div className="animate-fade-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+            <MaterialIcon name="schedule" size="xs" className="text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Recent Searches</span>
           </div>
-        )}
+          <ul className="py-2">
+            {recentSearches.map((artist) => (
+              <li key={artist.name}>
+                <button
+                  onClick={() => handleSelect(artist)}
+                  className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
+                >
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                    {artist.image_url ? (
+                      <img
+                        src={artist.image_url}
+                        alt={artist.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{artist.name}</p>
+                    {artist.listeners && (
+                      <p className="text-sm text-muted-foreground">
+                        {formatNumber(artist.listeners, 'listeners')}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
-  );
+  )
 }

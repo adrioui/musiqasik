@@ -1,15 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import { ArtistSearch } from "@/components/ArtistSearch";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import type { Artist } from "@/types/artist";
+import { useNavigate } from 'react-router-dom'
+import { ArtistSearch } from '@/components/ArtistSearch'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import type { Artist } from '@/types/artist'
 
 export default function Index() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const handleArtistSelect = (artist: Artist) => {
-    navigate(`/artist/${encodeURIComponent(artist.name)}`);
-  };
+    navigate(`/artist/${encodeURIComponent(artist.name)}`)
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -17,11 +17,7 @@ export default function Index() {
       <header className="w-full px-6 py-6">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <MaterialIcon
-              name="hub"
-              size="sm"
-              className="text-primary-foreground"
-            />
+            <MaterialIcon name="hub" size="sm" className="text-primary-foreground" />
           </div>
           <span className="text-xl font-bold">MusiqasiQ</span>
           <div className="ml-auto">
@@ -38,8 +34,8 @@ export default function Index() {
             <span className="text-primary"> Connections</span>
           </h1>
           <p className="mx-auto mb-12 max-w-xl text-xl text-muted-foreground">
-            Discover how your favorite artists are connected through an
-            interactive similarity map powered by Last.fm
+            Discover how your favorite artists are connected through an interactive similarity map
+            powered by Last.fm
           </p>
 
           {/* Search */}
@@ -51,46 +47,36 @@ export default function Index() {
           <div className="grid gap-6 text-left md:grid-cols-3">
             <div
               className="animate-slide-up rounded-2xl border border-border bg-card p-6"
-              style={{ animationDelay: "0.1s" }}
+              style={{ animationDelay: '0.1s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <MaterialIcon
-                  name="account_tree"
-                  className="text-primary"
-                  size="lg"
-                />
+                <MaterialIcon name="account_tree" className="text-primary" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Visual Connections</h3>
               <p className="text-sm text-muted-foreground">
-                Explore artist relationships through an interactive
-                force-directed graph
+                Explore artist relationships through an interactive force-directed graph
               </p>
             </div>
 
             <div
               className="animate-slide-up rounded-2xl border border-border bg-card p-6"
-              style={{ animationDelay: "0.2s" }}
+              style={{ animationDelay: '0.2s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
                 <MaterialIcon name="bolt" className="text-accent" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Configurable Depth</h3>
               <p className="text-sm text-muted-foreground">
-                Adjust the graph depth from 1-3 hops to discover more
-                connections
+                Adjust the graph depth from 1-3 hops to discover more connections
               </p>
             </div>
 
             <div
               className="animate-slide-up rounded-2xl border border-border bg-card p-6"
-              style={{ animationDelay: "0.3s" }}
+              style={{ animationDelay: '0.3s' }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <MaterialIcon
-                  name="database"
-                  className="text-primary"
-                  size="lg"
-                />
+                <MaterialIcon name="database" className="text-primary" size="lg" />
               </div>
               <h3 className="mb-2 font-semibold">Smart Caching</h3>
               <p className="text-sm text-muted-foreground">
@@ -108,5 +94,5 @@ export default function Index() {
         </div>
       </footer>
     </div>
-  );
+  )
 }

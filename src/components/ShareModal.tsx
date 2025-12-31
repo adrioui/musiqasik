@@ -1,77 +1,67 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { useToast } from '@/hooks/use-toast'
 
 interface ShareModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
   graphState: {
-    artist: string;
-    depth: number;
-    threshold: number;
-  };
-  onExportImage?: () => Promise<Blob | null>;
+    artist: string
+    depth: number
+    threshold: number
+  }
+  onExportImage?: () => Promise<Blob | null>
 }
 
-export function ShareModal({
-  open,
-  onOpenChange,
-  graphState,
-  onExportImage,
-}: ShareModalProps) {
-  const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
-  const [exporting, setExporting] = useState(false);
+export function ShareModal({ open, onOpenChange, graphState, onExportImage }: ShareModalProps) {
+  const { toast } = useToast()
+  const [copied, setCopied] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   // Build share URL
-  const shareUrl = new URL(window.location.href);
-  shareUrl.searchParams.set("depth", graphState.depth.toString());
-  shareUrl.searchParams.set("threshold", graphState.threshold.toString());
-  const shareUrlString = shareUrl.toString();
+  const shareUrl = new URL(window.location.href)
+  shareUrl.searchParams.set('depth', graphState.depth.toString())
+  shareUrl.searchParams.set('threshold', graphState.threshold.toString())
+  const shareUrlString = shareUrl.toString()
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrlString);
-      setCopied(true);
+      await navigator.clipboard.writeText(shareUrlString)
+      setCopied(true)
       toast({
-        title: "Link copied!",
-        description: "Share URL copied to clipboard",
-      });
-      setTimeout(() => setCopied(false), 2000);
+        title: 'Link copied!',
+        description: 'Share URL copied to clipboard',
+      })
+      setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast({ title: "Failed to copy", variant: "destructive" });
+      toast({ title: 'Failed to copy', variant: 'destructive' })
     }
-  };
+  }
 
   const handleExportImage = async () => {
-    if (!onExportImage) return;
+    if (!onExportImage) return
 
-    setExporting(true);
+    setExporting(true)
     try {
-      const blob = await onExportImage();
+      const blob = await onExportImage()
       if (blob) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${graphState.artist}-graph.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast({ title: "Image exported!", description: "Graph image saved" });
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${graphState.artist}-graph.png`
+        a.click()
+        URL.revokeObjectURL(url)
+        toast({ title: 'Image exported!', description: 'Graph image saved' })
       }
     } catch {
-      toast({ title: "Export failed", variant: "destructive" });
+      toast({ title: 'Export failed', variant: 'destructive' })
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,12 +76,9 @@ export function ShareModal({
         <div className="space-y-4">
           {/* Current Graph Info */}
           <div className="rounded-lg bg-secondary/50 p-3">
-            <p className="text-sm font-medium">
-              {graphState.artist}'s Similarity Graph
-            </p>
+            <p className="text-sm font-medium">{graphState.artist}'s Similarity Graph</p>
             <p className="text-xs text-muted-foreground">
-              Depth: {graphState.depth} hops • Threshold:{" "}
-              {Math.round(graphState.threshold * 100)}%
+              Depth: {graphState.depth} hops • Threshold: {Math.round(graphState.threshold * 100)}%
             </p>
           </div>
 
@@ -99,16 +86,9 @@ export function ShareModal({
           <div className="space-y-2">
             <label className="text-sm font-medium">Share Link</label>
             <div className="flex gap-2">
-              <Input
-                value={shareUrlString}
-                readOnly
-                className="flex-1 text-xs"
-              />
+              <Input value={shareUrlString} readOnly className="flex-1 text-xs" />
               <Button onClick={handleCopyLink} variant="outline">
-                <MaterialIcon
-                  name={copied ? "check" : "content_copy"}
-                  size="sm"
-                />
+                <MaterialIcon name={copied ? 'check' : 'content_copy'} size="sm" />
               </Button>
             </div>
           </div>
@@ -124,7 +104,7 @@ export function ShareModal({
                 disabled={exporting}
               >
                 <MaterialIcon name="download" size="sm" className="mr-2" />
-                {exporting ? "Exporting..." : "Download PNG"}
+                {exporting ? 'Exporting...' : 'Download PNG'}
               </Button>
             </div>
           )}
@@ -144,5 +124,5 @@ export function ShareModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

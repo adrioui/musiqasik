@@ -1,30 +1,25 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { cn, isPlaceholderImage } from "@/lib/utils";
-import type { Artist } from "@/types/artist";
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn, isPlaceholderImage } from '@/lib/utils'
+import type { Artist } from '@/types/artist'
 
 interface ArtistDetailSheetProps {
-  artist: Artist | null;
-  similarArtists: Artist[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onArtistClick: (name: string) => void;
-  onExploreClick: (name: string) => void;
-  similarityScore?: number;
+  artist: Artist | null
+  similarArtists: Artist[]
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onArtistClick: (name: string) => void
+  onExploreClick: (name: string) => void
+  similarityScore?: number
 }
 
 function formatListeners(count: number | undefined | null): string {
-  if (!count) return "N/A";
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(0)}K`;
-  return count.toString();
+  if (!count) return 'N/A'
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
+  if (count >= 1000) return `${(count / 1000).toFixed(0)}K`
+  return count.toString()
 }
 
 export function ArtistDetailSheet({
@@ -36,7 +31,7 @@ export function ArtistDetailSheet({
   onExploreClick,
   similarityScore,
 }: ArtistDetailSheetProps) {
-  if (!artist) return null;
+  if (!artist) return null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -48,7 +43,7 @@ export function ArtistDetailSheet({
               src={artist.image_url}
               alt={artist.name}
               className="h-full w-full object-cover"
-              style={{ filter: "brightness(0.7)" }}
+              style={{ filter: 'brightness(0.7)' }}
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
@@ -65,11 +60,7 @@ export function ArtistDetailSheet({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
-                <MaterialIcon
-                  name="graphic_eq"
-                  size="lg"
-                  className="text-primary/60"
-                />
+                <MaterialIcon name="graphic_eq" size="lg" className="text-primary/60" />
               </div>
             )}
           </div>
@@ -87,12 +78,8 @@ export function ArtistDetailSheet({
           {similarityScore !== undefined && (
             <div className="mb-6 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="uppercase tracking-wider text-muted-foreground">
-                  Match
-                </span>
-                <span className="font-bold text-primary">
-                  {Math.round(similarityScore * 100)}%
-                </span>
+                <span className="uppercase tracking-wider text-muted-foreground">Match</span>
+                <span className="font-bold text-primary">{Math.round(similarityScore * 100)}%</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
                 <div
@@ -111,8 +98,8 @@ export function ArtistDetailSheet({
                   key={tag}
                   variant="secondary"
                   className={cn(
-                    "border border-white/10 text-xs",
-                    i === 0 && "border-primary/30 text-primary",
+                    'border border-white/10 text-xs',
+                    i === 0 && 'border-primary/30 text-primary',
                   )}
                 >
                   {tag}
@@ -124,24 +111,14 @@ export function ArtistDetailSheet({
           {/* Stats */}
           <div className="mb-6 grid grid-cols-2 gap-4">
             <div className="rounded-lg bg-white/5 p-3 text-center">
-              <MaterialIcon
-                name="group"
-                size="sm"
-                className="mx-auto mb-1 text-primary"
-              />
-              <div className="text-lg font-semibold">
-                {formatListeners(artist.listeners)}
-              </div>
+              <MaterialIcon name="group" size="sm" className="mx-auto mb-1 text-primary" />
+              <div className="text-lg font-semibold">{formatListeners(artist.listeners)}</div>
               <div className="text-xs text-muted-foreground">Listeners</div>
             </div>
             <div className="rounded-lg bg-white/5 p-3 text-center">
-              <MaterialIcon
-                name="trending_up"
-                size="sm"
-                className="mx-auto mb-1 text-accent"
-              />
+              <MaterialIcon name="trending_up" size="sm" className="mx-auto mb-1 text-accent" />
               <div className="text-lg font-semibold">
-                {artist.playcount ? formatListeners(artist.playcount) : "N/A"}
+                {artist.playcount ? formatListeners(artist.playcount) : 'N/A'}
               </div>
               <div className="text-xs text-muted-foreground">Plays</div>
             </div>
@@ -161,8 +138,7 @@ export function ArtistDetailSheet({
                     className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/5"
                   >
                     <div className="h-10 w-10 overflow-hidden rounded-md bg-secondary">
-                      {!isPlaceholderImage(similar.image_url) &&
-                      similar.image_url ? (
+                      {!isPlaceholderImage(similar.image_url) && similar.image_url ? (
                         <img
                           src={similar.image_url}
                           alt={similar.name}
@@ -179,9 +155,7 @@ export function ArtistDetailSheet({
                       )}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className="truncate text-sm font-medium">
-                        {similar.name}
-                      </p>
+                      <p className="truncate text-sm font-medium">{similar.name}</p>
                     </div>
                     <MaterialIcon
                       name="chevron_right"
@@ -199,8 +173,8 @@ export function ArtistDetailSheet({
             <Button
               className="w-full"
               onClick={() => {
-                onExploreClick(artist.name);
-                onOpenChange(false);
+                onExploreClick(artist.name)
+                onOpenChange(false)
               }}
             >
               <MaterialIcon name="hub" size="sm" className="mr-2" />
@@ -208,11 +182,7 @@ export function ArtistDetailSheet({
             </Button>
             {artist.lastfm_url && (
               <Button variant="outline" className="w-full" asChild>
-                <a
-                  href={artist.lastfm_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={artist.lastfm_url} target="_blank" rel="noopener noreferrer">
                   <MaterialIcon name="open_in_new" size="sm" className="mr-2" />
                   View on Last.fm
                 </a>
@@ -222,5 +192,5 @@ export function ArtistDetailSheet({
         </div>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

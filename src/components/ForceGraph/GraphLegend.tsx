@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import { cn } from "@/lib/utils";
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { cn } from '@/lib/utils'
 
 interface GraphLegendProps {
-  colorMap: Map<string, string>;
-  className?: string;
+  colorMap: Map<string, string>
+  className?: string
 }
 
 export function GraphLegend({ colorMap, className }: GraphLegendProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(true)
 
-  if (colorMap.size === 0) return null;
+  if (colorMap.size === 0) return null
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border border-border bg-background/80 p-2 shadow-sm backdrop-blur-sm",
+        'flex flex-col gap-2 rounded-lg border border-border bg-background/80 p-2 shadow-sm backdrop-blur-sm',
         className,
       )}
     >
@@ -25,12 +25,7 @@ export function GraphLegend({ colorMap, className }: GraphLegendProps) {
           <MaterialIcon name="palette" size="xs" />
           <span>Genres</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={() => setIsOpen(!isOpen)}
-        >
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? (
             <MaterialIcon name="expand_more" size="xs" />
           ) : (
@@ -53,5 +48,5 @@ export function GraphLegend({ colorMap, className }: GraphLegendProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

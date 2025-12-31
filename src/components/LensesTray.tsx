@@ -1,23 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { GlassCard } from "@/components/ui/glass-card";
-import { Label } from "@/components/ui/label";
-import { MaterialIcon } from "@/components/ui/material-icon";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button'
+import { GlassCard } from '@/components/ui/glass-card'
+import { Label } from '@/components/ui/label'
+import { MaterialIcon } from '@/components/ui/material-icon'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 
 interface LensesTrayProps {
-  depth: number;
-  onDepthChange: (value: number) => void;
-  threshold: number;
-  onThresholdChange: (value: number) => void;
-  showLabels: boolean;
-  onShowLabelsChange: (value: boolean) => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset: () => void;
-  isLoading?: boolean;
-  className?: string;
+  depth: number
+  onDepthChange: (value: number) => void
+  threshold: number
+  onThresholdChange: (value: number) => void
+  showLabels: boolean
+  onShowLabelsChange: (value: boolean) => void
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onReset: () => void
+  isLoading?: boolean
+  className?: string
 }
 
 export function LensesTray({
@@ -34,16 +34,14 @@ export function LensesTray({
   className,
 }: LensesTrayProps) {
   return (
-    <GlassCard className={cn("w-72 space-y-4", className)}>
+    <GlassCard className={cn('w-72 space-y-4', className)}>
       {/* Header */}
       <div className="flex items-center gap-2 text-sm font-medium">
         <MaterialIcon name="tune" size="sm" className="text-primary" />
         <span>Lenses</span>
         <span className="ml-auto flex items-center gap-1">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-          <span className="text-[10px] uppercase tracking-wide text-primary">
-            Live
-          </span>
+          <span className="text-[10px] uppercase tracking-wide text-primary">Live</span>
         </span>
       </div>
 
@@ -54,9 +52,7 @@ export function LensesTray({
             <MaterialIcon name="layers" size="xs" />
             Depth
           </Label>
-          <span className="rounded bg-secondary px-2 py-0.5 font-mono text-xs">
-            {depth} hops
-          </span>
+          <span className="rounded bg-secondary px-2 py-0.5 font-mono text-xs">{depth} hops</span>
         </div>
         <Slider
           value={[depth]}
@@ -100,10 +96,7 @@ export function LensesTray({
       {/* Labels Toggle */}
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MaterialIcon
-            name={showLabels ? "visibility" : "visibility_off"}
-            size="xs"
-          />
+          <MaterialIcon name={showLabels ? 'visibility' : 'visibility_off'} size="xs" />
           Show Labels
         </Label>
         <Switch checked={showLabels} onCheckedChange={onShowLabelsChange} />
@@ -142,5 +135,5 @@ export function LensesTray({
         </Button>
       </div>
     </GlassCard>
-  );
+  )
 }

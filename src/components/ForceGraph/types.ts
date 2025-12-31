@@ -1,32 +1,32 @@
-import type { Artist, SimilarityEdge } from "@/types/artist";
-import type { GraphLink, GraphNode } from "./hooks/useGraphData";
+import type { Artist, SimilarityEdge } from '@/types/artist'
+import type { GraphLink, GraphNode } from './hooks/useGraphData'
 
-export type { GraphNode, GraphLink };
+export type { GraphNode, GraphLink }
 
 export interface EdgeClickInfo {
-  source: string;
-  target: string;
-  weight: number;
-  position: { x: number; y: number };
-  sharedTags?: string[];
+  source: string
+  target: string
+  weight: number
+  position: { x: number; y: number }
+  sharedTags?: string[]
 }
 
 export interface ForceGraphProps {
-  nodes: Artist[];
-  edges: SimilarityEdge[];
-  centerArtist: string | null;
-  threshold?: number;
-  showLabels?: boolean;
-  onNodeClick: (artist: Artist) => void;
-  onEdgeClick?: (info: EdgeClickInfo) => void;
-  className?: string;
+  nodes: Artist[]
+  edges: SimilarityEdge[]
+  centerArtist: string | null
+  threshold?: number
+  showLabels?: boolean
+  onNodeClick: (artist: Artist) => void
+  onEdgeClick?: (info: EdgeClickInfo) => void
+  className?: string
 }
 
 export interface ForceGraphHandle {
-  zoomIn: () => void;
-  zoomOut: () => void;
-  reset: () => void;
-  exportImage: () => Promise<Blob | null>;
+  zoomIn: () => void
+  zoomOut: () => void
+  reset: () => void
+  exportImage: () => Promise<Blob | null>
 }
 
 /**
@@ -34,10 +34,10 @@ export interface ForceGraphHandle {
  * Extends GraphNode with required position fields.
  */
 export interface SimulationNode extends GraphNode {
-  x: number;
-  y: number;
-  vx?: number;
-  vy?: number;
+  x: number
+  y: number
+  vx?: number
+  vy?: number
 }
 
 /**
@@ -46,7 +46,7 @@ export interface SimulationNode extends GraphNode {
  * After simulation starts, D3 resolves indices to node objects.
  */
 export interface SimulationLink {
-  source: SimulationNode | number;
-  target: SimulationNode | number;
-  weight: number;
+  source: SimulationNode | number
+  target: SimulationNode | number
+  weight: number
 }

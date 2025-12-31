@@ -1,11 +1,11 @@
-import { Effect, Layer } from "effect";
-import { SurrealClient } from "@/integrations/surrealdb/client";
-import { DatabaseError } from "@/lib/errors";
-import { DatabaseService } from "@/services";
-import type { Artist } from "@/types/artist";
+import { Effect, Layer } from 'effect'
+import { SurrealClient } from '@/integrations/surrealdb/client'
+import { DatabaseError } from '@/lib/errors'
+import { DatabaseService } from '@/services'
+import type { Artist } from '@/types/artist'
 
 const makeDatabaseService = Effect.gen(function* () {
-  const db = yield* SurrealClient;
+  const db = yield* SurrealClient
 
   return DatabaseService.of({
     getArtist: (artistName: string) =>
@@ -18,15 +18,15 @@ const makeDatabaseService = Effect.gen(function* () {
             ),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to query artist",
+              message: 'Failed to query artist',
               cause: error,
             }),
-        });
+        })
 
-        return result[0]?.[0] || null;
+        return result[0]?.[0] || null
       }),
 
-    upsertArtist: (artist: Omit<Artist, "id">) =>
+    upsertArtist: (artist: Omit<Artist, 'id'>) =>
       Effect.gen(function* () {
         const result = yield* Effect.tryPromise({
           try: () =>
@@ -60,12 +60,12 @@ const makeDatabaseService = Effect.gen(function* () {
             ),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to upsert artist",
+              message: 'Failed to upsert artist',
               cause: error,
             }),
-        });
+        })
 
-        return result[0]?.[0] as Artist;
+        return result[0]?.[0] as Artist
       }),
 
     getCachedEdges: (artistId: string) =>
@@ -78,20 +78,20 @@ const makeDatabaseService = Effect.gen(function* () {
             ),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to fetch cached edges",
+              message: 'Failed to fetch cached edges',
               cause: error,
             }),
-        });
+        })
 
         return (result[0] || []).map((edge) => ({
           target: edge.out,
           match_score: edge.match_score,
-        }));
+        }))
       }),
 
     upsertEdges: (edges) =>
       Effect.gen(function* () {
-        if (edges.length === 0) return;
+        if (edges.length === 0) return
 
         // Build RELATE statements for each edge
         const relateStatements = edges
@@ -99,24 +99,24 @@ const makeDatabaseService = Effect.gen(function* () {
             (_, i) =>
               `RELATE $source${i}->similarity_edges->$target${i} SET match_score = $score${i}, depth = $depth${i};`,
           )
-          .join("\n");
+          .join('\n')
 
-        const params: Record<string, unknown> = {};
+        const params: Record<string, unknown> = {}
         edges.forEach((edge, i) => {
-          params[`source${i}`] = edge.source_artist_id;
-          params[`target${i}`] = edge.target_artist_id;
-          params[`score${i}`] = edge.match_score;
-          params[`depth${i}`] = edge.depth;
-        });
+          params[`source${i}`] = edge.source_artist_id
+          params[`target${i}`] = edge.target_artist_id
+          params[`score${i}`] = edge.match_score
+          params[`depth${i}`] = edge.depth
+        })
 
         yield* Effect.tryPromise({
           try: () => db.query(relateStatements, params),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to upsert edges",
+              message: 'Failed to upsert edges',
               cause: error,
             }),
-        });
+        })
       }),
 
     getSimilarityGraph: (artistName: string, maxDepth: number) =>
@@ -130,15 +130,15 @@ const makeDatabaseService = Effect.gen(function* () {
             ),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to query center artist",
+              message: 'Failed to query center artist',
               cause: error,
             }),
-        });
+        })
 
-        const center = centerResult[0]?.[0] || null;
+        const center = centerResult[0]?.[0] || null
 
         if (!center) {
-          return { nodes: [], edges: [], center: null };
+          return { nodes: [], edges: [], center: null }
         }
 
         // Get all edges from this artist up to maxDepth using graph traversal
@@ -152,36 +152,33 @@ const makeDatabaseService = Effect.gen(function* () {
             ),
           catch: (error) =>
             new DatabaseError({
-              message: "Failed to traverse graph",
+              message: 'Failed to traverse graph',
               cause: error,
             }),
-        });
+        })
 
-        const edgesData = graphResult[0] || [];
+        const edgesData = graphResult[0] || []
 
         // Collect unique nodes
-        const nodesMap = new Map<string, Artist>();
-        nodesMap.set(center.id!, center);
+        const nodesMap = new Map<string, Artist>()
+        nodesMap.set(center.id!, center)
 
         edgesData.forEach((edge) => {
-          if (edge.in?.id) nodesMap.set(edge.in.id, edge.in);
-          if (edge.out?.id) nodesMap.set(edge.out.id, edge.out);
-        });
+          if (edge.in?.id) nodesMap.set(edge.in.id, edge.in)
+          if (edge.out?.id) nodesMap.set(edge.out.id, edge.out)
+        })
 
         return {
           nodes: Array.from(nodesMap.values()),
           edges: edgesData.map((edge) => ({
-            source: edge.in?.name || "",
-            target: edge.out?.name || "",
+            source: edge.in?.name || '',
+            target: edge.out?.name || '',
             weight: edge.match_score,
           })),
           center,
-        };
+        }
       }),
-  });
-});
+  })
+})
 
-export const DatabaseServiceLive = Layer.effect(
-  DatabaseService,
-  makeDatabaseService,
-);
+export const DatabaseServiceLive = Layer.effect(DatabaseService, makeDatabaseService)
