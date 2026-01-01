@@ -1,6 +1,7 @@
 import { Effect, Layer } from 'effect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
 import { makeWorkerConfigLayer } from './config'
 import { LastFmAuthError, LastFmAuthService, LastFmAuthServiceLive } from './services/lastfm-auth'
 
@@ -11,6 +12,16 @@ interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+// Security headers
+app.use(
+  '*',
+  secureHeaders({
+    xFrameOptions: 'DENY',
+    xContentTypeOptions: 'nosniff',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+  }),
+)
 
 // CORS for API routes
 app.use('/api/*', cors({ origin: '*' }))
@@ -49,7 +60,9 @@ app.post('/api/lastfm/session', async (c) => {
         error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
       return c.json({ error: error.message }, isAuthError ? 401 : 500)
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
+    // Fail securely: Log the actual error but return a generic message to the client
+    console.error('Internal Server Error:', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
 
