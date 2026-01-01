@@ -1,64 +1,63 @@
 import { expect, test } from '@playwright/test'
 
-test.describe('Home Page', () => {
-  test('should load the home page successfully', async ({ page }) => {
+test.describe('Living Gallery - Main View', () => {
+  test('should load the app successfully', async ({ page }) => {
     const response = await page.goto('/')
     expect(response?.status()).toBe(200)
 
-    // Wait for React to render
-    await page.waitForSelector('h1', { timeout: 10000 })
+    // Wait for React to render the graph
+    await page.waitForSelector('svg', { timeout: 10000 })
     await expect(page).toHaveTitle(/MusiqasiQ/i)
   })
 
-  test('should display the MusiqasiQ header', async ({ page }) => {
+  test('should display The Living Gallery header', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('header', { timeout: 10000 })
+    await page.waitForSelector('nav', { timeout: 10000 })
 
-    const header = page.locator('header')
-    await expect(header).toBeVisible()
-    await expect(header.getByText('MusiqasiQ')).toBeVisible()
+    const nav = page.locator('nav')
+    await expect(nav).toBeVisible()
+    await expect(nav.getByText('The Living Gallery')).toBeVisible()
   })
 
-  test('should display the main heading', async ({ page }) => {
+  test('should display Miles Davis as default anchor', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('h1', { timeout: 10000 })
+    await page.waitForSelector('h1', { timeout: 15000 })
 
     const h1 = page.locator('h1')
-    await expect(h1).toContainText('Explore Artist')
+    await expect(h1).toContainText('Miles Davis')
   })
 
-  test('should have a search input field', async ({ page }) => {
+  test('should render the force graph SVG', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('input', { timeout: 10000 })
+    await page.waitForSelector('svg', { timeout: 10000 })
 
-    const searchInput = page.locator('input[placeholder*="Search"]')
-    await expect(searchInput).toBeVisible()
+    const svg = page.locator('svg')
+    await expect(svg).toBeVisible()
   })
 
-  test('should display feature cards', async ({ page }) => {
+  test('should display graph nodes', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('.rounded-2xl', { timeout: 10000 })
+    // Wait for nodes to be rendered
+    await page.waitForSelector('.graph-node', { timeout: 15000 })
 
-    const featureCards = page.locator('.rounded-2xl.border')
-    await expect(featureCards).toHaveCount(3)
-  })
-
-  test('should display footer', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForSelector('footer', { timeout: 10000 })
-
-    const footer = page.locator('footer')
-    await expect(footer).toContainText('Last.fm')
+    const nodes = page.locator('.graph-node')
+    // Should have at least the center node and some similar artists
+    expect(await nodes.count()).toBeGreaterThan(0)
   })
 })
 
-test.describe('Artist Search', () => {
-  test('should allow typing in search input', async ({ page }) => {
+test.describe('Responsive Design', () => {
+  test('should display on mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')
-    await page.waitForSelector('input', { timeout: 10000 })
+    await page.waitForSelector('nav', { timeout: 10000 })
+    await expect(page.locator('nav')).toBeVisible()
+  })
 
-    const searchInput = page.locator('input[placeholder*="Search"]')
-    await searchInput.fill('Radiohead')
-    await expect(searchInput).toHaveValue('Radiohead')
+  test('should display on desktop viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto('/')
+    await page.waitForSelector('svg', { timeout: 10000 })
+    await expect(page.locator('svg')).toBeVisible()
   })
 })
