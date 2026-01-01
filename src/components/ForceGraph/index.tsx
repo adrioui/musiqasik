@@ -53,6 +53,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const lensIndicatorRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(
     null,
   )
+  const hoveredNodeRef = useRef<SimulationNode | null>(null)
 
   // Use extracted hooks
   const dimensions = useElementDimensions(containerRef)
@@ -195,9 +196,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   )
 
   const getNodeRadius = useCallback((d: SimulationNode) => {
-    if (d.isCenter) return 80
-    const baseSize = 24
-    const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 12
+    if (d.isCenter) return 120 // Increased from 80
+    // Orbital nodes: 40-64px based on listeners (was 24-36px)
+    const baseSize = 40
+    const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 24
     return baseSize + listenersBonus
   }, [])
 
@@ -209,7 +211,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         .append('text')
         .text(d.name)
         .attr('text-anchor', 'middle')
-        .attr('dy', d.isCenter ? 50 : 42)
+        .attr('dy', d.isCenter ? 75 : 55) // Was 50 : 42
         .attr('class', 'fill-foreground text-xs font-medium')
         .style('pointer-events', 'none')
         .style('opacity', 1)
@@ -246,7 +248,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
             ?.append('clipPath')
             .attr('id', vinylClipId)
             .append('circle')
-            .attr('r', radius - 8)
+            .attr('r', radius - 12) // Was radius - 8
         }
 
         const spinGroup = content
@@ -274,10 +276,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
           spinGroup
             .append('image')
             .attr('href', d.image_url)
-            .attr('width', (radius - 8) * 2)
-            .attr('height', (radius - 8) * 2)
-            .attr('x', -(radius - 8))
-            .attr('y', -(radius - 8))
+            .attr('width', (radius - 12) * 2)
+            .attr('height', (radius - 12) * 2)
+            .attr('x', -(radius - 12))
+            .attr('y', -(radius - 12))
             .attr('clip-path', `url(#${vinylClipId})`)
             .style('filter', 'grayscale(60%) contrast(1.2) brightness(0.8)')
             .style('opacity', '0.7')
@@ -286,14 +288,14 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
         spinGroup
           .append('circle')
-          .attr('r', 20)
+          .attr('r', 28) // Was 20
           .attr('fill', 'hsl(var(--primary))')
           .attr('class', 'vinyl-glow')
 
         spinGroup.append('circle').attr('r', 2).attr('fill', '#000')
       } else {
-        const floatDuration = 6 + Math.random() * 6
-        const floatDelay = Math.random() * 5
+        const floatDuration = 8 + Math.random() * 4 // Was 6-12s, now 8-12s for slower drift
+        const floatDelay = Math.random() * 8 // Longer stagger
 
         content
           .classed('animate-drift', true)
@@ -318,8 +320,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
               .attr('r', radius - 2)
           }
 
+          // Append image AFTER circle so it renders on top
           content
-            .insert('image', 'circle')
+            .append('image')
             .attr('class', 'node-image')
             .attr('href', d.image_url)
             .attr('x', -(radius - 2))
@@ -327,6 +330,8 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
             .attr('width', (radius - 2) * 2)
             .attr('height', (radius - 2) * 2)
             .attr('clip-path', `url(#${clipId})`)
+            .style('filter', 'grayscale(100%)')
+            .style('transition', 'filter 0.5s ease-out')
             .style('pointer-events', 'none')
         }
       }
@@ -342,13 +347,13 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
       if (d.isCenter) {
         const vinylClipId = getVinylClipId(d)
-        defsRef.current?.select(`#${vinylClipId} circle`).attr('r', radius - 8)
+        defsRef.current?.select(`#${vinylClipId} circle`).attr('r', radius - 12) // Was radius - 8
         content.selectAll<SVGImageElement, SimulationNode>('image').each(function () {
           d3.select(this)
-            .attr('width', (radius - 8) * 2)
-            .attr('height', (radius - 8) * 2)
-            .attr('x', -(radius - 8))
-            .attr('y', -(radius - 8))
+            .attr('width', (radius - 12) * 2)
+            .attr('height', (radius - 12) * 2)
+            .attr('x', -(radius - 12))
+            .attr('y', -(radius - 12))
         })
       } else {
         const circle = content.select<SVGCircleElement>('.node-circle')
@@ -371,7 +376,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       const text = labelGroup
         .select<SVGTextElement>('text')
         .text(d.name)
-        .attr('dy', d.isCenter ? 50 : 42)
+        .attr('dy', d.isCenter ? 75 : 55) // Was 50 : 42
       const backdrop = labelGroup.select<SVGRectElement>('.label-backdrop')
       const textNode = text.node()
 
@@ -410,6 +415,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       nodeSelectionRef.current.attr('transform', (d) => `translate(${d.x},${d.y})`)
     }
 
+    // Update lens indicator position if a node is hovered
+    if (lensIndicatorRef.current && hoveredNodeRef.current) {
+      const d = hoveredNodeRef.current
+      const radius = getNodeRadius(d)
+      lensIndicatorRef.current
+        .attr('cx', d.x)
+        .attr('cy', d.y)
+        .attr('r', radius + 16)
+    }
+
     // On first tick after data/zoom reset, fit graph to viewport
     if (!hasFittedRef.current) {
       hasFittedRef.current = true
@@ -418,7 +433,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         fitGraphToViewport()
       })
     }
-  }, [fitGraphToViewport])
+  }, [fitGraphToViewport, getNodeRadius])
 
   // Use the D3 simulation hook
   const { simulation, restart } = useD3Simulation({
@@ -562,6 +577,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
       if (!highlightedName) {
         linkSelectionRef.current.attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
+        linkSelectionRef.current.attr('stroke', 'hsl(var(--graph-edge))')
         nodeSelectionRef.current.style('opacity', 1)
         return
       }
@@ -573,9 +589,18 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         const sourceKey = (d.source as SimulationNode).name.toLowerCase()
         const targetKey = (d.target as SimulationNode).name.toLowerCase()
         if (sourceKey === highlightKey || targetKey === highlightKey) {
-          return 0.8
+          return 0.9
         }
-        return 0.05
+        return 0.03
+      })
+
+      linkSelectionRef.current.attr('stroke', (d) => {
+        const sourceKey = (d.source as SimulationNode).name.toLowerCase()
+        const targetKey = (d.target as SimulationNode).name.toLowerCase()
+        if (sourceKey === highlightKey || targetKey === highlightKey) {
+          return 'hsl(var(--primary))'
+        }
+        return 'hsl(var(--graph-edge))'
       })
 
       nodeSelectionRef.current.style('opacity', (d) => {
@@ -583,7 +608,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         if (nodeKey === highlightKey || neighbors.has(nodeKey)) {
           return 1
         }
-        return 0.2
+        return 0.15
       })
     },
     [getNeighbors],
@@ -598,11 +623,32 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       if (d.isCenter) return
       applyHighlight(d.name)
 
+      // Track hovered node for tick updates
+      hoveredNodeRef.current = d
+
       const currentTarget = event.currentTarget as SVGGElement | null
       if (currentTarget) {
+        const radius = getNodeRadius(d)
+
+        // Show lens indicator
+        if (lensIndicatorRef.current) {
+          lensIndicatorRef.current
+            .attr('cx', d.x)
+            .attr('cy', d.y)
+            .attr('r', radius + 16)
+            .classed('animate-pulse-ring', true)
+            .style('opacity', 1)
+        }
+
+        // Highlight circle with active glow
         d3.select(currentTarget)
           .select('.node-content circle')
           .attr('fill', 'hsl(var(--graph-node-hover))')
+          .classed('node-glow-active', true)
+          .classed('node-glow', false)
+
+        // Remove grayscale on hover
+        d3.select(currentTarget).select('image.node-image').classed('node-image-hover', true)
       }
 
       if (!tooltipRef.current) return
@@ -613,13 +659,14 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         .html(
           `
           <div class="font-display italic text-lg">${d.name}</div>
-          ${d.tags?.[0] ? `<div class="text-xs text-primary uppercase tracking-widest mt-1">${d.tags[0]}</div>` : ''}
+          ${d.tags?.[0] ? `<div class="text-[10px] text-primary uppercase tracking-[0.2em] mt-1">${d.tags[0]}</div>` : ''}
+          <div class="text-[10px] text-muted-foreground mt-2 opacity-70">Often played together</div>
         `,
         )
         .style('left', `${event.pageX + 15}px`)
         .style('top', `${event.pageY - 10}px`)
     },
-    [applyHighlight],
+    [applyHighlight, getNodeRadius],
   )
 
   const handleNodeMouseMove = useCallback((event: MouseEvent) => {
@@ -631,9 +678,25 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const handleNodeMouseLeave = useCallback(
     (event: MouseEvent, d: SimulationNode) => {
       applyHighlight(null)
+
+      // Clear hovered node tracking
+      hoveredNodeRef.current = null
+
+      // Hide lens indicator
+      if (lensIndicatorRef.current) {
+        lensIndicatorRef.current.classed('animate-pulse-ring', false).style('opacity', 0)
+      }
+
       const currentTarget = event.currentTarget as SVGGElement | null
       if (currentTarget) {
-        d3.select(currentTarget).select('.node-content circle').attr('fill', getNodeColor(d))
+        d3.select(currentTarget)
+          .select('.node-content circle')
+          .attr('fill', getNodeColor(d))
+          .classed('node-glow-active', false)
+          .classed('node-glow', true)
+
+        // Restore grayscale on leave
+        d3.select(currentTarget).select('image.node-image').classed('node-image-hover', false)
       }
 
       if (tooltipRef.current) {

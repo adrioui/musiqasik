@@ -2,6 +2,28 @@ import * as d3 from 'd3'
 import { useCallback, useEffect, useRef } from 'react'
 import type { GraphLink, GraphNode } from '@/types/artist'
 
+// Force simulation tuning constants - adjust these if nodes overlap or feel too spread
+const FORCE_CONFIG = {
+  // Link distances
+  linkDistanceBase: 200, // Was 120
+  linkDistanceVariance: 200, // Was 150
+  linkStrengthMultiplier: 0.25,
+
+  // Radial orbit distances
+  orbitInner: 280, // Was 180
+  orbitDefault: 350, // Was 250
+  orbitDistant: 420, // Was 320
+  orbitDiscovery: 520, // Was 400
+  radialStrength: 0.5,
+
+  // Collision
+  centerNodePadding: 130, // 120px radius + 10px padding
+  orbitalNodePadding: 15,
+
+  // Charge
+  chargeStrength: -300, // Was -100
+} as const
+
 interface UseD3SimulationProps {
   nodes: GraphNode[]
   links: GraphLink[]
@@ -50,8 +72,11 @@ export function useD3Simulation({
         d3
           .forceLink<GraphNode, GraphLink>(links)
           .id((d) => d.name)
-          .distance((d) => 120 + (1 - d.weight) * 150)
-          .strength((d) => d.weight * 0.3),
+          .distance(
+            (d) =>
+              FORCE_CONFIG.linkDistanceBase + (1 - d.weight) * FORCE_CONFIG.linkDistanceVariance,
+          )
+          .strength((d) => d.weight * FORCE_CONFIG.linkStrengthMultiplier),
       )
       // Radial orbital layout: center anchored, others orbit by role
       .force(
@@ -60,18 +85,27 @@ export function useD3Simulation({
           .forceRadial<GraphNode>(
             (d) => {
               if (d.isCenter) return 0
-              if (d.orbit === 'inner') return 180
-              if (d.orbit === 'distant') return 320
-              if (d.orbit === 'discovery') return 400
-              return 250
+              if (d.orbit === 'inner') return FORCE_CONFIG.orbitInner
+              if (d.orbit === 'distant') return FORCE_CONFIG.orbitDistant
+              if (d.orbit === 'discovery') return FORCE_CONFIG.orbitDiscovery
+              return FORCE_CONFIG.orbitDefault
             },
             centerX,
             centerY,
           )
-          .strength(0.6),
+          .strength(FORCE_CONFIG.radialStrength),
       )
-      .force('collision', d3.forceCollide().radius(60))
-      .force('charge', d3.forceManyBody().strength(-100))
+      .force(
+        'collision',
+        d3.forceCollide<GraphNode>().radius((d) => {
+          // Dynamic collision based on actual node size
+          if (d.isCenter) return FORCE_CONFIG.centerNodePadding
+          const baseSize = 40
+          const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 24
+          return baseSize + listenersBonus + FORCE_CONFIG.orbitalNodePadding
+        }),
+      )
+      .force('charge', d3.forceManyBody().strength(FORCE_CONFIG.chargeStrength))
       .alphaDecay(0.03)
       .velocityDecay(0.4)
       .on('tick', () => {

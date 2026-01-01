@@ -102,9 +102,12 @@ export default function MainView() {
       {/* Anchor Label */}
       {anchorArtist && (
         <div className="absolute bottom-32 left-1/2 -translate-x-1/2 text-center pointer-events-none z-20">
-          <h1 className="font-display italic text-4xl md:text-5xl drop-shadow-lg">
+          <h1 className="font-display italic text-4xl md:text-5xl drop-shadow-lg mb-2">
             {anchorArtist.name}
           </h1>
+          <p className="text-primary text-[10px] font-bold tracking-[0.25em] uppercase">
+            Anchor Node
+          </p>
         </div>
       )}
 

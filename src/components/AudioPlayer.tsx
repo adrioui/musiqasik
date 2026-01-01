@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef } from 'react'
 
+import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
 
 interface Track {
@@ -15,10 +16,11 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  // Static values for MVP display - will be connected to YouTube player in future
-  const currentTime = 0
-  const duration = 180 // Default 3 minutes for display
+  const progressBarRef = useRef<HTMLDivElement>(null)
+
+  const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
+    videoId: track?.youtubeId ?? null,
+  })
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -27,14 +29,21 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const togglePlay = useCallback(() => {
-    setIsPlaying(!isPlaying)
-    // Note: Actual YouTube playback integration would go here
-    // For MVP, this is just visual state
-  }, [isPlaying])
-
   // Progress percentage
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+
+  // Handle progress bar click
+  const handleProgressClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!progressBarRef.current || duration <= 0) return
+      const rect = progressBarRef.current.getBoundingClientRect()
+      const clickX = event.clientX - rect.left
+      const percentage = clickX / rect.width
+      const newTime = percentage * duration
+      seekTo(newTime)
+    },
+    [duration, seekTo],
+  )
 
   if (!track) {
     return null // Don't render if no track
@@ -70,8 +79,12 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group">
+          {/* Progress Bar - Now clickable */}
+          <div
+            ref={progressBarRef}
+            onClick={handleProgressClick}
+            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
+          >
             <div
               className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
               style={{ width: `${progress}%` }}
@@ -90,7 +103,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
 
           <button
             onClick={togglePlay}
-            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg"
+            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-transform play-button-glow"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             <MaterialIcon name={isPlaying ? 'pause' : 'play_arrow'} size="md" />
@@ -112,13 +125,6 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
           </button>
         </div>
       </div>
-
-      {/* Hidden YouTube iframe for audio - placeholder for future implementation */}
-      {track.youtubeId && (
-        <div className="hidden">
-          <div id="youtube-player" />
-        </div>
-      )}
     </div>
   )
 }
