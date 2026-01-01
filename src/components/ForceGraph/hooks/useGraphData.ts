@@ -55,6 +55,27 @@ function processGraphData(
     connectedNodes.add(e.target.toLowerCase())
   })
 
+  const centerKey = centerArtist?.toLowerCase() ?? null
+
+  // Map of node name -> orbit assignment based on center edge weight
+  const orbitMap = new Map<string, GraphNode['orbit']>()
+  filteredEdges.forEach((edge) => {
+    const sourceKey = edge.source.toLowerCase()
+    const targetKey = edge.target.toLowerCase()
+
+    const assignOrbit = (weight: number) => {
+      if (weight >= 0.55) return 'inner'
+      return 'distant'
+    }
+
+    if (sourceKey === centerKey) {
+      orbitMap.set(targetKey, assignOrbit(edge.weight))
+    }
+    if (targetKey === centerKey) {
+      orbitMap.set(sourceKey, assignOrbit(edge.weight))
+    }
+  })
+
   // Filter and transform nodes
   const filteredNodes: GraphNode[] = nodes
     .filter(
@@ -62,10 +83,17 @@ function processGraphData(
         connectedNodes.has(n.name.toLowerCase()) ||
         n.name.toLowerCase() === centerArtist?.toLowerCase(),
     )
-    .map((node) => ({
-      ...node,
-      isCenter: node.name.toLowerCase() === centerArtist?.toLowerCase(),
-    }))
+    .map((node) => {
+      const nodeKey = node.name.toLowerCase()
+      const orbitValue =
+        nodeKey === centerKey ? undefined : (node.orbit ?? orbitMap.get(nodeKey) ?? 'distant')
+
+      return {
+        ...node,
+        isCenter: nodeKey === centerArtist?.toLowerCase(),
+        orbit: orbitValue,
+      }
+    })
 
   // Build node map for link resolution
   const nodeMap = new Map(filteredNodes.map((n) => [n.name.toLowerCase(), n]))

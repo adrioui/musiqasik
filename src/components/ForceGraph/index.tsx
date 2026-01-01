@@ -3,7 +3,6 @@ import { Effect } from 'effect'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 import { svgToPng } from '@/lib/graph-export'
 import { cn, isPlaceholderImage } from '@/lib/utils'
-import { GraphLegend } from './GraphLegend'
 import { useD3Simulation } from './hooks/useD3Simulation'
 import { useD3Zoom } from './hooks/useD3Zoom'
 import { useElementDimensions } from './hooks/useElementDimensions'
@@ -31,11 +30,14 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
   // Refs for D3 selections that need to be updated on tick
   const linkSelectionRef = useRef<d3.Selection<
-    SVGLineElement,
+    SVGPathElement,
     SimulationLink,
     SVGGElement,
     unknown
   > | null>(null)
+  const lensIndicatorRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(
+    null,
+  )
   const nodeSelectionRef = useRef<d3.Selection<
     SVGGElement,
     SimulationNode,
@@ -52,7 +54,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     threshold,
   })
   const { zoomIn, zoomOut, reset, applyZoom } = useD3Zoom({ svgRef })
-  const { getNodeColor, genreColorMap } = useGenreColors({
+  const { getNodeColor } = useGenreColors({
     nodes: filteredNodes,
   })
   const { animateNodesIn, resetAnimation } = useNodeAnimation({
@@ -85,12 +87,30 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
   // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
   const { graphNodes, links } = useMemo(() => {
-    // Clone nodes for D3 mutation with required position fields
-    const nodes: SimulationNode[] = filteredNodes.map((node) => ({
-      ...node,
-      x: node.x ?? 0,
-      y: node.y ?? 0,
-    }))
+    const centerX = dimensions.width / 2 || 400
+    const centerY = dimensions.height / 2 || 300
+
+    // Clone nodes for D3 mutation with initial positions spread around center
+    const nodes: SimulationNode[] = filteredNodes.map((node, i) => {
+      // Center node goes in the middle, others spread in a circle
+      if (node.isCenter) {
+        return {
+          ...node,
+          x: centerX,
+          y: centerY,
+          fx: centerX,
+          fy: centerY,
+        }
+      }
+      // Spread other nodes in a circle around center
+      const angle = (i / filteredNodes.length) * 2 * Math.PI
+      const radius = 150 + Math.random() * 100
+      return {
+        ...node,
+        x: node.x ?? centerX + Math.cos(angle) * radius,
+        y: node.y ?? centerY + Math.sin(angle) * radius,
+      }
+    })
     const nodeMap = new Map(nodes.map((n) => [n.name.toLowerCase(), n]))
 
     // Build links with resolved node references
@@ -109,16 +129,25 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     }
 
     return { graphNodes: nodes, links: resolvedLinks }
-  }, [filteredNodes, graphLinks])
+  }, [filteredNodes, graphLinks, dimensions.width, dimensions.height])
 
-  // Tick handler for simulation - updates D3 selections
+  // Tick handler for simulation - updates D3 selections with curved paths
   const handleTick = useCallback(() => {
     if (linkSelectionRef.current) {
-      linkSelectionRef.current
-        .attr('x1', (d) => (d.source as SimulationNode).x)
-        .attr('y1', (d) => (d.source as SimulationNode).y)
-        .attr('x2', (d) => (d.target as SimulationNode).x)
-        .attr('y2', (d) => (d.target as SimulationNode).y)
+      linkSelectionRef.current.attr('d', (d) => {
+        const source = d.source as SimulationNode
+        const target = d.target as SimulationNode
+        const dx = target.x - source.x
+        const dy = target.y - source.y
+        const dist = Math.sqrt(dx * dx + dy * dy) + 0.001
+        const midX = (source.x + target.x) / 2
+        const midY = (source.y + target.y) / 2
+        // Perpendicular offset for curve
+        const offset = dist * 0.15
+        const controlX = midX - (dy / dist) * offset
+        const controlY = midY + (dx / dist) * offset
+        return `M ${source.x} ${source.y} Q ${controlX} ${controlY} ${target.x} ${target.y}`
+      })
     }
 
     if (nodeSelectionRef.current) {
@@ -172,18 +201,19 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     // Apply zoom behavior
     applyZoom(g)
 
-    // Draw links and store reference
+    // Draw links as curved paths and store reference
     const linkSelection = g
       .append('g')
       .attr('class', 'links')
-      .selectAll<SVGLineElement, SimulationLink>('line')
+      .selectAll<SVGPathElement, SimulationLink>('path')
       .data(links)
-      .join('line')
+      .join('path')
+      .attr('fill', 'none')
       .attr('stroke', 'hsl(var(--graph-edge))')
-      .attr('stroke-opacity', (d) => 0.2 + d.weight * 0.6)
-      .attr('stroke-width', (d) => 1 + d.weight * 2)
-      .attr('class', 'cursor-pointer')
-      .style('transition', 'stroke-opacity 0.15s ease-out, stroke 0.15s ease-out')
+      .attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
+      .attr('stroke-width', (d) => 0.5 + d.weight * 1.5)
+      .attr('class', 'cursor-pointer edge-glow')
+      .style('transition', 'stroke-opacity 0.3s ease-out, stroke 0.3s ease-out')
       .on('click', (event, d) => {
         event.stopPropagation()
         if (onEdgeClick) {
@@ -211,7 +241,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       .on('mouseleave', function (_, d) {
         d3.select(this)
           .attr('stroke', 'hsl(var(--graph-edge))')
-          .attr('stroke-opacity', 0.2 + d.weight * 0.6)
+          .attr('stroke-opacity', 0.15 + d.weight * 0.25)
       })
 
     linkSelectionRef.current = linkSelection
@@ -225,7 +255,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       .join('g')
       .attr('class', 'graph-node')
       .style('cursor', 'pointer')
-      .style('transition', 'opacity 0.15s ease-out')
 
     nodeSelectionRef.current = nodeSelection
 
@@ -233,7 +262,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     const applyHighlight = (highlightedName: string | null) => {
       if (!highlightedName) {
         // Reset all to normal
-        linkSelection.attr('stroke-opacity', (d) => 0.2 + d.weight * 0.6)
+        linkSelection.attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
         nodeSelection.style('opacity', 1)
         return
       }
@@ -261,6 +290,18 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       })
     }
 
+    // Add lens indicator for hover effect
+    const lensIndicator = g
+      .append('circle')
+      .attr('class', 'lens-indicator')
+      .attr('fill', 'none')
+      .attr('stroke', 'hsl(var(--primary) / 0.5)')
+      .attr('stroke-width', 2)
+      .style('opacity', 0)
+      .style('pointer-events', 'none')
+
+    lensIndicatorRef.current = lensIndicator
+
     // Apply drag behavior
     nodeSelection.call(
       d3
@@ -281,59 +322,121 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         }),
     )
 
-    // Outer glow ring for center nodes
-    nodeSelection
-      .filter((d) => d.isCenter)
-      .insert('circle', ':first-child')
-      .attr('r', 44)
-      .attr('fill', 'none')
-      .attr('stroke', 'hsl(var(--primary) / 0.3)')
-      .attr('stroke-width', 2)
-      .attr('class', 'graph-node-pulse')
-
     // Node circles with enhanced sizing
     const getNodeRadius = (d: SimulationNode) => {
-      if (d.isCenter) return 32
-      const baseSize = 20
-      const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 10
+      if (d.isCenter) return 80 // Larger vinyl center
+      const baseSize = 24
+      const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 12
       return baseSize + listenersBonus
     }
 
+    // Helper to sanitize name for IDs
+    const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-')
+
+    // Render vinyl anchor node (center node special treatment)
     nodeSelection
-      .append('circle')
-      .attr('r', getNodeRadius)
-      .attr('fill', (d) => getNodeColor(d))
-      .attr('stroke', 'hsl(var(--background))')
-      .attr('stroke-width', (d) => (d.isCenter ? 4 : 3))
-      .attr('class', (d) => (d.isCenter ? 'node-glow-active' : 'node-glow'))
-      .style('transition', 'fill 0.2s ease-out, filter 0.2s ease-out')
+      .filter((d) => d.isCenter === true)
+      .each(function (d) {
+        const node = d3.select(this)
+        const radius = 80
 
-    // Node images (skip Last.fm placeholder images)
-    nodeSelection.each(function (d) {
-      if (!isPlaceholderImage(d.image_url) && d.image_url) {
-        const nodeG = d3.select(this)
-        const radius = getNodeRadius(d)
+        // Vinyl outer ring (main record)
+        node
+          .append('circle')
+          .attr('r', radius)
+          .attr('fill', '#111')
+          .attr('stroke', 'rgba(255,255,255,0.05)')
+          .attr('stroke-width', 1)
+          .attr('class', 'vinyl-glow')
 
-        // Create clipPath
-        const clipId = `clip-${d.name.replace(/[^a-zA-Z0-9]/g, '-')}`
+        // Grooves pattern overlay
+        node
+          .append('circle')
+          .attr('r', radius - 5)
+          .attr('fill', 'none')
+          .attr('stroke', 'rgba(255,255,255,0.03)')
+          .attr('stroke-width', radius - 20)
+          .attr('stroke-dasharray', '1 3')
+
+        // Album art (grayscale, rotating)
+        const clipId = `vinyl-clip-${sanitizeName(d.name)}`
         svg
           .append('defs')
           .append('clipPath')
           .attr('id', clipId)
           .append('circle')
-          .attr('r', radius - 2)
+          .attr('r', radius - 8)
 
-        nodeG
-          .insert('image', 'circle')
-          .attr('xlink:href', d.image_url)
-          .attr('x', -(radius - 2))
-          .attr('y', -(radius - 2))
-          .attr('width', (radius - 2) * 2)
-          .attr('height', (radius - 2) * 2)
-          .attr('clip-path', `url(#${clipId})`)
-          .style('pointer-events', 'none')
-      }
-    })
+        if (d.image_url && !isPlaceholderImage(d.image_url)) {
+          node
+            .append('image')
+            .attr('href', d.image_url)
+            .attr('width', (radius - 8) * 2)
+            .attr('height', (radius - 8) * 2)
+            .attr('x', -(radius - 8))
+            .attr('y', -(radius - 8))
+            .attr('clip-path', `url(#${clipId})`)
+            .attr('class', 'animate-spin-slow')
+            .style('filter', 'grayscale(60%) contrast(1.2) brightness(0.8)')
+            .style('opacity', '0.7')
+            .style('pointer-events', 'none')
+        }
+
+        // Gold center label
+        node
+          .append('circle')
+          .attr('r', 20)
+          .attr('fill', 'hsl(var(--primary))')
+          .attr('class', 'vinyl-glow')
+
+        // Center dot
+        node.append('circle').attr('r', 2).attr('fill', '#000')
+      })
+
+    // Render non-center nodes as circular image bubbles with floating animation
+    nodeSelection
+      .filter((d) => !d.isCenter)
+      .each(function (d) {
+        const node = d3.select(this)
+        const radius = getNodeRadius(d)
+
+        // Set random float animation delays
+        const floatDuration = 6 + Math.random() * 6 // 6-12s
+        const floatDelay = Math.random() * 5 // 0-5s offset
+        node.style('--drift-duration', `${floatDuration}s`)
+        node.style('--drift-delay', `${floatDelay}s`)
+        node.attr('class', 'graph-node animate-drift')
+
+        // Main circle
+        node
+          .append('circle')
+          .attr('r', radius)
+          .attr('fill', getNodeColor(d))
+          .attr('stroke', 'hsl(var(--background))')
+          .attr('stroke-width', 3)
+          .attr('class', 'node-glow')
+
+        // Node image if available
+        if (d.image_url && !isPlaceholderImage(d.image_url)) {
+          const clipId = `clip-${sanitizeName(d.name)}`
+          svg
+            .append('defs')
+            .append('clipPath')
+            .attr('id', clipId)
+            .append('circle')
+            .attr('r', radius - 2)
+
+          node
+            .insert('image', 'circle')
+            .attr('xlink:href', d.image_url)
+            .attr('x', -(radius - 2))
+            .attr('y', -(radius - 2))
+            .attr('width', (radius - 2) * 2)
+            .attr('height', (radius - 2) * 2)
+            .attr('clip-path', `url(#${clipId})`)
+            .style('pointer-events', 'none')
+        }
+      })
 
     // Node labels with backdrop
     const labelGroup = nodeSelection.append('g').attr('class', 'label-group')
@@ -390,21 +493,32 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     }
     const tooltip = d3.select(tooltipRef.current)
 
-    // Hover highlighting and tooltip
+    // Hover highlighting, lens indicator, and tooltip
     nodeSelection
       .on('mouseenter', function (event, d) {
+        // Skip lens indicator on center node
+        if (d.isCenter) return
+
         applyHighlight(d.name)
         d3.select(this).select('circle').attr('fill', 'hsl(var(--graph-node-hover))')
 
-        // Show tooltip
+        // Show lens indicator ring
+        const radius = getNodeRadius(d) + 12
+        lensIndicator
+          .attr('cx', d.x)
+          .attr('cy', d.y)
+          .attr('r', radius)
+          .attr('class', 'lens-indicator animate-pulse-ring')
+          .style('opacity', 1)
+
+        // Show simplified tooltip (name + primary tag only)
         tooltip
           .style('display', 'block')
           .style('opacity', '1')
           .html(
             `
-            <div class="font-semibold">${d.name}</div>
-            ${d.listeners ? `<div class="text-sm text-muted-foreground">${(d.listeners / 1000000).toFixed(1)}M listeners</div>` : ''}
-            ${d.tags && d.tags.length > 0 ? `<div class="text-xs text-muted-foreground mt-1">${d.tags.slice(0, 3).join(', ')}</div>` : ''}
+            <div class="font-display italic text-lg">${d.name}</div>
+            ${d.tags?.[0] ? `<div class="text-xs text-primary uppercase tracking-widest mt-1">${d.tags[0]}</div>` : ''}
           `,
           )
           .style('left', `${event.pageX + 15}px`)
@@ -417,6 +531,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         applyHighlight(null)
         d3.select(this).select('circle').attr('fill', getNodeColor(d))
 
+        // Hide lens indicator
+        lensIndicator.style('opacity', 0)
+
         // Hide tooltip
         tooltip.style('opacity', '0').style('display', 'none')
       })
@@ -425,6 +542,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     return () => {
       linkSelectionRef.current = null
       nodeSelectionRef.current = null
+      lensIndicatorRef.current = null
     }
   }, [
     onNodeClick,
@@ -477,9 +595,6 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         height={dimensions.height}
         className="bg-background"
       />
-      <div className="absolute bottom-4 left-4 z-10 max-w-[200px]">
-        <GraphLegend colorMap={genreColorMap} />
-      </div>
     </div>
   )
 })

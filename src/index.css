@@ -4,102 +4,62 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 200 30% 8%;
+    /* Living Gallery - Dark Only */
+    --background: 30 13% 9%;        /* #1a1814 - warm olive-black */
+    --foreground: 40 6% 91%;        /* #E8E6E1 - warm white */
 
-    --card: 0 0% 100%;
-    --card-foreground: 200 30% 8%;
+    --card: 35 10% 15%;             /* #2a2722 - elevated surface */
+    --card-foreground: 40 6% 91%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 30% 8%;
+    --popover: 35 10% 15%;
+    --popover-foreground: 40 6% 91%;
 
-    --primary: 195 85% 50%; /* #13b6ec - cyan-blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 98% 58%;          /* #FBC02D - gold */
+    --primary-foreground: 30 13% 9%;
 
-    --secondary: 195 15% 96%;
-    --secondary-foreground: 200 30% 8%;
+    --secondary: 35 10% 18%;
+    --secondary-foreground: 40 6% 91%;
 
-    --muted: 195 15% 96%;
-    --muted-foreground: 200 30% 45%;
+    --muted: 38 8% 25%;
+    --muted-foreground: 38 8% 53%;  /* #8F8A80 */
 
-    --accent: 212 85% 50%; /* #137fec - bright blue */
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 195 15% 90%;
-    --input: 195 15% 90%;
-    --ring: 195 85% 50%;
-
-    --radius: 0.75rem;
-
-    --chart-1: 195 85% 50%;
-    --chart-2: 212 85% 50%;
-    --chart-3: 173 58% 39%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    /* Graph-specific */
-    --graph-node: 195 85% 50%;
-    --graph-node-hover: 212 85% 50%;
-    --graph-edge: 195 15% 75%;
-    --graph-center: 212 85% 50%;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 200 30% 8%;
-    --sidebar-primary: 195 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 195 15% 96%;
-    --sidebar-accent-foreground: 200 30% 8%;
-    --sidebar-border: 195 15% 90%;
-    --sidebar-ring: 195 85% 50%;
-  }
-
-  .dark {
-    --background: 200 30% 8%; /* #101d22 */
-    --foreground: 0 0% 98%;
-
-    --card: 195 15% 12%; /* #1c2427 */
-    --card-foreground: 0 0% 98%;
-
-    --popover: 195 15% 12%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 195 85% 50%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 195 15% 18%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 195 15% 18%;
-    --muted-foreground: 195 15% 65%;
-
-    --accent: 212 85% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 98% 58%;
+    --accent-foreground: 30 13% 9%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 195 15% 20%;
-    --input: 195 15% 20%;
-    --ring: 195 85% 50%;
+    --border: 35 10% 20%;
+    --input: 35 10% 20%;
+    --ring: 45 98% 58%;
 
-    /* Graph-specific */
-    --graph-node: 195 85% 55%;
-    --graph-node-hover: 212 85% 60%;
-    --graph-edge: 195 15% 35%;
-    --graph-center: 212 85% 60%;
+    /* Graph-specific tokens */
+    --graph-node: 45 98% 58%;
+    --graph-node-hover: 45 98% 68%;
+    --graph-edge: 35 10% 25%;
+    --graph-center: 45 98% 65%;
 
-    --sidebar-background: 195 15% 12%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 195 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 195 15% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 195 15% 20%;
-    --sidebar-ring: 195 85% 50%;
+    --radius: 0.75rem;
+
+    /* Sidebar - same as card for consistency */
+    --sidebar-background: 35 10% 15%;
+    --sidebar-foreground: 40 6% 91%;
+    --sidebar-primary: 45 98% 58%;
+    --sidebar-primary-foreground: 30 13% 9%;
+    --sidebar-accent: 35 10% 20%;
+    --sidebar-accent-foreground: 40 6% 91%;
+    --sidebar-border: 35 10% 20%;
+    --sidebar-ring: 45 98% 58%;
+
+    /* Chart colors - gold spectrum */
+    --chart-1: 45 98% 58%;
+    --chart-2: 35 85% 50%;
+    --chart-3: 25 75% 45%;
+    --chart-4: 15 65% 40%;
+    --chart-5: 5 55% 35%;
   }
+
+  /* Remove .dark class - always dark */
 }
 
 @layer base {
@@ -109,6 +69,38 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* ===== GALLERY EFFECTS ===== */
+
+/* Film Grain Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  transform: translateZ(0);
+}
+
+/* Vignette Overlay - lightweight GPU accelerated */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.2) 70%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  transform: translateZ(0);
 }
 
 /* Material Symbols base configuration */
@@ -129,36 +121,108 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism utilities */
+/* ===== GLASS PANEL ===== */
+
 .glass-panel {
-  @apply bg-[rgba(16,29,34,0.75)] backdrop-blur-xl border border-white/10 rounded-xl;
+  background: rgba(26, 24, 20, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(251, 192, 45, 0.08);
+  border-radius: 1rem;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(251, 192, 45, 0.05);
+}
+
+/* Pill variant for audio player */
+.glass-panel-pill {
+  background: rgba(26, 24, 20, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel-light {
   @apply bg-white/75 backdrop-blur-xl border border-black/5 rounded-xl;
 }
 
-/* Glow effects */
+/* ===== NODE GLOW EFFECTS ===== */
+
 .node-glow {
-  filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.3));
+  filter: 
+    drop-shadow(0 0 8px hsl(var(--primary) / 0.25))
+    drop-shadow(0 0 16px hsl(var(--primary) / 0.15))
+    drop-shadow(0 0 24px hsl(var(--primary) / 0.08));
 }
 
 .node-glow-active {
-  filter: drop-shadow(0 0 12px hsl(var(--primary) / 0.5));
+  filter: 
+    drop-shadow(0 0 12px hsl(var(--primary) / 0.4))
+    drop-shadow(0 0 24px hsl(var(--primary) / 0.25))
+    drop-shadow(0 0 40px hsl(var(--primary) / 0.15))
+    drop-shadow(0 0 60px hsl(var(--primary) / 0.08));
+}
+
+/* Vinyl center extra glow */
+.vinyl-glow {
+  filter: 
+    drop-shadow(0 0 16px hsl(var(--primary) / 0.5))
+    drop-shadow(0 0 32px hsl(var(--primary) / 0.35))
+    drop-shadow(0 0 48px hsl(var(--primary) / 0.2))
+    drop-shadow(0 0 64px hsl(var(--primary) / 0.1));
 }
 
 .edge-glow {
-  filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.5));
+  filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.3));
 }
 
-/* Float animation for satellite nodes */
+/* ===== FLOATING ANIMATIONS ===== */
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-12px); }
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float var(--float-duration, 8s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+/* Drift animation for more organic movement */
+@keyframes drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(8px, -10px); }
+  50% { transform: translate(-5px, -15px); }
+  75% { transform: translate(10px, -8px); }
+  100% { transform: translate(0, 0); }
+}
+
+.animate-drift {
+  animation: drift var(--drift-duration, 10s) ease-in-out infinite;
+  animation-delay: var(--drift-delay, 0s);
+}
+
+/* Vinyl spin animation */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Lens pulse animation */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
 }
 
 /* Bubble-in animation */

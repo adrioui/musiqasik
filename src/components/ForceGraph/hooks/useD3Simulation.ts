@@ -40,6 +40,9 @@ export function useD3Simulation({
       simulationRef.current.stop()
     }
 
+    const centerX = width / 2
+    const centerY = height / 2
+
     const simulation = d3
       .forceSimulation<GraphNode>(nodes)
       .force(
@@ -47,12 +50,30 @@ export function useD3Simulation({
         d3
           .forceLink<GraphNode, GraphLink>(links)
           .id((d) => d.name)
-          .distance((d) => 100 + (1 - d.weight) * 100)
-          .strength((d) => d.weight * 0.5),
+          .distance((d) => 120 + (1 - d.weight) * 150)
+          .strength((d) => d.weight * 0.3),
       )
-      .force('charge', d3.forceManyBody().strength(-600))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(55))
+      // Radial orbital layout: center anchored, others orbit by role
+      .force(
+        'radial',
+        d3
+          .forceRadial<GraphNode>(
+            (d) => {
+              if (d.isCenter) return 0
+              if (d.orbit === 'inner') return 180
+              if (d.orbit === 'distant') return 320
+              if (d.orbit === 'discovery') return 400
+              return 250
+            },
+            centerX,
+            centerY,
+          )
+          .strength(0.6),
+      )
+      .force('collision', d3.forceCollide().radius(60))
+      .force('charge', d3.forceManyBody().strength(-100))
+      .alphaDecay(0.03)
+      .velocityDecay(0.4)
       .on('tick', () => {
         onTickRef.current()
       })

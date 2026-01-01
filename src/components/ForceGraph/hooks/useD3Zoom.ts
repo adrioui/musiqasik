@@ -13,7 +13,7 @@ interface UseD3ZoomResult {
   applyZoom: (g: d3.Selection<SVGGElement, unknown, null, undefined>) => void
 }
 
-export function useD3Zoom({ svgRef, scaleExtent = [0.2, 4] }: UseD3ZoomProps): UseD3ZoomResult {
+export function useD3Zoom({ svgRef, scaleExtent = [0.5, 2] }: UseD3ZoomProps): UseD3ZoomResult {
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
   const applyZoom = useCallback(
@@ -23,6 +23,7 @@ export function useD3Zoom({ svgRef, scaleExtent = [0.2, 4] }: UseD3ZoomProps): U
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent(scaleExtent)
+        .wheelDelta((event) => -event.deltaY * 0.002) // Slower scroll zoom
         .on('zoom', (event) => {
           g.attr('transform', event.transform)
         })

@@ -9,6 +9,7 @@ export interface Artist {
   lastfm_url?: string | null
   created_at?: string
   updated_at?: string
+  orbit?: 'inner' | 'distant' | 'discovery'
 }
 
 export interface SimilarityEdge {
@@ -33,6 +34,7 @@ export interface GraphNode extends Artist {
   fx?: number | null
   fy?: number | null
   isCenter?: boolean
+  orbit?: 'inner' | 'distant' | 'discovery'
 }
 
 export interface GraphLink {
