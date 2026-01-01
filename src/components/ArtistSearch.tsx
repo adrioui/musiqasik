@@ -117,9 +117,11 @@ export function ArtistSearch({
           name="search"
           size="sm"
           className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
         />
         <Input
           ref={inputRef}
+          aria-label="Search artists"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -144,6 +146,7 @@ export function ArtistSearch({
             name="progress_activity"
             size="sm"
             className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground"
+            aria-hidden="true"
           />
         )}
       </div>
@@ -162,11 +165,7 @@ export function ArtistSearch({
                 >
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
                     {artist.image_url ? (
-                      <img
-                        src={artist.image_url}
-                        alt={artist.name}
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={artist.image_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
                     )}
@@ -201,11 +200,7 @@ export function ArtistSearch({
                 >
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
                     {artist.image_url ? (
-                      <img
-                        src={artist.image_url}
-                        alt={artist.name}
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={artist.image_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <MaterialIcon name="graphic_eq" size="lg" className="text-muted-foreground" />
                     )}
