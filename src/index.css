@@ -59,7 +59,53 @@
     --chart-5: 5 55% 35%;
   }
 
-  /* Remove .dark class - always dark */
+}
+
+/* Light mode variables */
+.light {
+  --background: 40 20% 96%;        /* #F5F2EB - warm paper cream */
+  --foreground: 30 10% 15%;        /* #2a2520 - warm dark brown */
+
+  --card: 40 15% 98%;              /* #FDFCF8 - near white */
+  --card-foreground: 30 10% 15%;
+
+  --popover: 40 15% 98%;
+  --popover-foreground: 30 10% 15%;
+
+  --primary: 45 98% 58%;           /* #FBC02D - gold (same) */
+  --primary-foreground: 30 10% 15%;
+
+  --secondary: 40 10% 92%;
+  --secondary-foreground: 30 10% 25%;
+
+  --muted: 40 8% 88%;
+  --muted-foreground: 38 8% 45%;
+
+  --accent: 45 98% 58%;
+  --accent-foreground: 30 10% 15%;
+
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 40 10% 85%;
+  --input: 40 10% 85%;
+  --ring: 45 98% 58%;
+
+  /* Graph tokens for light mode */
+  --graph-node: 45 98% 50%;
+  --graph-node-hover: 45 98% 45%;
+  --graph-edge: 40 10% 70%;
+  --graph-center: 45 98% 55%;
+}
+
+/* Smooth theme transition */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.light,
+html.dark {
+  color-scheme: light dark;
 }
 
 @layer base {
@@ -117,6 +163,22 @@ body::after {
   transform: translateZ(0);
 }
 
+/* Light mode vignette - subtle */
+.light body::after {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 75%,
+    rgba(0, 0, 0, 0.12) 100%
+  );
+}
+
+/* Light mode film grain - reduced opacity */
+.light body::before {
+  opacity: 0.02;
+}
+
 /* Material Symbols base configuration */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -162,13 +224,28 @@ body::after {
   @apply bg-white/75 backdrop-blur-xl border border-black/5 rounded-xl;
 }
 
+/* Light mode glass panels */
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.light .glass-panel-pill {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
 /* ===== NODE GLOW EFFECTS ===== */
 
 .node-glow {
   filter: 
-    drop-shadow(0 0 8px hsl(var(--primary) / 0.25))
-    drop-shadow(0 0 16px hsl(var(--primary) / 0.15))
-    drop-shadow(0 0 24px hsl(var(--primary) / 0.08));
+    drop-shadow(0 0 12px hsl(var(--primary) / 0.3))
+    drop-shadow(0 0 24px hsl(var(--primary) / 0.2))
+    drop-shadow(0 0 40px hsl(var(--primary) / 0.1));
 }
 
 .node-glow-active {
@@ -230,13 +307,26 @@ body::after {
 
 /* Lens pulse animation */
 @keyframes pulse-ring {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.08); opacity: 0.3; }
-  100% { transform: scale(1); opacity: 0.6; }
+  0% { 
+    transform: scale(1); 
+    opacity: 0.6;
+    stroke-width: 2px;
+  }
+  50% { 
+    transform: scale(1.05); 
+    opacity: 0.3;
+    stroke-width: 3px;
+  }
+  100% { 
+    transform: scale(1); 
+    opacity: 0.6;
+    stroke-width: 2px;
+  }
 }
 
 .animate-pulse-ring {
   animation: pulse-ring 2s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 /* Bubble-in animation */
@@ -291,8 +381,26 @@ body::after {
   }
 }
 
+/* Play button glow effect */
+.play-button-glow {
+  box-shadow: 
+    0 4px 14px hsla(45, 98%, 58%, 0.4),
+    0 0 20px hsla(45, 98%, 58%, 0.3);
+}
+
+/* Orbital node image - grayscale by default */
+.node-image {
+  filter: grayscale(100%);
+  transition: filter 0.5s ease-out;
+}
+
+.node-image.node-image-hover {
+  filter: grayscale(0%);
+}
+
 .graph-tooltip {
-  @apply pointer-events-none absolute z-50 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg;
+  @apply pointer-events-none absolute z-50 rounded-xl border border-primary/20 bg-card/95 backdrop-blur-md p-4 text-foreground shadow-2xl;
+  min-width: 160px;
 }
 
 @keyframes graph-pulse {
