@@ -14,28 +14,29 @@ export function useNodeAnimation(options: UseNodeAnimationOptions = {}) {
 
   const animateNodesIn = useCallback(
     (nodeSelection: d3.Selection<SVGGElement, SimulationNode, SVGGElement, unknown>) => {
-      if (!enabled || hasAnimatedRef.current) return
+      if (!enabled || nodeSelection.empty()) return
 
-      hasAnimatedRef.current = true
+      // Reset per-run so newly entered nodes can animate on later updates
+      hasAnimatedRef.current = false
 
-      // Set initial state - scale 0, opacity 0
-      nodeSelection
-        .style('opacity', 0)
-        .attr('transform', (d) => `translate(${d.x},${d.y}) scale(0)`)
+      // Select inner content groups (animation controls scale, not position)
+      const contentGroups = nodeSelection.select<SVGGElement>('.node-content')
+
+      // Set initial state - scale 0, opacity 0 (position is handled by tick handler)
+      contentGroups.style('opacity', 0).attr('transform', 'scale(0)')
 
       // Animate each node with stagger
-      nodeSelection.each(function (d, i) {
+      contentGroups.each(function (_d, i) {
         d3.select(this)
           .transition()
           .delay(i * staggerDelay)
           .duration(duration)
           .ease(d3.easeBackOut.overshoot(1.2))
           .style('opacity', 1)
-          .attrTween('transform', () => {
-            const interpolate = d3.interpolate(0, 1)
-            return (t) => `translate(${d.x},${d.y}) scale(${interpolate(t)})`
-          })
+          .attr('transform', 'scale(1)')
       })
+
+      hasAnimatedRef.current = true
     },
     [enabled, staggerDelay, duration],
   )

@@ -27,6 +27,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
+  const hasFittedRef = useRef(false)
+  const onNodeClickRef = useRef(onNodeClick)
+  const onEdgeClickRef = useRef(onEdgeClick)
 
   // Refs for D3 selections that need to be updated on tick
   const linkSelectionRef = useRef<d3.Selection<
@@ -35,15 +38,21 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     SVGGElement,
     unknown
   > | null>(null)
-  const lensIndicatorRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(
-    null,
-  )
   const nodeSelectionRef = useRef<d3.Selection<
     SVGGElement,
     SimulationNode,
     SVGGElement,
     unknown
   > | null>(null)
+  const containerSelectionRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(
+    null,
+  )
+  const linksGroupRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
+  const nodesGroupRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
+  const defsRef = useRef<d3.Selection<SVGDefsElement, unknown, null, undefined> | null>(null)
+  const lensIndicatorRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(
+    null,
+  )
 
   // Use extracted hooks
   const dimensions = useElementDimensions(containerRef)
@@ -53,7 +62,11 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     centerArtist,
     threshold,
   })
-  const { zoomIn, zoomOut, reset, applyZoom } = useD3Zoom({ svgRef })
+  const zoomScaleExtent: [number, number] = [0.25, 3]
+  const { zoomIn, zoomOut, reset, applyZoom, setTransform } = useD3Zoom({
+    svgRef,
+    scaleExtent: zoomScaleExtent,
+  })
   const { getNodeColor } = useGenreColors({
     nodes: filteredNodes,
   })
@@ -63,27 +76,39 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
   // Reset animation when center artist changes
   useEffect(() => {
-    resetAnimation()
-  }, [resetAnimation])
-
-  // Build adjacency map for efficient neighbor lookups (used for highlighting)
-  const adjacencyMap = useMemo(() => {
-    const map = new Map<string, Set<string>>()
-    for (const link of graphLinks) {
-      const sourceName =
-        typeof link.source === 'string' ? link.source : (link.source as SimulationNode).name
-      const targetName =
-        typeof link.target === 'string' ? link.target : (link.target as SimulationNode).name
-      const sourceKey = sourceName.toLowerCase()
-      const targetKey = targetName.toLowerCase()
-
-      if (!map.has(sourceKey)) map.set(sourceKey, new Set())
-      if (!map.has(targetKey)) map.set(targetKey, new Set())
-      map.get(sourceKey)!.add(targetKey)
-      map.get(targetKey)!.add(sourceKey)
+    if (centerArtist !== undefined) {
+      resetAnimation()
     }
-    return map
-  }, [graphLinks])
+  }, [resetAnimation, centerArtist])
+
+  // Keep latest event handlers without retriggering effects
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick
+  }, [onNodeClick])
+
+  useEffect(() => {
+    onEdgeClickRef.current = onEdgeClick
+  }, [onEdgeClick])
+
+  // Neighbor lookup for hover highlighting
+  const getNeighbors = useCallback(
+    (nodeName: string) => {
+      const neighbors = new Set<string>()
+      const key = nodeName.toLowerCase()
+      for (const link of graphLinks) {
+        const sourceName =
+          typeof link.source === 'string' ? link.source : (link.source as SimulationNode).name
+        const targetName =
+          typeof link.target === 'string' ? link.target : (link.target as SimulationNode).name
+        const sourceKey = sourceName.toLowerCase()
+        const targetKey = targetName.toLowerCase()
+        if (sourceKey === key) neighbors.add(targetKey)
+        if (targetKey === key) neighbors.add(sourceKey)
+      }
+      return neighbors
+    },
+    [graphLinks],
+  )
 
   // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
   const { graphNodes, links } = useMemo(() => {
@@ -131,6 +156,237 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     return { graphNodes: nodes, links: resolvedLinks }
   }, [filteredNodes, graphLinks, dimensions.width, dimensions.height])
 
+  // Fit graph into viewport on initial render/reload to avoid clipping
+  const fitGraphToViewport = useCallback(() => {
+    if (!svgRef.current) return
+    const svgElement = svgRef.current
+    const container = svgElement.querySelector<SVGGElement>('.graph-container')
+    if (!container) return
+    const bbox = container.getBBox()
+    if (bbox.width === 0 || bbox.height === 0) return
+
+    const margin = 80
+    const { width, height } = dimensions
+    const scaleX = (width - margin * 2) / bbox.width
+    const scaleY = (height - margin * 2) / bbox.height
+    const desiredScale = Math.min(scaleX, scaleY)
+    const clampedScale = Math.max(zoomScaleExtent[0], Math.min(desiredScale, zoomScaleExtent[1]))
+    const tx = width / 2 - (bbox.x + bbox.width / 2) * clampedScale
+    const ty = height / 2 - (bbox.y + bbox.height / 2) * clampedScale
+
+    setTransform(d3.zoomIdentity.translate(tx, ty).scale(clampedScale))
+  }, [dimensions, setTransform])
+
+  const sanitizeId = useCallback((value: string) => value.replace(/[^a-zA-Z0-9]/g, '-'), [])
+
+  const getNodeKey = useCallback((d: SimulationNode) => d.lastfm_mbid || d.id || d.name, [])
+
+  const getClipId = useCallback(
+    (d: SimulationNode) => {
+      const base = getNodeKey(d)
+      return `clip-${sanitizeId(base)}`
+    },
+    [getNodeKey, sanitizeId],
+  )
+
+  const getVinylClipId = useCallback(
+    (d: SimulationNode) => `vinyl-clip-${sanitizeId(d.name)}`,
+    [sanitizeId],
+  )
+
+  const getNodeRadius = useCallback((d: SimulationNode) => {
+    if (d.isCenter) return 80
+    const baseSize = 24
+    const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 12
+    return baseSize + listenersBonus
+  }, [])
+
+  const renderLabel = useCallback(
+    (content: d3.Selection<SVGGElement, SimulationNode, null, undefined>, d: SimulationNode) => {
+      const labelGroup = content.append('g').attr('class', 'label-group')
+
+      labelGroup
+        .append('text')
+        .text(d.name)
+        .attr('text-anchor', 'middle')
+        .attr('dy', d.isCenter ? 50 : 42)
+        .attr('class', 'fill-foreground text-xs font-medium')
+        .style('pointer-events', 'none')
+        .style('opacity', 1)
+        .style('transition', 'opacity 0.2s ease-out')
+
+      const textNode = labelGroup.select('text').node() as SVGTextElement | null
+      if (textNode) {
+        const bbox = textNode.getBBox()
+        labelGroup
+          .insert('rect', 'text')
+          .attr('class', 'label-backdrop')
+          .attr('rx', 4)
+          .attr('ry', 4)
+          .attr('x', bbox.x - 6)
+          .attr('y', bbox.y - 2)
+          .attr('width', bbox.width + 12)
+          .attr('height', bbox.height + 4)
+          .attr('fill', 'hsl(var(--card) / 0.85)')
+          .style('opacity', 0.9)
+          .style('transition', 'opacity 0.2s ease-out')
+      }
+    },
+    [],
+  )
+
+  const renderNodeContent = useCallback(
+    (content: d3.Selection<SVGGElement, SimulationNode, null, undefined>, d: SimulationNode) => {
+      const radius = getNodeRadius(d)
+
+      if (d.isCenter) {
+        const vinylClipId = getVinylClipId(d)
+        if (!defsRef.current?.select(`#${vinylClipId}`).node()) {
+          defsRef.current
+            ?.append('clipPath')
+            .attr('id', vinylClipId)
+            .append('circle')
+            .attr('r', radius - 8)
+        }
+
+        const spinGroup = content
+          .append('g')
+          .attr('class', 'vinyl-spin animate-spin-slow')
+          .style('pointer-events', 'none')
+
+        spinGroup
+          .append('circle')
+          .attr('r', radius)
+          .attr('fill', '#111')
+          .attr('stroke', 'rgba(255,255,255,0.05)')
+          .attr('stroke-width', 1)
+          .attr('class', 'vinyl-glow')
+
+        spinGroup
+          .append('circle')
+          .attr('r', radius - 5)
+          .attr('fill', 'none')
+          .attr('stroke', 'rgba(255,255,255,0.03)')
+          .attr('stroke-width', radius - 20)
+          .attr('stroke-dasharray', '1 3')
+
+        if (d.image_url && !isPlaceholderImage(d.image_url)) {
+          spinGroup
+            .append('image')
+            .attr('href', d.image_url)
+            .attr('width', (radius - 8) * 2)
+            .attr('height', (radius - 8) * 2)
+            .attr('x', -(radius - 8))
+            .attr('y', -(radius - 8))
+            .attr('clip-path', `url(#${vinylClipId})`)
+            .style('filter', 'grayscale(60%) contrast(1.2) brightness(0.8)')
+            .style('opacity', '0.7')
+            .style('pointer-events', 'none')
+        }
+
+        spinGroup
+          .append('circle')
+          .attr('r', 20)
+          .attr('fill', 'hsl(var(--primary))')
+          .attr('class', 'vinyl-glow')
+
+        spinGroup.append('circle').attr('r', 2).attr('fill', '#000')
+      } else {
+        const floatDuration = 6 + Math.random() * 6
+        const floatDelay = Math.random() * 5
+
+        content
+          .classed('animate-drift', true)
+          .style('--drift-duration', `${floatDuration}s`)
+          .style('--drift-delay', `${floatDelay}s`)
+
+        content
+          .append('circle')
+          .attr('class', 'node-circle node-glow')
+          .attr('r', radius)
+          .attr('fill', getNodeColor(d))
+          .attr('stroke', 'hsl(var(--background))')
+          .attr('stroke-width', 3)
+
+        if (d.image_url && !isPlaceholderImage(d.image_url)) {
+          const clipId = getClipId(d)
+          if (!defsRef.current?.select(`#${clipId}`).node()) {
+            defsRef.current
+              ?.append('clipPath')
+              .attr('id', clipId)
+              .append('circle')
+              .attr('r', radius - 2)
+          }
+
+          content
+            .insert('image', 'circle')
+            .attr('class', 'node-image')
+            .attr('href', d.image_url)
+            .attr('x', -(radius - 2))
+            .attr('y', -(radius - 2))
+            .attr('width', (radius - 2) * 2)
+            .attr('height', (radius - 2) * 2)
+            .attr('clip-path', `url(#${clipId})`)
+            .style('pointer-events', 'none')
+        }
+      }
+
+      renderLabel(content, d)
+    },
+    [getClipId, getNodeColor, getNodeRadius, getVinylClipId, renderLabel],
+  )
+
+  const updateNodeContent = useCallback(
+    (content: d3.Selection<SVGGElement, SimulationNode, null, undefined>, d: SimulationNode) => {
+      const radius = getNodeRadius(d)
+
+      if (d.isCenter) {
+        const vinylClipId = getVinylClipId(d)
+        defsRef.current?.select(`#${vinylClipId} circle`).attr('r', radius - 8)
+        content.selectAll<SVGImageElement, SimulationNode>('image').each(function () {
+          d3.select(this)
+            .attr('width', (radius - 8) * 2)
+            .attr('height', (radius - 8) * 2)
+            .attr('x', -(radius - 8))
+            .attr('y', -(radius - 8))
+        })
+      } else {
+        const circle = content.select<SVGCircleElement>('.node-circle')
+        circle.attr('r', radius).attr('fill', getNodeColor(d))
+
+        const clipId = getClipId(d)
+        defsRef.current?.select(`#${clipId} circle`).attr('r', radius - 2)
+
+        content.select<SVGImageElement>('.node-image').each(function () {
+          d3.select(this)
+            .attr('x', -(radius - 2))
+            .attr('y', -(radius - 2))
+            .attr('width', (radius - 2) * 2)
+            .attr('height', (radius - 2) * 2)
+            .attr('clip-path', `url(#${clipId})`)
+        })
+      }
+
+      const labelGroup = content.select<SVGGElement>('.label-group')
+      const text = labelGroup
+        .select<SVGTextElement>('text')
+        .text(d.name)
+        .attr('dy', d.isCenter ? 50 : 42)
+      const backdrop = labelGroup.select<SVGRectElement>('.label-backdrop')
+      const textNode = text.node()
+
+      if (textNode && !backdrop.empty()) {
+        const bbox = textNode.getBBox()
+        backdrop
+          .attr('x', bbox.x - 6)
+          .attr('y', bbox.y - 2)
+          .attr('width', bbox.width + 12)
+          .attr('height', bbox.height + 4)
+      }
+    },
+    [getClipId, getNodeColor, getNodeRadius, getVinylClipId],
+  )
+
   // Tick handler for simulation - updates D3 selections with curved paths
   const handleTick = useCallback(() => {
     if (linkSelectionRef.current) {
@@ -153,7 +409,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     if (nodeSelectionRef.current) {
       nodeSelectionRef.current.attr('transform', (d) => `translate(${d.x},${d.y})`)
     }
-  }, [])
+
+    // On first tick after data/zoom reset, fit graph to viewport
+    if (!hasFittedRef.current) {
+      hasFittedRef.current = true
+      // Defer to next frame so DOM measurements reflect latest tick
+      requestAnimationFrame(() => {
+        fitGraphToViewport()
+      })
+    }
+  }, [fitGraphToViewport])
 
   // Use the D3 simulation hook
   const { simulation, restart } = useD3Simulation({
@@ -186,112 +451,25 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     [zoomIn, zoomOut, reset],
   )
 
-  // Create and update the D3 visualization (DOM elements only, simulation is handled by hook)
+  // Initial container setup (runs once per SVG mount)
   useEffect(() => {
-    if (!svgRef.current || filteredNodes.length === 0 || !simulation) return
+    if (!svgRef.current) return
 
     const svg = d3.select(svgRef.current)
-
-    // Clear previous content
     svg.selectAll('*').remove()
 
-    // Create container group for zoom
-    const g = svg.append('g').attr('class', 'graph-container')
+    const container = svg.append('g').attr('class', 'graph-container')
+    containerSelectionRef.current = container
 
-    // Apply zoom behavior
-    applyZoom(g)
+    const defs = svg.append('defs').attr('class', 'graph-defs')
+    defsRef.current = defs
 
-    // Draw links as curved paths and store reference
-    const linkSelection = g
-      .append('g')
-      .attr('class', 'links')
-      .selectAll<SVGPathElement, SimulationLink>('path')
-      .data(links)
-      .join('path')
-      .attr('fill', 'none')
-      .attr('stroke', 'hsl(var(--graph-edge))')
-      .attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
-      .attr('stroke-width', (d) => 0.5 + d.weight * 1.5)
-      .attr('class', 'cursor-pointer edge-glow')
-      .style('transition', 'stroke-opacity 0.3s ease-out, stroke 0.3s ease-out')
-      .on('click', (event, d) => {
-        event.stopPropagation()
-        if (onEdgeClick) {
-          const source = d.source as SimulationNode
-          const target = d.target as SimulationNode
-          const midX = (source.x + target.x) / 2
-          const midY = (source.y + target.y) / 2
+    applyZoom(container)
 
-          // Find shared tags
-          const sourceTags = new Set(source.tags || [])
-          const sharedTags = (target.tags || []).filter((tag) => sourceTags.has(tag))
+    linksGroupRef.current = container.append('g').attr('class', 'links')
+    nodesGroupRef.current = container.append('g').attr('class', 'nodes')
 
-          onEdgeClick({
-            source: source.name,
-            target: target.name,
-            weight: d.weight,
-            position: { x: midX, y: midY },
-            sharedTags,
-          })
-        }
-      })
-      .on('mouseenter', function () {
-        d3.select(this).attr('stroke', 'hsl(var(--primary))').attr('stroke-opacity', 0.8)
-      })
-      .on('mouseleave', function (_, d) {
-        d3.select(this)
-          .attr('stroke', 'hsl(var(--graph-edge))')
-          .attr('stroke-opacity', 0.15 + d.weight * 0.25)
-      })
-
-    linkSelectionRef.current = linkSelection
-
-    // Draw nodes and store reference
-    const nodeSelection = g
-      .append('g')
-      .attr('class', 'nodes')
-      .selectAll<SVGGElement, SimulationNode>('g')
-      .data(graphNodes)
-      .join('g')
-      .attr('class', 'graph-node')
-      .style('cursor', 'pointer')
-
-    nodeSelectionRef.current = nodeSelection
-
-    // Hover highlighting function (pure D3, no React state)
-    const applyHighlight = (highlightedName: string | null) => {
-      if (!highlightedName) {
-        // Reset all to normal
-        linkSelection.attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
-        nodeSelection.style('opacity', 1)
-        return
-      }
-
-      const highlightKey = highlightedName.toLowerCase()
-      const neighbors = adjacencyMap.get(highlightKey) || new Set<string>()
-
-      // Update links
-      linkSelection.attr('stroke-opacity', (d) => {
-        const sourceKey = (d.source as SimulationNode).name.toLowerCase()
-        const targetKey = (d.target as SimulationNode).name.toLowerCase()
-        if (sourceKey === highlightKey || targetKey === highlightKey) {
-          return 0.8
-        }
-        return 0.05
-      })
-
-      // Update nodes
-      nodeSelection.style('opacity', (d) => {
-        const nodeKey = d.name.toLowerCase()
-        if (nodeKey === highlightKey || neighbors.has(nodeKey)) {
-          return 1
-        }
-        return 0.2
-      })
-    }
-
-    // Add lens indicator for hover effect
-    const lensIndicator = g
+    lensIndicatorRef.current = container
       .append('circle')
       .attr('class', 'lens-indicator')
       .attr('fill', 'none')
@@ -300,10 +478,191 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       .style('opacity', 0)
       .style('pointer-events', 'none')
 
-    lensIndicatorRef.current = lensIndicator
+    return () => {
+      containerSelectionRef.current = null
+      linksGroupRef.current = null
+      nodesGroupRef.current = null
+      defsRef.current = null
+      lensIndicatorRef.current = null
+    }
+  }, [applyZoom])
 
-    // Apply drag behavior
-    nodeSelection.call(
+  const handleEdgeClick = useCallback((event: MouseEvent, d: SimulationLink) => {
+    event.stopPropagation()
+    const handler = onEdgeClickRef.current
+    if (!handler) return
+
+    const source = d.source as SimulationNode
+    const target = d.target as SimulationNode
+    const midX = (source.x + target.x) / 2
+    const midY = (source.y + target.y) / 2
+
+    const sourceTags = new Set(source.tags || [])
+    const sharedTags = (target.tags || []).filter((tag) => sourceTags.has(tag))
+
+    handler({
+      source: source.name,
+      target: target.name,
+      weight: d.weight,
+      position: { x: midX, y: midY },
+      sharedTags,
+    })
+  }, [])
+
+  const handleEdgeMouseEnter = useCallback(function (this: SVGPathElement) {
+    d3.select(this).attr('stroke', 'hsl(var(--primary))').attr('stroke-opacity', 0.8)
+  }, [])
+
+  const handleEdgeMouseLeave = useCallback(function (
+    this: SVGPathElement,
+    _event: MouseEvent,
+    d: SimulationLink,
+  ) {
+    d3.select(this)
+      .attr('stroke', 'hsl(var(--graph-edge))')
+      .attr('stroke-opacity', 0.15 + d.weight * 0.25)
+  }, [])
+
+  useEffect(() => {
+    if (!linksGroupRef.current) return
+
+    const linkSelection = linksGroupRef.current
+      .selectAll<SVGPathElement, SimulationLink>('path')
+      .data(links, (d) => {
+        const source = d.source as SimulationNode
+        const target = d.target as SimulationNode
+        return `${source.name}-${target.name}`
+      })
+
+    linkSelection.exit().remove()
+
+    const linkEnter = linkSelection
+      .enter()
+      .append('path')
+      .attr('fill', 'none')
+      .attr('stroke', 'hsl(var(--graph-edge))')
+      .attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
+      .attr('stroke-width', (d) => 0.5 + d.weight * 1.5)
+      .attr('class', 'cursor-pointer edge-glow')
+      .style('transition', 'stroke-opacity 0.3s ease-out, stroke 0.3s ease-out')
+      .on('click', handleEdgeClick)
+      .on('mouseenter', handleEdgeMouseEnter)
+      .on('mouseleave', handleEdgeMouseLeave)
+
+    linkSelectionRef.current = linkEnter.merge(linkSelection)
+
+    if (links.length === 0) {
+      linkSelectionRef.current = null
+    }
+  }, [handleEdgeClick, handleEdgeMouseEnter, handleEdgeMouseLeave, links])
+
+  const applyHighlight = useCallback(
+    (highlightedName: string | null) => {
+      if (!linkSelectionRef.current || !nodeSelectionRef.current) return
+
+      if (!highlightedName) {
+        linkSelectionRef.current.attr('stroke-opacity', (d) => 0.15 + d.weight * 0.25)
+        nodeSelectionRef.current.style('opacity', 1)
+        return
+      }
+
+      const highlightKey = highlightedName.toLowerCase()
+      const neighbors = getNeighbors(highlightKey)
+
+      linkSelectionRef.current.attr('stroke-opacity', (d) => {
+        const sourceKey = (d.source as SimulationNode).name.toLowerCase()
+        const targetKey = (d.target as SimulationNode).name.toLowerCase()
+        if (sourceKey === highlightKey || targetKey === highlightKey) {
+          return 0.8
+        }
+        return 0.05
+      })
+
+      nodeSelectionRef.current.style('opacity', (d) => {
+        const nodeKey = d.name.toLowerCase()
+        if (nodeKey === highlightKey || neighbors.has(nodeKey)) {
+          return 1
+        }
+        return 0.2
+      })
+    },
+    [getNeighbors],
+  )
+
+  const handleNodeClick = useCallback((_event: MouseEvent, d: SimulationNode) => {
+    onNodeClickRef.current?.(d)
+  }, [])
+
+  const handleNodeMouseEnter = useCallback(
+    (event: MouseEvent, d: SimulationNode) => {
+      if (d.isCenter) return
+      applyHighlight(d.name)
+
+      const currentTarget = event.currentTarget as SVGGElement | null
+      if (currentTarget) {
+        d3.select(currentTarget)
+          .select('.node-content circle')
+          .attr('fill', 'hsl(var(--graph-node-hover))')
+      }
+
+      if (!tooltipRef.current) return
+      const tooltip = d3.select(tooltipRef.current)
+      tooltip
+        .style('display', 'block')
+        .style('opacity', '1')
+        .html(
+          `
+          <div class="font-display italic text-lg">${d.name}</div>
+          ${d.tags?.[0] ? `<div class="text-xs text-primary uppercase tracking-widest mt-1">${d.tags[0]}</div>` : ''}
+        `,
+        )
+        .style('left', `${event.pageX + 15}px`)
+        .style('top', `${event.pageY - 10}px`)
+    },
+    [applyHighlight],
+  )
+
+  const handleNodeMouseMove = useCallback((event: MouseEvent) => {
+    if (!tooltipRef.current) return
+    const tooltip = d3.select(tooltipRef.current)
+    tooltip.style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`)
+  }, [])
+
+  const handleNodeMouseLeave = useCallback(
+    (event: MouseEvent, d: SimulationNode) => {
+      applyHighlight(null)
+      const currentTarget = event.currentTarget as SVGGElement | null
+      if (currentTarget) {
+        d3.select(currentTarget).select('.node-content circle').attr('fill', getNodeColor(d))
+      }
+
+      if (tooltipRef.current) {
+        d3.select(tooltipRef.current).style('opacity', '0').style('display', 'none')
+      }
+    },
+    [applyHighlight, getNodeColor],
+  )
+
+  // Create tooltip once
+  useEffect(() => {
+    if (!tooltipRef.current) {
+      tooltipRef.current = document.createElement('div')
+      tooltipRef.current.className = 'graph-tooltip'
+      tooltipRef.current.style.opacity = '0'
+      tooltipRef.current.style.display = 'none'
+      document.body.appendChild(tooltipRef.current)
+    }
+
+    return () => {
+      if (tooltipRef.current) {
+        tooltipRef.current.remove()
+        tooltipRef.current = null
+      }
+    }
+  }, [])
+
+  const dragBehavior = useMemo(
+    () =>
       d3
         .drag<SVGGElement, SimulationNode>()
         .on('start', (event, d) => {
@@ -320,262 +679,91 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
           d.fx = undefined
           d.fy = undefined
         }),
-    )
+    [restart, simulation],
+  )
 
-    // Node circles with enhanced sizing
-    const getNodeRadius = (d: SimulationNode) => {
-      if (d.isCenter) return 80 // Larger vinyl center
-      const baseSize = 24
-      const listenersBonus = Math.min((d.listeners || 0) / 10000000, 1) * 12
-      return baseSize + listenersBonus
-    }
+  useEffect(() => {
+    if (!nodesGroupRef.current) return
 
-    // Helper to sanitize name for IDs
-    const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '-')
+    hasFittedRef.current = false
 
-    // Render vinyl anchor node (center node special treatment)
-    nodeSelection
-      .filter((d) => d.isCenter === true)
-      .each(function (d) {
-        const node = d3.select(this)
-        const radius = 80
+    const nodeSelection: d3.Selection<SVGGElement, SimulationNode, SVGGElement, unknown> =
+      nodesGroupRef.current
+        .selectAll<SVGGElement, SimulationNode>('.node-position')
+        .data<SimulationNode>(graphNodes, (d) => getNodeKey(d))
 
-        // Vinyl outer ring (main record)
-        node
-          .append('circle')
-          .attr('r', radius)
-          .attr('fill', '#111')
-          .attr('stroke', 'rgba(255,255,255,0.05)')
-          .attr('stroke-width', 1)
-          .attr('class', 'vinyl-glow')
+    const nodeExit: d3.Selection<SVGGElement, SimulationNode, SVGGElement, unknown> =
+      nodeSelection.exit()
+    nodeExit.each((d: SimulationNode) => {
+      defsRef.current?.select(`#${getClipId(d)}`).remove()
+      defsRef.current?.select(`#${getVinylClipId(d)}`).remove()
+    })
+    nodeExit.remove()
 
-        // Grooves pattern overlay
-        node
-          .append('circle')
-          .attr('r', radius - 5)
-          .attr('fill', 'none')
-          .attr('stroke', 'rgba(255,255,255,0.03)')
-          .attr('stroke-width', radius - 20)
-          .attr('stroke-dasharray', '1 3')
+    const nodeEnter = nodeSelection
+      .enter()
+      .append('g')
+      .attr('class', 'node-position')
+      .style('cursor', 'pointer')
+      .attr('transform', (d) => `translate(${d.x},${d.y})`)
 
-        // Album art (grayscale, rotating)
-        const clipId = `vinyl-clip-${sanitizeName(d.name)}`
-        svg
-          .append('defs')
-          .append('clipPath')
-          .attr('id', clipId)
-          .append('circle')
-          .attr('r', radius - 8)
+    nodeEnter.append('g').attr('class', 'node-content')
 
-        if (d.image_url && !isPlaceholderImage(d.image_url)) {
-          node
-            .append('image')
-            .attr('href', d.image_url)
-            .attr('width', (radius - 8) * 2)
-            .attr('height', (radius - 8) * 2)
-            .attr('x', -(radius - 8))
-            .attr('y', -(radius - 8))
-            .attr('clip-path', `url(#${clipId})`)
-            .attr('class', 'animate-spin-slow')
-            .style('filter', 'grayscale(60%) contrast(1.2) brightness(0.8)')
-            .style('opacity', '0.7')
-            .style('pointer-events', 'none')
-        }
-
-        // Gold center label
-        node
-          .append('circle')
-          .attr('r', 20)
-          .attr('fill', 'hsl(var(--primary))')
-          .attr('class', 'vinyl-glow')
-
-        // Center dot
-        node.append('circle').attr('r', 2).attr('fill', '#000')
-      })
-
-    // Render non-center nodes as circular image bubbles with floating animation
-    nodeSelection
-      .filter((d) => !d.isCenter)
-      .each(function (d) {
-        const node = d3.select(this)
-        const radius = getNodeRadius(d)
-
-        // Set random float animation delays
-        const floatDuration = 6 + Math.random() * 6 // 6-12s
-        const floatDelay = Math.random() * 5 // 0-5s offset
-        node.style('--drift-duration', `${floatDuration}s`)
-        node.style('--drift-delay', `${floatDelay}s`)
-        node.attr('class', 'graph-node animate-drift')
-
-        // Main circle
-        node
-          .append('circle')
-          .attr('r', radius)
-          .attr('fill', getNodeColor(d))
-          .attr('stroke', 'hsl(var(--background))')
-          .attr('stroke-width', 3)
-          .attr('class', 'node-glow')
-
-        // Node image if available
-        if (d.image_url && !isPlaceholderImage(d.image_url)) {
-          const clipId = `clip-${sanitizeName(d.name)}`
-          svg
-            .append('defs')
-            .append('clipPath')
-            .attr('id', clipId)
-            .append('circle')
-            .attr('r', radius - 2)
-
-          node
-            .insert('image', 'circle')
-            .attr('xlink:href', d.image_url)
-            .attr('x', -(radius - 2))
-            .attr('y', -(radius - 2))
-            .attr('width', (radius - 2) * 2)
-            .attr('height', (radius - 2) * 2)
-            .attr('clip-path', `url(#${clipId})`)
-            .style('pointer-events', 'none')
-        }
-      })
-
-    // Node labels with backdrop
-    const labelGroup = nodeSelection.append('g').attr('class', 'label-group')
-
-    // Text label
-    labelGroup
-      .append('text')
-      .text((d) => d.name)
-      .attr('text-anchor', 'middle')
-      .attr('dy', (d) => (d.isCenter ? 50 : 42))
-      .attr('class', 'fill-foreground text-xs font-medium')
-      .style('pointer-events', 'none')
-      .style('opacity', showLabels ? 1 : 0)
-      .style('transition', 'opacity 0.2s ease-out')
-
-    // Add backdrop rect behind text (measure after text is created)
-    labelGroup.each(function () {
-      const group = d3.select(this)
-      const text = group.select('text')
-      const textNode = text.node() as SVGTextElement | null
-
-      if (textNode) {
-        const bbox = textNode.getBBox()
-        group
-          .insert('rect', 'text')
-          .attr('class', 'label-backdrop')
-          .attr('rx', 4)
-          .attr('ry', 4)
-          .attr('x', bbox.x - 6)
-          .attr('y', bbox.y - 2)
-          .attr('width', bbox.width + 12)
-          .attr('height', bbox.height + 4)
-          .attr('fill', 'hsl(var(--card) / 0.85)')
-          .style('opacity', showLabels ? 0.9 : 0)
-          .style('transition', 'opacity 0.2s ease-out')
-      }
+    nodeEnter.each(function (d: SimulationNode) {
+      const content = d3
+        .select<SVGGElement, SimulationNode>(this as SVGGElement)
+        .select<SVGGElement>('.node-content')
+      renderNodeContent(content, d)
     })
 
-    // Trigger bubble-in animation
-    animateNodesIn(nodeSelection)
+    nodeEnter.call(dragBehavior)
+    nodeEnter
+      .on('click', handleNodeClick)
+      .on('mouseenter', handleNodeMouseEnter)
+      .on('mousemove', handleNodeMouseMove)
+      .on('mouseleave', handleNodeMouseLeave)
 
-    // Click handler for node selection (opens artist panel)
-    nodeSelection.on('click', (_event, d) => {
-      onNodeClick(d)
+    const nodeMerge: d3.Selection<SVGGElement, SimulationNode, SVGGElement, unknown> =
+      nodeEnter.merge(nodeSelection)
+
+    nodeMerge.each(function (d: SimulationNode) {
+      const content = d3
+        .select<SVGGElement, SimulationNode>(this as SVGGElement)
+        .select<SVGGElement>('.node-content')
+      updateNodeContent(content, d)
     })
 
-    // Tooltip
-    if (!tooltipRef.current) {
-      tooltipRef.current = document.createElement('div')
-      tooltipRef.current.className = 'graph-tooltip'
-      tooltipRef.current.style.opacity = '0'
-      tooltipRef.current.style.display = 'none'
-      document.body.appendChild(tooltipRef.current)
+    nodeSelectionRef.current = nodeMerge
+
+    if (nodeEnter.size() > 0) {
+      animateNodesIn(nodeEnter)
     }
-    const tooltip = d3.select(tooltipRef.current)
 
-    // Hover highlighting, lens indicator, and tooltip
-    nodeSelection
-      .on('mouseenter', function (event, d) {
-        // Skip lens indicator on center node
-        if (d.isCenter) return
-
-        applyHighlight(d.name)
-        d3.select(this).select('circle').attr('fill', 'hsl(var(--graph-node-hover))')
-
-        // Show lens indicator ring
-        const radius = getNodeRadius(d) + 12
-        lensIndicator
-          .attr('cx', d.x)
-          .attr('cy', d.y)
-          .attr('r', radius)
-          .attr('class', 'lens-indicator animate-pulse-ring')
-          .style('opacity', 1)
-
-        // Show simplified tooltip (name + primary tag only)
-        tooltip
-          .style('display', 'block')
-          .style('opacity', '1')
-          .html(
-            `
-            <div class="font-display italic text-lg">${d.name}</div>
-            ${d.tags?.[0] ? `<div class="text-xs text-primary uppercase tracking-widest mt-1">${d.tags[0]}</div>` : ''}
-          `,
-          )
-          .style('left', `${event.pageX + 15}px`)
-          .style('top', `${event.pageY - 10}px`)
-      })
-      .on('mousemove', (event) => {
-        tooltip.style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`)
-      })
-      .on('mouseleave', function (_event, d) {
-        applyHighlight(null)
-        d3.select(this).select('circle').attr('fill', getNodeColor(d))
-
-        // Hide lens indicator
-        lensIndicator.style('opacity', 0)
-
-        // Hide tooltip
-        tooltip.style('opacity', '0').style('display', 'none')
-      })
-
-    // Cleanup refs on effect cleanup
-    return () => {
-      linkSelectionRef.current = null
+    if (graphNodes.length === 0) {
       nodeSelectionRef.current = null
-      lensIndicatorRef.current = null
     }
   }, [
-    onNodeClick,
-    onEdgeClick,
-    showLabels,
-    applyZoom,
-    simulation,
-    restart,
-    graphNodes,
-    links,
-    filteredNodes.length,
-    getNodeColor,
-    adjacencyMap,
     animateNodesIn,
+    dragBehavior,
+    getClipId,
+    getVinylClipId,
+    graphNodes,
+    handleNodeClick,
+    handleNodeMouseEnter,
+    handleNodeMouseLeave,
+    handleNodeMouseMove,
+    getNodeKey,
+    renderNodeContent,
+    updateNodeContent,
   ])
 
-  // Update labels visibility
+  // Toggle label visibility without rerendering nodes
   useEffect(() => {
     if (!svgRef.current) return
     const svg = d3.select(svgRef.current)
     svg.selectAll('.label-group text').style('opacity', showLabels ? 1 : 0)
     svg.selectAll('.label-backdrop').style('opacity', showLabels ? 0.9 : 0)
   }, [showLabels])
-
-  // Cleanup tooltip on unmount
-  useEffect(() => {
-    return () => {
-      if (tooltipRef.current) {
-        tooltipRef.current.remove()
-        tooltipRef.current = null
-      }
-    }
-  }, [])
 
   if (filteredNodes.length === 0) {
     return (

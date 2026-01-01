@@ -11,6 +11,7 @@ interface UseD3ZoomResult {
   zoomOut: () => void
   reset: () => void
   applyZoom: (g: d3.Selection<SVGGElement, unknown, null, undefined>) => void
+  setTransform: (transform: d3.ZoomTransform) => void
 }
 
 export function useD3Zoom({ svgRef, scaleExtent = [0.5, 2] }: UseD3ZoomProps): UseD3ZoomResult {
@@ -19,16 +20,25 @@ export function useD3Zoom({ svgRef, scaleExtent = [0.5, 2] }: UseD3ZoomProps): U
   const applyZoom = useCallback(
     (g: d3.Selection<SVGGElement, unknown, null, undefined>) => {
       if (!svgRef.current) return
+      const { width, height } = svgRef.current.getBoundingClientRect()
+      const translateExtent: [[number, number], [number, number]] = [
+        [-width * 2, -height * 2],
+        [width * 3, height * 3],
+      ]
 
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent(scaleExtent)
+        .translateExtent(translateExtent)
         .wheelDelta((event) => -event.deltaY * 0.002) // Slower scroll zoom
         .on('zoom', (event) => {
           g.attr('transform', event.transform)
         })
 
-      d3.select(svgRef.current).call(zoom)
+      const svgSelection = d3.select(svgRef.current)
+      svgSelection.call(zoom)
+      // Reset transform to keep graph centered on re-init
+      svgSelection.call(zoom.transform, d3.zoomIdentity)
       zoomRef.current = zoom
     },
     [svgRef, scaleExtent],
@@ -55,5 +65,14 @@ export function useD3Zoom({ svgRef, scaleExtent = [0.5, 2] }: UseD3ZoomProps): U
     }
   }, [svgRef])
 
-  return { zoomIn, zoomOut, reset, applyZoom }
+  const setTransform = useCallback(
+    (transform: d3.ZoomTransform) => {
+      if (svgRef.current && zoomRef.current) {
+        d3.select(svgRef.current).call(zoomRef.current.transform, transform)
+      }
+    },
+    [svgRef],
+  )
+
+  return { zoomIn, zoomOut, reset, applyZoom, setTransform }
 }
