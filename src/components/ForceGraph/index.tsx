@@ -656,13 +656,27 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       tooltip
         .style('display', 'block')
         .style('opacity', '1')
-        .html(
-          `
-          <div class="font-display italic text-lg">${d.name}</div>
-          ${d.tags?.[0] ? `<div class="text-[10px] text-primary uppercase tracking-[0.2em] mt-1">${d.tags[0]}</div>` : ''}
-          <div class="text-[10px] text-muted-foreground mt-2 opacity-70">Often played together</div>
-        `,
-        )
+        .html('') // Clear existing content
+
+      // Safe DOM construction to prevent XSS
+      tooltip
+        .append('div')
+        .attr('class', 'font-display italic text-lg')
+        .text(d.name)
+
+      if (d.tags?.[0]) {
+        tooltip
+          .append('div')
+          .attr('class', 'text-[10px] text-primary uppercase tracking-[0.2em] mt-1')
+          .text(d.tags[0])
+      }
+
+      tooltip
+        .append('div')
+        .attr('class', 'text-[10px] text-muted-foreground mt-2 opacity-70')
+        .text('Often played together')
+
+      tooltip
         .style('left', `${event.pageX + 15}px`)
         .style('top', `${event.pageY - 10}px`)
     },
