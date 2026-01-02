@@ -102,3 +102,38 @@ describe('isPlaceholderImage', () => {
     expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false)
   })
 })
+
+import { debounce } from './utils'
+
+describe('debounce', () => {
+  it('should delay function execution', async () => {
+    let count = 0
+    const increment = debounce(() => {
+      count++
+    }, 100)
+
+    increment()
+    expect(count).toBe(0)
+
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(count).toBe(0)
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(count).toBe(1)
+  })
+
+  it('should coalesce multiple calls', async () => {
+    let count = 0
+    const increment = debounce(() => {
+      count++
+    }, 100)
+
+    increment()
+    increment()
+    increment()
+    expect(count).toBe(0)
+
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    expect(count).toBe(1)
+  })
+})
