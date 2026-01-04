@@ -1,6 +1,7 @@
 import { Effect, Layer } from 'effect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
 import { makeWorkerConfigLayer } from './config'
 import { LastFmAuthError, LastFmAuthService, LastFmAuthServiceLive } from './services/lastfm-auth'
 
@@ -11,6 +12,9 @@ interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+// Security headers
+app.use('*', secureHeaders())
 
 // CORS for API routes
 app.use('/api/*', cors({ origin: '*' }))

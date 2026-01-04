@@ -41,6 +41,16 @@ describe('Worker API Routes', () => {
 
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
     })
+
+    it('should include security headers', async () => {
+      const request = new Request('http://localhost/api/health')
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
+      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+      expect(response.headers.get('Strict-Transport-Security')).toContain('max-age=')
+      expect(response.headers.get('Referrer-Policy')).toBe('no-referrer')
+    })
   })
 
   describe('POST /api/lastfm/session', () => {
