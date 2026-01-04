@@ -45,6 +45,23 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     [duration, seekTo],
   )
 
+  // Handle keyboard navigation for progress bar
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (duration <= 0) return
+
+      const step = 5 // 5 seconds step
+      if (event.key === 'ArrowRight') {
+        seekTo(Math.min(currentTime + step, duration))
+        event.preventDefault()
+      } else if (event.key === 'ArrowLeft') {
+        seekTo(Math.max(currentTime - step, 0))
+        event.preventDefault()
+      }
+    },
+    [currentTime, duration, seekTo],
+  )
+
   if (!track) {
     return null // Don't render if no track
   }
@@ -79,11 +96,19 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
+          {/* Progress Bar - Now clickable and keyboard accessible */}
           <div
             ref={progressBarRef}
             onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
+            onKeyDown={handleKeyDown}
+            role="slider"
+            tabIndex={0}
+            aria-label="Seek time"
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={currentTime}
+            aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
           >
             <div
               className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
@@ -98,7 +123,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Previous"
           >
-            <MaterialIcon name="skip_previous" size="md" />
+            <MaterialIcon name="skip_previous" size="md" aria-hidden="true" />
           </button>
 
           <button
@@ -106,14 +131,14 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-transform play-button-glow"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
-            <MaterialIcon name={isPlaying ? 'pause' : 'play_arrow'} size="md" />
+            <MaterialIcon name={isPlaying ? 'pause' : 'play_arrow'} size="md" aria-hidden="true" />
           </button>
 
           <button
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Next"
           >
-            <MaterialIcon name="skip_next" size="md" />
+            <MaterialIcon name="skip_next" size="md" aria-hidden="true" />
           </button>
 
           <button
@@ -121,7 +146,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             className="text-muted-foreground hover:text-red-500 transition-colors ml-2"
             aria-label="Favorite"
           >
-            <MaterialIcon name="favorite" size="sm" />
+            <MaterialIcon name="favorite" size="sm" aria-hidden="true" />
           </button>
         </div>
       </div>

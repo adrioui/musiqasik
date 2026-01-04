@@ -21,7 +21,7 @@ export function GalleryHeader() {
           className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center hover:border-primary/50 hover:text-primary transition-colors bg-background/20 backdrop-blur-sm"
           aria-label="Search"
         >
-          <MaterialIcon name="search" size="sm" />
+          <MaterialIcon name="search" size="sm" aria-hidden="true" />
         </button>
 
         {/* Theme toggle */}
@@ -30,7 +30,11 @@ export function GalleryHeader() {
           className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center hover:border-primary/50 hover:text-primary transition-colors bg-background/20 backdrop-blur-sm"
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
-          <MaterialIcon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} size="sm" />
+          <MaterialIcon
+            name={theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            size="sm"
+            aria-hidden="true"
+          />
         </button>
 
         {/* Menu button - decorative */}
@@ -38,7 +42,7 @@ export function GalleryHeader() {
           className="w-10 h-10 rounded-full border border-border/50 flex items-center justify-center hover:border-primary/50 hover:text-primary transition-colors bg-background/20 backdrop-blur-sm"
           aria-label="Menu"
         >
-          <MaterialIcon name="menu" size="sm" />
+          <MaterialIcon name="menu" size="sm" aria-hidden="true" />
         </button>
       </div>
     </nav>
