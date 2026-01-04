@@ -1,5 +1,24 @@
-import { describe, expect, it } from 'vitest'
-import { cn, formatNumber, isPlaceholderImage } from './utils'
+import { describe, expect, it, vi } from 'vitest'
+import { cn, debounce, formatNumber, isPlaceholderImage } from './utils'
+
+describe('debounce', () => {
+  it('should debounce function calls', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debouncedFunc = debounce(func, 100)
+
+    debouncedFunc('test')
+    expect(func).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(50)
+    debouncedFunc('test')
+    expect(func).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(100)
+    expect(func).toHaveBeenCalledTimes(1)
+    expect(func).toHaveBeenCalledWith('test')
+  })
+})
 
 describe('cn utility', () => {
   it('should merge class names', () => {
