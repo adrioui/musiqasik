@@ -58,10 +58,13 @@ const makeLastFmAuthService = Effect.gen(function* () {
       // Fetch from Last.fm
       const response = yield* Effect.tryPromise({
         try: () => fetch(url.toString()),
-        catch: (error) =>
-          new LastFmAuthError({
-            message: `Network error: ${error instanceof Error ? error.message : 'Unknown'}`,
-          }),
+        catch: (error) => {
+          // Log the full error for debugging but don't expose it to the client
+          console.error('Last.fm network error:', error)
+          return new LastFmAuthError({
+            message: 'Network error connecting to Last.fm',
+          })
+        },
       })
 
       if (!response.ok) {
