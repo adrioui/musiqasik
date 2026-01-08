@@ -35,3 +35,27 @@ export function isPlaceholderImage(url?: string | null): boolean {
     url.endsWith('/noimage/')
   )
 }
+
+// biome-ignore lint/suspicious/noExplicitAny: Debounce requires any to accept generic functions
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): T & { cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func(...args)
+    }, wait)
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced as T & { cancel: () => void }
+}
