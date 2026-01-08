@@ -86,6 +86,21 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
+    it('should return 400 when token is too long', async () => {
+      const longToken = 'a'.repeat(129)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: longToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Token too long')
+    })
+
     it('should return error for invalid token', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',

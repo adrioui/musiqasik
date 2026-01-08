@@ -27,6 +27,11 @@ app.post('/api/lastfm/session', async (c) => {
     return c.json({ error: 'No token provided' }, 400)
   }
 
+  // Security: Prevent DoS with overly long tokens
+  if (token.length > 128) {
+    return c.json({ error: 'Token too long' }, 400)
+  }
+
   // Create Effect layers with CloudFlare env bindings
   const ConfigLayer = makeWorkerConfigLayer({
     LASTFM_API_KEY: c.env.LASTFM_API_KEY,
@@ -49,7 +54,10 @@ app.post('/api/lastfm/session', async (c) => {
         error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
       return c.json({ error: error.message }, isAuthError ? 401 : 500)
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
+
+    // Security: Log the full error but hide details from the client
+    console.error('Unhandled error:', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
 
