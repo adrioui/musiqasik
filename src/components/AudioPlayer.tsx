@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,11 +16,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // State to handle slider dragging without jitter
+  const [sliderValue, setSliderValue] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Sync slider with player time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -29,20 +38,21 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
+  const handleSeek = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = Number(e.target.value)
+      setSliderValue(newValue)
+      setIsDragging(true)
     },
-    [duration, seekTo],
+    [],
+  )
+
+  const handleCommit = useCallback(
+    (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
+      setIsDragging(false)
+      seekTo(sliderValue)
+    },
+    [seekTo, sliderValue],
   )
 
   if (!track) {
@@ -73,23 +83,29 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
               </span>
             </h3>
             <div className="text-[10px] font-mono text-muted-foreground whitespace-nowrap hidden sm:block">
-              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(isDragging ? sliderValue : currentTime)}</span>
               <span className="opacity-50 mx-1">/</span>
               <span className="opacity-50">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          {/* Accessible Native Slider */}
+          <input
+            type="range"
+            min={0}
+            max={duration > 0 ? duration : 100}
+            value={sliderValue}
+            onChange={handleSeek}
+            onMouseUp={handleCommit}
+            onTouchEnd={handleCommit}
+            onKeyUp={(e) => {
+              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                handleCommit(e as any)
+              }
+            }}
+            className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background"
+            aria-label="Track progress"
+          />
         </div>
 
         {/* Controls */}
