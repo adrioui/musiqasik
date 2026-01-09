@@ -86,15 +86,29 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 for malformed token', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'invalid-token' }),
+        body: JSON.stringify({ token: 'invalid-token-with-hyphens' }),
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 401/500 for valid format but invalid token', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'deadbeef1234567890abcdef' }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      // Should return 500 or 401 depending on the error from Last.fm (or network error in test)
       expect([401, 500]).toContain(response.status)
 
       const body = (await response.json()) as ErrorResponse
