@@ -23,7 +23,7 @@ app.post('/api/lastfm/session', async (c) => {
   const body = await c.req.json<{ token?: string }>().catch(() => ({ token: undefined }))
 
   const token = body.token
-  if (!token) {
+  if (!token || typeof token !== 'string') {
     return c.json({ error: 'No token provided' }, 400)
   }
 
@@ -49,7 +49,8 @@ app.post('/api/lastfm/session', async (c) => {
         error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
       return c.json({ error: error.message }, isAuthError ? 401 : 500)
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
+    console.error('API Error:', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
 
