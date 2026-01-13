@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { cn, formatNumber, isPlaceholderImage } from './utils'
+import { describe, expect, it, vi } from 'vitest'
+import { cn, debounce, formatNumber, isPlaceholderImage } from './utils'
 
 describe('cn utility', () => {
   it('should merge class names', () => {
@@ -100,5 +100,38 @@ describe('isPlaceholderImage', () => {
 
   it('returns false for valid image URLs', () => {
     expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false)
+  })
+})
+
+describe('debounce', () => {
+  it('should debounce function calls', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced()
+    debounced()
+    debounced()
+
+    expect(func).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(100)
+    expect(func).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  it('should cancel the debounced call', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced()
+    debounced.cancel()
+
+    vi.advanceTimersByTime(100)
+    expect(func).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
   })
 })

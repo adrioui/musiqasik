@@ -35,3 +35,38 @@ export function isPlaceholderImage(url?: string | null): boolean {
     url.endsWith('/noimage/')
   )
 }
+
+/**
+ * Debounce function to limit the rate at which a function can fire.
+ * Useful for resizing, scrolling, or typing events.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Generic utility function requires any for arguments
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): {
+  (...args: Parameters<T>): void
+  cancel: () => void
+} {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  // biome-ignore lint/suspicious/noExplicitAny: Need to capture 'this' context generically
+  const debounced = function (this: any, ...args: Parameters<T>) {
+    // biome-ignore lint/complexity/noUselessThisAlias: capturing 'this' for arrow function inside setTimeout
+    const context = this
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      timeout = null
+      func.apply(context, args)
+    }, wait)
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced
+}
