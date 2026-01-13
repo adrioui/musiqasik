@@ -43,6 +43,25 @@ describe('Worker API Routes', () => {
     })
   })
 
+  describe('Security Headers', () => {
+    it('should include security headers in responses', async () => {
+      const request = new Request('http://localhost/api/health')
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.headers.get('X-Frame-Options')).toBe('DENY')
+      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+      expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
+    })
+
+    it('should include security headers for static assets', async () => {
+      const request = new Request('http://localhost/index.html')
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.headers.get('X-Frame-Options')).toBe('DENY')
+      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+    })
+  })
+
   describe('POST /api/lastfm/session', () => {
     it('should return 400 when no token provided', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
