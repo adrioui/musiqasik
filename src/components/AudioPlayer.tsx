@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,8 +16,6 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
@@ -29,21 +27,36 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Seek state management
+  const [isDragging, setIsDragging] = useState(false)
+  const [sliderValue, setSliderValue] = useState(0)
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  // Use local state while dragging, otherwise use actual currentTime
+  const displayTime = isDragging ? sliderValue : currentTime
+  const progress = duration > 0 ? (displayTime / duration) * 100 : 0
+
+  const handleSeekStart = () => {
+    setIsDragging(true)
+    setSliderValue(currentTime)
+  }
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value)
+    setSliderValue(val)
+
+    // If we're not dragging (e.g. keyboard interaction or click-jump where mouse down/up order varies),
+    // seek immediately.
+    // Note: For click-jump, onMouseDown fires first usually, so isDragging is true.
+    // For keyboard, onMouseDown never fires, so isDragging is false.
+    if (!isDragging) {
+       seekTo(val)
+    }
+  }
+
+  const handleSeekEnd = () => {
+    setIsDragging(false)
+    seekTo(sliderValue)
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -79,15 +92,34 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar Container */}
+          <div className="relative w-full h-4 flex items-center group">
+            {/* Visual Bar */}
+            <div className="absolute left-0 right-0 h-1 bg-muted rounded-full overflow-hidden pointer-events-none">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            {/* Range Input Overlay */}
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              step="1"
+              value={displayTime}
+              disabled={duration <= 0}
+              onMouseDown={handleSeekStart}
+              onTouchStart={handleSeekStart}
+              onChange={handleSeekChange}
+              onMouseUp={handleSeekEnd}
+              onTouchEnd={handleSeekEnd}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek"
+              aria-valuemin={0}
+              aria-valuemax={duration}
+              aria-valuenow={displayTime}
+              aria-valuetext={`${formatTime(displayTime)} of ${formatTime(duration)}`}
             />
           </div>
         </div>
