@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useState } from 'react'
+import { debounce } from '@/lib/utils'
 
 export interface Dimensions {
   width: number
@@ -19,9 +20,17 @@ export function useElementDimensions(
       }
     }
 
+    // Initial measurement
     updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
+
+    // Debounce resize updates to prevent excessive re-renders and simulation restarts
+    const debouncedUpdate = debounce(updateDimensions, 200)
+
+    window.addEventListener('resize', debouncedUpdate)
+    return () => {
+      window.removeEventListener('resize', debouncedUpdate)
+      debouncedUpdate.cancel()
+    }
   }, [containerRef])
 
   return dimensions
