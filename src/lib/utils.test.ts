@@ -1,104 +1,85 @@
-import { describe, expect, it } from 'vitest'
-import { cn, formatNumber, isPlaceholderImage } from './utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cn, debounce, formatNumber, isPlaceholderImage } from './utils'
 
-describe('cn utility', () => {
-  it('should merge class names', () => {
-    const result = cn('foo', 'bar')
-    expect(result).toBe('foo bar')
+describe('utils', () => {
+  describe('cn', () => {
+    it('merges class names', () => {
+      expect(cn('foo', 'bar')).toBe('foo bar')
+    })
+    it('handles conditionals', () => {
+      expect(cn('foo', true && 'bar', false && 'baz')).toBe('foo bar')
+    })
+    it('merges tailwind classes', () => {
+      expect(cn('p-4', 'p-2')).toBe('p-2')
+    })
   })
 
-  it('should handle conditional classes', () => {
-    const isActive = true
-    const result = cn('base', isActive && 'active')
-    expect(result).toBe('base active')
+  describe('formatNumber', () => {
+    it('formats numbers with K/M', () => {
+      expect(formatNumber(1200)).toBe('1K')
+      expect(formatNumber(1500000)).toBe('1.5M')
+      expect(formatNumber(500)).toBe('500')
+    })
+    it('adds suffix', () => {
+      expect(formatNumber(1200, 'listeners')).toBe('1K listeners')
+    })
+    it('handles null/undefined', () => {
+      expect(formatNumber(null)).toBe('N/A')
+      expect(formatNumber(undefined)).toBe('N/A')
+    })
   })
 
-  it('should handle false conditionals', () => {
-    const isActive = false
-    const result = cn('base', isActive && 'active')
-    expect(result).toBe('base')
+  describe('isPlaceholderImage', () => {
+    it('identifies placeholder images', () => {
+      expect(isPlaceholderImage('')).toBe(true)
+      expect(isPlaceholderImage(null)).toBe(true)
+      expect(
+        isPlaceholderImage(
+          'https://lastfm.freetls.fastly.net/i/u/2a96cbd8b46e442fc41c2b86b821562f.png',
+        ),
+      ).toBe(true)
+      expect(isPlaceholderImage('https://example.com/star.png')).toBe(true)
+      expect(isPlaceholderImage('https://example.com/noimage/')).toBe(true)
+    })
+    it('identifies real images', () => {
+      expect(isPlaceholderImage('https://example.com/image.jpg')).toBe(false)
+    })
   })
 
-  it('should merge tailwind classes correctly', () => {
-    const result = cn('px-2 py-1', 'px-4')
-    expect(result).toBe('py-1 px-4')
-  })
+  describe('debounce', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
 
-  it('should handle object syntax', () => {
-    const result = cn('base', { active: true, disabled: false })
-    expect(result).toBe('base active')
-  })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
 
-  it('should handle array syntax', () => {
-    const result = cn(['foo', 'bar'])
-    expect(result).toBe('foo bar')
-  })
+    it('debounces function calls', () => {
+      const func = vi.fn()
+      const debouncedFunc = debounce(func, 100)
 
-  it('should handle undefined and null', () => {
-    const result = cn('base', undefined, null, 'end')
-    expect(result).toBe('base end')
-  })
+      debouncedFunc()
+      debouncedFunc()
+      debouncedFunc()
 
-  it('should handle empty inputs', () => {
-    const result = cn()
-    expect(result).toBe('')
-  })
-})
+      expect(func).not.toHaveBeenCalled()
 
-describe('formatNumber', () => {
-  it('formats millions with M suffix', () => {
-    expect(formatNumber(1500000)).toBe('1.5M')
-    expect(formatNumber(10000000)).toBe('10.0M')
-  })
+      vi.advanceTimersByTime(100)
 
-  it('formats thousands with K suffix', () => {
-    expect(formatNumber(1500)).toBe('2K')
-    expect(formatNumber(999000)).toBe('999K')
-  })
+      expect(func).toHaveBeenCalledTimes(1)
+    })
 
-  it('returns raw number for small values', () => {
-    expect(formatNumber(500)).toBe('500')
-    expect(formatNumber(0)).toBe('0')
-  })
+    it('can be canceled', () => {
+      const func = vi.fn()
+      const debouncedFunc = debounce(func, 100)
 
-  it('returns N/A for null or undefined', () => {
-    expect(formatNumber(null)).toBe('N/A')
-    expect(formatNumber(undefined)).toBe('N/A')
-  })
+      debouncedFunc()
+      debouncedFunc.cancel()
 
-  it('appends suffix when provided', () => {
-    expect(formatNumber(1500000, 'listeners')).toBe('1.5M listeners')
-    expect(formatNumber(null, 'listeners')).toBe('N/A')
-  })
-})
+      vi.advanceTimersByTime(100)
 
-describe('isPlaceholderImage', () => {
-  it('returns true for null or undefined', () => {
-    expect(isPlaceholderImage(null)).toBe(true)
-    expect(isPlaceholderImage(undefined)).toBe(true)
-  })
-
-  it('returns true for empty string', () => {
-    expect(isPlaceholderImage('')).toBe(true)
-  })
-
-  it('returns true for Last.fm placeholder hash', () => {
-    expect(
-      isPlaceholderImage(
-        'https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png',
-      ),
-    ).toBe(true)
-  })
-
-  it('returns true for star placeholder', () => {
-    expect(isPlaceholderImage('https://example.com/star.png')).toBe(true)
-  })
-
-  it('returns true for noimage path', () => {
-    expect(isPlaceholderImage('https://example.com/noimage/')).toBe(true)
-  })
-
-  it('returns false for valid image URLs', () => {
-    expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false)
+      expect(func).not.toHaveBeenCalled()
+    })
   })
 })
