@@ -23,8 +23,17 @@ app.post('/api/lastfm/session', async (c) => {
   const body = await c.req.json<{ token?: string }>().catch(() => ({ token: undefined }))
 
   const token = body.token
-  if (!token) {
-    return c.json({ error: 'No token provided' }, 400)
+  if (!token || typeof token !== 'string') {
+    return c.json({ error: 'Invalid token format' }, 400)
+  }
+
+  if (token.length > 64) {
+    return c.json({ error: 'Token too long' }, 400)
+  }
+
+  // Basic alphanumeric check to prevent injection of special chars
+  if (!/^[a-zA-Z0-9]+$/.test(token)) {
+    return c.json({ error: 'Invalid token characters' }, 400)
   }
 
   // Create Effect layers with CloudFlare env bindings
@@ -49,7 +58,8 @@ app.post('/api/lastfm/session', async (c) => {
         error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
       return c.json({ error: error.message }, isAuthError ? 401 : 500)
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
+    console.error('Unhandled worker error:', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
 

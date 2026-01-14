@@ -55,7 +55,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token format')
     })
 
     it('should return 400 when body is empty', async () => {
@@ -69,7 +69,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token format')
     })
 
     it('should return 400 when body is invalid JSON', async () => {
@@ -83,18 +83,47 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token format')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 when token is too long', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'invalid-token' }),
+        body: JSON.stringify({ token: 'a'.repeat(65) }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Token too long')
+    })
+
+    it('should return 400 when token contains invalid characters', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'invalid-token!' }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token characters')
+    })
+
+    it('should return error for invalid token (upstream error)', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'invalidtoken' }),
       })
       const response = await app.fetch(request, mockEnv)
 
       // Should return 500 or 401 depending on the error from Last.fm
+      // Note: Since we are mocking Env but not fetch deeply, it might fail in different ways
       expect([401, 500]).toContain(response.status)
 
       const body = (await response.json()) as ErrorResponse
