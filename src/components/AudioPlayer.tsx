@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,8 +16,6 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
@@ -29,21 +27,27 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Local state for dragging the slider
+  const [isDragging, setIsDragging] = useState(false)
+  const [sliderValue, setSliderValue] = useState(0)
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  // Sync slider with player time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging])
+
+  // Progress percentage for visual bar
+  // Use sliderValue if dragging to provide immediate feedback
+  const displayTime = isDragging ? sliderValue : currentTime
+  const progress = duration > 0 ? (displayTime / duration) * 100 : 0
+
+  // Handle seek action
+  const handleSeek = (time: number) => {
+    setSliderValue(time)
+    seekTo(time)
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -73,21 +77,55 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
               </span>
             </h3>
             <div className="text-[10px] font-mono text-muted-foreground whitespace-nowrap hidden sm:block">
-              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(isDragging ? sliderValue : currentTime)}</span>
               <span className="opacity-50 mx-1">/</span>
               <span className="opacity-50">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar Container */}
+          <div className="relative h-4 flex items-center group">
+            {/* Visual Progress Bar */}
+            <div className="absolute w-full h-1 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            {/* Accessible Range Input Overlay */}
+            <input
+              type="range"
+              min={0}
+              max={duration || 100} // Prevent 0 max
+              step="any"
+              value={sliderValue}
+              disabled={duration <= 0}
+              aria-label="Seek"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              onChange={(e) => {
+                const newValue = Number(e.target.value)
+                setSliderValue(newValue)
+              }}
+              onPointerDown={() => setIsDragging(true)}
+              onPointerUp={(e) => {
+                setIsDragging(false)
+                handleSeek(Number(e.currentTarget.value))
+              }}
+              onKeyDown={(e) => {
+                // Only treat as dragging if using arrow keys to adjust
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                  setIsDragging(true)
+                }
+              }}
+              onKeyUp={(e) => {
+                // Commit seek when arrow keys are released
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                  setIsDragging(false)
+                  handleSeek(Number(e.currentTarget.value))
+                }
+              }}
+              onBlur={() => setIsDragging(false)}
             />
           </div>
         </div>
