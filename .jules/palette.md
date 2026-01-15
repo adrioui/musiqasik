@@ -1,0 +1,1 @@
+## 2024-05-22 - Accessible Range Input Overlay **Learning:** When creating a custom-styled seek bar, using an invisible `<input type='range'>` overlay is the most robust way to ensure accessibility (keyboard, screen reader) and standard behavior (touch), while maintaining design fidelity. **Action:** Apply this pattern to all custom sliders in the future.
