@@ -35,3 +35,33 @@ export function isPlaceholderImage(url?: string | null): boolean {
     url.endsWith('/noimage/')
   )
 }
+
+/**
+ * Creates a debounced function that delays invoking func until after wait milliseconds have elapsed
+ * since the last time the debounced function was invoked.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Generic utility function requires any for flexibility
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): { (...args: Parameters<T>): void; cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  // biome-ignore lint/suspicious/noExplicitAny: ensuring this context is preserved
+  const debounced = function (this: any, ...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      timeout = null
+      func.apply(this, args)
+    }, wait)
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced
+}
