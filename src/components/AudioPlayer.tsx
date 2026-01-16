@@ -45,6 +45,33 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     [duration, seekTo],
   )
 
+  // Handle keyboard seek
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (duration <= 0) return
+
+      let newTime = currentTime
+      const seekAmount = 5 // 5 seconds step
+
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowDown':
+          newTime = Math.max(0, currentTime - seekAmount)
+          break
+        case 'ArrowRight':
+        case 'ArrowUp':
+          newTime = Math.min(duration, currentTime + seekAmount)
+          break
+        default:
+          return
+      }
+
+      event.preventDefault()
+      seekTo(newTime)
+    },
+    [currentTime, duration, seekTo],
+  )
+
   if (!track) {
     return null // Don't render if no track
   }
@@ -79,11 +106,19 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
+          {/* Progress Bar - Now clickable and accessible */}
           <div
             ref={progressBarRef}
             onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
+            onKeyDown={handleKeyDown}
+            tabIndex={0}
+            role="slider"
+            aria-label="Seek time"
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={currentTime}
+            aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <div
               className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
