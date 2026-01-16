@@ -35,3 +35,31 @@ export function isPlaceholderImage(url?: string | null): boolean {
     url.endsWith('/noimage/')
   )
 }
+
+/**
+ * Debounces a function call
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Generic utility needs any
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): T & { cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  // biome-ignore lint/suspicious/noExplicitAny: this context needs any
+  const debounced = function (this: any, ...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func.apply(this, args)
+    }, wait)
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced as T & { cancel: () => void }
+}
