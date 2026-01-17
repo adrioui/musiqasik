@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { cn, formatNumber, isPlaceholderImage } from './utils'
+import { describe, expect, it, vi } from 'vitest'
+import { cn, debounce, formatNumber, isPlaceholderImage } from './utils'
 
 describe('cn utility', () => {
   it('should merge class names', () => {
@@ -100,5 +100,51 @@ describe('isPlaceholderImage', () => {
 
   it('returns false for valid image URLs', () => {
     expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false)
+  })
+})
+
+describe('debounce', () => {
+  it('should delay execution', () => {
+    vi.useFakeTimers()
+    const fn = vi.fn()
+    const debounced = debounce(fn, 100)
+
+    debounced()
+    expect(fn).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(50)
+    expect(fn).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(51)
+    expect(fn).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('should coalesce multiple calls', () => {
+    vi.useFakeTimers()
+    const fn = vi.fn()
+    const debounced = debounce(fn, 100)
+
+    debounced()
+    vi.advanceTimersByTime(50)
+    debounced()
+    vi.advanceTimersByTime(50)
+    expect(fn).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(51)
+    expect(fn).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('should support cancellation', () => {
+    vi.useFakeTimers()
+    const fn = vi.fn()
+    const debounced = debounce(fn, 100)
+
+    debounced()
+    debounced.cancel()
+    vi.advanceTimersByTime(200)
+    expect(fn).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })
