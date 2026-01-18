@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,11 +16,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // Local state for smooth sliding
+  const [isDragging, setIsDragging] = useState(false)
+  const [sliderValue, setSliderValue] = useState(0)
+
+  // Sync slider with playback time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -30,20 +39,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
   }
 
   // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const progress = duration > 0 ? (sliderValue / duration) * 100 : 0
 
   if (!track) {
     return null // Don't render if no track
@@ -79,16 +75,33 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar - Accessible Slider */}
+          <div className="relative w-full h-4 flex items-center group">
+            {/* Input Slider (First for peer targeting) */}
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={sliderValue}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setSliderValue(val)
+                seekTo(val)
+              }}
+              onPointerDown={() => setIsDragging(true)}
+              onPointerUp={() => setIsDragging(false)}
+              className="peer absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek"
+              aria-valuetext={formatTime(sliderValue)}
             />
+
+            {/* Visual Track */}
+            <div className="absolute inset-x-0 h-1 bg-muted rounded-full overflow-hidden pointer-events-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
 
