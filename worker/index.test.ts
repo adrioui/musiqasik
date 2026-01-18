@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import app from './index'
 
 interface HealthResponse {
@@ -72,18 +72,32 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return 400 when body is invalid JSON', async () => {
+    // New tests for security validation
+    it('should return 400 when token is not a string', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: 'not json',
+        body: JSON.stringify({ token: 12345 }),
       })
       const response = await app.fetch(request, mockEnv)
 
       expect(response.status).toBe(400)
-
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 when token is too long', async () => {
+      const longToken = 'a'.repeat(101)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: longToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
     })
 
     it('should return error for invalid token', async () => {
