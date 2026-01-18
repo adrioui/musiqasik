@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useState } from 'react'
+import { debounce } from '@/lib/utils'
 
 export interface Dimensions {
   width: number
@@ -12,16 +13,24 @@ export function useElementDimensions(
   const [dimensions, setDimensions] = useState<Dimensions>(defaultDimensions)
 
   useEffect(() => {
-    const updateDimensions = () => {
+    const updateDimensions = debounce(() => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
         setDimensions({ width, height })
       }
+    }, 200)
+
+    // Initial update
+    if (containerRef.current) {
+      const { width, height } = containerRef.current.getBoundingClientRect()
+      setDimensions({ width, height })
     }
 
-    updateDimensions()
     window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
+    return () => {
+      window.removeEventListener('resize', updateDimensions)
+      updateDimensions.cancel()
+    }
   }, [containerRef])
 
   return dimensions
