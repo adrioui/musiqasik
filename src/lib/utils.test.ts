@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { cn, formatNumber, isPlaceholderImage } from './utils'
+import { describe, expect, it, vi } from 'vitest'
+import { cn, debounce, formatNumber, isPlaceholderImage } from './utils'
 
 describe('cn utility', () => {
   it('should merge class names', () => {
@@ -100,5 +100,59 @@ describe('isPlaceholderImage', () => {
 
   it('returns false for valid image URLs', () => {
     expect(isPlaceholderImage('https://example.com/artist.jpg')).toBe(false)
+  })
+})
+
+describe('debounce', () => {
+  it('should execute function after delay', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced()
+    expect(func).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(100)
+    expect(func).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('should reset timer on subsequent calls', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced()
+    vi.advanceTimersByTime(50)
+    debounced()
+    vi.advanceTimersByTime(50)
+    expect(func).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(50)
+    expect(func).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('should pass arguments correctly', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced('arg1', 123)
+    vi.advanceTimersByTime(100)
+    expect(func).toHaveBeenCalledWith('arg1', 123)
+    vi.useRealTimers()
+  })
+
+  it('should cancel pending execution', () => {
+    vi.useFakeTimers()
+    const func = vi.fn()
+    const debounced = debounce(func, 100)
+
+    debounced()
+    debounced.cancel()
+    vi.advanceTimersByTime(100)
+    expect(func).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })
