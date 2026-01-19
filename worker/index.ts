@@ -1,4 +1,4 @@
-import { Effect, Layer } from 'effect'
+import { Cause, Effect, Exit, Layer } from 'effect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { makeWorkerConfigLayer } from './config'
@@ -20,11 +20,15 @@ app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISO
 
 // Session endpoint
 app.post('/api/lastfm/session', async (c) => {
-  const body = await c.req.json<{ token?: string }>().catch(() => ({ token: undefined }))
+  const body = await c.req.json<{ token?: unknown }>().catch(() => ({ token: undefined }))
 
   const token = body.token
   if (!token) {
     return c.json({ error: 'No token provided' }, 400)
+  }
+
+  if (typeof token !== 'string' || token.length > 200) {
+    return c.json({ error: 'Invalid token format' }, 400)
   }
 
   // Create Effect layers with CloudFlare env bindings
@@ -40,16 +44,26 @@ app.post('/api/lastfm/session', async (c) => {
     return yield* authService.getSession(token)
   }).pipe(Effect.provide(AppLayer))
 
-  try {
-    const result = await Effect.runPromise(program)
-    return c.json(result)
-  } catch (error) {
-    if (error instanceof LastFmAuthError) {
-      const isAuthError =
-        error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
-      return c.json({ error: error.message }, isAuthError ? 401 : 500)
+  const exit = await Effect.runPromiseExit(program)
+
+  if (Exit.isSuccess(exit)) {
+    return c.json(exit.value)
+  } else {
+    const failure = Cause.failureOrCause(exit.cause)
+
+    if (failure._tag === 'Left') {
+      // Expected error (LastFmAuthError)
+      const error = failure.left
+      if (error instanceof LastFmAuthError) {
+        const isAuthError =
+          error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
+        return c.json({ error: error.message }, isAuthError ? 401 : 500)
+      }
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
+
+    // Unexpected error (Defect or Interruption)
+    console.error('Unexpected error:', Cause.pretty(exit.cause))
+    return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
 
