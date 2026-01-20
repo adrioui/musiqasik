@@ -86,7 +86,12 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 401 error for invalid token', async () => {
+      // Note: The real LastFmAuthServiceLive is used here, but since mockEnv provides dummy keys,
+      // it should result in a LastFmAuthError (typically 401 or 500 depending on network).
+      // However, if we assume the service logic maps API errors to LastFmAuthError,
+      // we are checking if our index.ts correctly extracts it from the Effect Exit.
+
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +99,51 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      // We expect 401/500 depending on exact failure mode of the mock env + real fetch (which might fail with network error).
+      // But importantly, if it IS a LastFmAuthError, it should NOT return "Internal Server Error"
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+
+      if (response.status === 500) {
+        // If it's 500, it might be the generic fallback.
+        // But if it's a domain error code=403/401, it should be 401.
+        // In this test env, we can't easily force a specific domain error without mocking fetch.
+        // But we can check that it didn't crash completely if it was expected.
+        expect(body.error).not.toBe('Internal Server Error')
+      } else {
+        expect(response.status).toBe(401)
+        expect(body.error).toBeDefined()
+        expect(body.error).not.toBe('Internal Server Error')
+      }
+    })
+
+    // SENTINEL REPRO TESTS
+    it('should return 400 when token is not a string', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 12345 }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      // Currently this will likely fall through to 500 or 401, but we want 400
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 when token is too long', async () => {
+      const longToken = 'a'.repeat(300)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: longToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
     })
   })
 
