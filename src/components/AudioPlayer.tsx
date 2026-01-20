@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,11 +16,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // Local state for dragging the slider
+  const [sliderValue, setSliderValue] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Sync slider with actual time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -29,21 +38,24 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Progress percentage for visual bar
+  const progress = duration > 0 ? (sliderValue / duration) * 100 : 0
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number(e.target.value)
+    setSliderValue(newValue)
+    seekTo(newValue)
+  }
+
+  const handleDragStart = () => setIsDragging(true)
+  const handleDragEnd = () => setIsDragging(false)
+
+  // Prevent keyboard events from propagating to avoid unwanted scrolling or focus issues
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+      e.stopPropagation()
+    }
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -79,16 +91,33 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Accessible Progress Bar (Slider) */}
+          <div className="relative w-full h-3 flex items-center group">
+             {/* Invisible native range input for interaction/accessibility */}
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={sliderValue}
+              onChange={handleSliderChange}
+              onPointerDown={handleDragStart}
+              onPointerUp={handleDragEnd}
+              onKeyDown={handleKeyDown}
+              className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+              aria-label="Seek time"
+              aria-valuemin={0}
+              aria-valuemax={duration || 100}
+              aria-valuenow={sliderValue}
+              aria-valuetext={`${formatTime(sliderValue)} of ${formatTime(duration)}`}
             />
+
+            {/* Visual Track */}
+            <div className="w-full h-1 bg-muted rounded-full overflow-hidden pointer-events-none">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80 group-focus-within:bg-primary/90"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
 
