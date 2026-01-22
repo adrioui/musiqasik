@@ -86,8 +86,8 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
           >
             <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+              className="h-full w-full bg-primary rounded-full transition-all group-hover:bg-primary/80 origin-left"
+              style={{ transform: `translateX(${progress - 100}%)` }}
             />
           </div>
         </div>
