@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,8 +16,6 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
@@ -29,21 +27,33 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Seek bar state
+  const [isDragging, setIsDragging] = useState(false)
+  const [sliderValue, setSliderValue] = useState(0)
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  // Sync slider with player time when not dragging
+  useEffect(() => {
+    if (!isDragging && duration > 0) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging, duration])
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseFloat(e.target.value)
+    setSliderValue(newValue)
+
+    // If not dragging (e.g. keyboard input), seek immediately
+    if (!isDragging) {
+      seekTo(newValue)
+    }
+  }
+
+  const handlePointerDown = () => setIsDragging(true)
+
+  const handlePointerUp = () => {
+    setIsDragging(false)
+    seekTo(sliderValue)
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -79,16 +89,27 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Accessible Seek Bar */}
+          <div className="relative w-full h-3 flex items-center group">
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={sliderValue}
+              onChange={handleSeekChange}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek"
+              disabled={duration <= 0 || !track}
             />
+
+            <div className="w-full h-1 bg-muted rounded-full overflow-hidden pointer-events-none ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${duration > 0 ? (sliderValue / duration) * 100 : 0}%` }}
+              />
+            </div>
           </div>
         </div>
 
