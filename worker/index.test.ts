@@ -55,7 +55,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token provided')
     })
 
     it('should return 400 when body is empty', async () => {
@@ -69,7 +69,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token provided')
     })
 
     it('should return 400 when body is invalid JSON', async () => {
@@ -83,21 +83,45 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 for invalid token format (too short)', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'invalid-token' }),
+        body: JSON.stringify({ token: 'short-token' }),
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token provided')
+    })
+
+    it('should try to authenticate with valid length token', async () => {
+      // 32 chars
+      const token = '12345678901234567890123456789012'
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      // Should return 500 or 401 depending on the error from Last.fm (mocked env might not have keys)
+      // Since we are not mocking fetch inside the worker in this test suite setup fully (only ASSETS),
+      // it will try to call real fetch or fail.
+      // Actually LastFmAuthService uses Effect.tryPromise which uses fetch.
+      // But we are in node/vitest. fetch needs to be polyfilled or native in Node 18+.
+      // Vitest environment 'jsdom' or 'node' usually has it.
+      // But we haven't mocked the external fetch call to Last.fm in this test file,
+      // so it will likely fail with network error or 500.
       expect([401, 500]).toContain(response.status)
 
       const body = (await response.json()) as ErrorResponse
+      // Expect either specific auth error or generic internal server error
       expect(body.error).toBeDefined()
     })
   })
