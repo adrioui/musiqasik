@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,11 +16,33 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  const [isDragging, setIsDragging] = useState(false)
+  const [sliderValue, setSliderValue] = useState(0)
+
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue(currentTime)
+    }
+  }, [currentTime, isDragging])
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value)
+    setSliderValue(value)
+    if (!isDragging) {
+      seekTo(value)
+    }
+  }
+
+  const handlePointerDown = () => setIsDragging(true)
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLInputElement>) => {
+    setIsDragging(false)
+    seekTo(Number(e.currentTarget.value))
+  }
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -30,20 +52,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
   }
 
   // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const progress = duration > 0 ? (sliderValue / duration) * 100 : 0
 
   if (!track) {
     return null // Don't render if no track
@@ -79,16 +88,26 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar - Accessible Slider */}
+          <div className="relative w-full h-4 flex items-center group">
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={sliderValue}
+              onChange={handleSeekChange}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek slider"
+              disabled={!track}
             />
+            <div className="w-full h-1 bg-muted rounded-full overflow-hidden pointer-events-none">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
 
