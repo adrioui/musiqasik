@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,11 +16,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // Local state for smooth seeking
+  const [isDragging, setIsDragging] = useState(false)
+  const [localValue, setLocalValue] = useState(0)
+
+  // Sync local value with player time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalValue(currentTime)
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -29,21 +38,34 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Progress percentage for visual track
+  const progress = duration > 0 ? (localValue / duration) * 100 : 0
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(parseFloat(e.target.value))
+  }
+
+  const handleSeekCommit = () => {
+    setIsDragging(false)
+    seekTo(localValue)
+  }
+
+  const handlePointerDown = () => {
+    setIsDragging(true)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+      setIsDragging(false)
+      seekTo(localValue)
+    }
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -79,15 +101,31 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar - Accessible Range Input */}
+          <div className="relative w-full h-4 flex items-center group">
+            {/* Visual Track Background */}
+            <div className="absolute left-0 right-0 h-1 bg-muted rounded-full overflow-hidden pointer-events-none">
+              {/* Visual Track Fill */}
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            {/* Invisible Range Input */}
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={localValue}
+              step="any"
+              onChange={handleSeekChange}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handleSeekCommit}
+              onKeyDown={handleKeyDown}
+              onKeyUp={handleKeyUp}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek video"
             />
           </div>
         </div>
