@@ -8,6 +8,7 @@ import { useD3Zoom } from './hooks/useD3Zoom'
 import { useElementDimensions } from './hooks/useElementDimensions'
 import { useGenreColors } from './hooks/useGenreColors'
 import { useGraphData } from './hooks/useGraphData'
+import { useGraphNeighbors } from './hooks/useGraphNeighbors'
 import { useNodeAnimation } from './hooks/useNodeAnimation'
 import type { ForceGraphHandle, ForceGraphProps, SimulationLink, SimulationNode } from './types'
 
@@ -63,6 +64,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     centerArtist,
     threshold,
   })
+  const neighborsMap = useGraphNeighbors(graphLinks)
   const zoomScaleExtent: [number, number] = [0.25, 3]
   const { zoomIn, zoomOut, reset, applyZoom, setTransform } = useD3Zoom({
     svgRef,
@@ -94,21 +96,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   // Neighbor lookup for hover highlighting
   const getNeighbors = useCallback(
     (nodeName: string) => {
-      const neighbors = new Set<string>()
       const key = nodeName.toLowerCase()
-      for (const link of graphLinks) {
-        const sourceName =
-          typeof link.source === 'string' ? link.source : (link.source as SimulationNode).name
-        const targetName =
-          typeof link.target === 'string' ? link.target : (link.target as SimulationNode).name
-        const sourceKey = sourceName.toLowerCase()
-        const targetKey = targetName.toLowerCase()
-        if (sourceKey === key) neighbors.add(targetKey)
-        if (targetKey === key) neighbors.add(sourceKey)
-      }
-      return neighbors
+      return neighborsMap.get(key) || new Set<string>()
     },
-    [graphLinks],
+    [neighborsMap],
   )
 
   // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
