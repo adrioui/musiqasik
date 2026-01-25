@@ -1,0 +1,4 @@
+## 2025-05-22 - Secure Error Handling with Effect.ts
+**Vulnerability:** Leaking stack traces and internal error details in Cloudflare Workers API.
+**Learning:** In the `Effect` library, `Effect.runPromise` throws a `FiberFailure` (wrapping the original error) instead of the error itself when an effect fails. Standard `try/catch (e) { if (e instanceof MyError) ... }` blocks fail to catch specific domain errors because `e` is a `FiberFailure`, causing the catch-all block to execute and potentially leak the wrapped error details if not carefully handled.
+**Prevention:** Use `Effect.runPromiseExit` and pattern match on `Exit.isSuccess(exit)` and check `Cause.isFailType(exit.cause)` to correctly identify and handle expected domain errors, ensuring all other defects return a generic "Internal Server Error" to the client.

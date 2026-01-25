@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import app from './index'
 
 interface HealthResponse {
@@ -86,7 +86,7 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 for invalid token format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +94,65 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 when token is not a string', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 12345 }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 when token length is invalid', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'short' }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 401 for valid format token that fails authentication', async () => {
+      const token = 'a'.repeat(32)
+
+      // Mock fetch to return a Last.fm error response
+      global.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: 4,
+            message: 'Invalid API key',
+          }),
+          { status: 200 }, // Last.fm sometimes returns 200 even with error body
+        ),
+      )
+
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(401)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid API key')
+
+      vi.restoreAllMocks()
     })
   })
 
