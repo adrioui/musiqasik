@@ -7,9 +7,11 @@ import { useDiscoveryInjection } from '@/hooks/useDiscoveryInjection'
 import { useLastFm } from '@/hooks/useLastFm'
 import { useTasteTracking } from '@/hooks/useTasteTracking'
 import { useTrackPreview } from '@/hooks/useTrackPreview'
-import type { Artist, GraphData } from '@/types/artist'
+import type { Artist, GraphData, SimilarityEdge } from '@/types/artist'
 
 const DEFAULT_ARTIST = 'Miles Davis'
+const EMPTY_NODES: Artist[] = []
+const EMPTY_EDGES: SimilarityEdge[] = []
 
 export default function MainView() {
   const graphRef = useRef<ForceGraphHandle>(null)
@@ -89,8 +91,8 @@ export default function MainView() {
       <div className="absolute inset-0">
         <ForceGraph
           ref={graphRef}
-          nodes={graphData?.nodes || []}
-          edges={graphData?.edges || []}
+          nodes={graphData?.nodes || EMPTY_NODES}
+          edges={graphData?.edges || EMPTY_EDGES}
           centerArtist={anchorArtist?.name || null}
           threshold={0}
           showLabels={true}

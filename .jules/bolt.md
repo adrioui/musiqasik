@@ -1,0 +1,1 @@
+## 2024-05-23 - [Stable Props for Memoization] **Learning:** `React.memo` is ineffective if props are new references (like `[]`) every render. **Action:** Define fallback values as constants outside the component scope (e.g., `const EMPTY_LIST = []`) to ensure reference stability.
