@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,8 +16,6 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
@@ -29,21 +27,32 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Local state for smooth seeking
+  const [isDragging, setIsDragging] = useState(false)
+  const [seekValue, setSeekValue] = useState(0)
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  // Calculate progress based on local seek value if dragging, otherwise API time
+  const currentDisplayTime = isDragging ? seekValue : currentTime
+  const progress = duration > 0 ? (currentDisplayTime / duration) * 100 : 0
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseFloat(e.target.value)
+    setSeekValue(newValue)
+    // For keyboard interactions (not dragging), commit immediately
+    if (!isDragging) {
+      seekTo(newValue)
+    }
+  }
+
+  const handleSeekStart = () => {
+    setIsDragging(true)
+    setSeekValue(currentTime)
+  }
+
+  const handleSeekEnd = (e: React.PointerEvent<HTMLInputElement>) => {
+    setIsDragging(false)
+    seekTo(parseFloat(e.currentTarget.value))
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -79,15 +88,26 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Progress Bar - Accessible Slider */}
+          <div className="relative w-full h-4 flex items-center group">
+            <div className="absolute inset-0 my-auto h-1 bg-muted rounded-full overflow-hidden group-focus-within:ring-2 group-focus-within:ring-primary/50">
+              <div
+                className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              step="any"
+              value={currentDisplayTime}
+              disabled={duration <= 0}
+              onChange={handleSeekChange}
+              onPointerDown={handleSeekStart}
+              onPointerUp={handleSeekEnd}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              aria-label="Seek"
             />
           </div>
         </div>
