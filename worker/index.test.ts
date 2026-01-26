@@ -55,7 +55,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token')
     })
 
     it('should return 400 when body is empty', async () => {
@@ -69,7 +69,7 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token')
     })
 
     it('should return 400 when body is invalid JSON', async () => {
@@ -83,14 +83,30 @@ describe('Worker API Routes', () => {
       expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
+      expect(body.error).toBe('Invalid token')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 for invalid token format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: 'invalid-token' }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token')
+    })
+
+    it('should return error for valid format token but auth failure', async () => {
+      // 32 chars
+      const token = '00000000000000000000000000000000'
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
       })
       const response = await app.fetch(request, mockEnv)
 
