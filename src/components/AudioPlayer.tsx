@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
@@ -16,7 +16,8 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragTime, setDragTime] = useState(0)
 
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
@@ -29,21 +30,21 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Progress logic
+  const currentDisplayTime = isDragging ? dragTime : currentTime
+  const progress = duration > 0 ? (currentDisplayTime / duration) * 100 : 0
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDragTime(parseFloat(e.target.value))
+  }
+
+  const handleSeekCommit = (
+    e: React.PointerEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    const time = parseFloat(e.currentTarget.value)
+    seekTo(time)
+    setIsDragging(false)
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -73,21 +74,31 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
               </span>
             </h3>
             <div className="text-[10px] font-mono text-muted-foreground whitespace-nowrap hidden sm:block">
-              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(currentDisplayTime)}</span>
               <span className="opacity-50 mx-1">/</span>
               <span className="opacity-50">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
+          {/* Progress Bar - Accessible Seek */}
+          <div className="relative w-full h-1 bg-muted rounded-full group">
             <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
+              className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
               style={{ width: `${progress}%` }}
+            />
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              step="any"
+              value={currentDisplayTime}
+              onChange={handleSeekChange}
+              onPointerDown={() => setIsDragging(true)}
+              onPointerUp={handleSeekCommit}
+              onKeyUp={handleSeekCommit}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Seek"
+              disabled={duration <= 0}
             />
           </div>
         </div>
