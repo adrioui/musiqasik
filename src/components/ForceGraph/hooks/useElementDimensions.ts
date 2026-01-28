@@ -1,3 +1,4 @@
+import { debounce } from '@/lib/utils'
 import { type RefObject, useEffect, useState } from 'react'
 
 export interface Dimensions {
@@ -19,9 +20,18 @@ export function useElementDimensions(
       }
     }
 
+    // Debounce the resize handler to prevent excessive re-renders
+    const debouncedUpdate = debounce(updateDimensions, 200)
+
+    // Initial measure
     updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
+
+    window.addEventListener('resize', debouncedUpdate)
+
+    return () => {
+      window.removeEventListener('resize', debouncedUpdate)
+      debouncedUpdate.cancel()
+    }
   }, [containerRef])
 
   return dimensions
