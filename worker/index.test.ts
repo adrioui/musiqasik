@@ -86,7 +86,7 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return 400 for invalid token format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +94,25 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should process valid token format', async () => {
+      // 32-char hex string
+      const validFormatToken = 'a'.repeat(32)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: validFormatToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      // Should proceed to service and fail (401/500) since we don't mock the internal service success here
+      // and we are using a dummy token.
+      expect([401, 500]).toContain(response.status)
     })
   })
 
