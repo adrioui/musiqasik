@@ -1,4 +1,4 @@
-import { Effect, Layer } from 'effect'
+import { Cause, Effect, Exit, Layer } from 'effect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { makeWorkerConfigLayer } from './config'
@@ -27,6 +27,11 @@ app.post('/api/lastfm/session', async (c) => {
     return c.json({ error: 'No token provided' }, 400)
   }
 
+  // Validate token format (32-character hex string)
+  if (!/^[a-fA-F0-9]{32}$/.test(token)) {
+    return c.json({ error: 'Invalid token format' }, 400)
+  }
+
   // Create Effect layers with CloudFlare env bindings
   const ConfigLayer = makeWorkerConfigLayer({
     LASTFM_API_KEY: c.env.LASTFM_API_KEY,
@@ -40,17 +45,25 @@ app.post('/api/lastfm/session', async (c) => {
     return yield* authService.getSession(token)
   }).pipe(Effect.provide(AppLayer))
 
-  try {
-    const result = await Effect.runPromise(program)
-    return c.json(result)
-  } catch (error) {
+  const exit = await Effect.runPromiseExit(program)
+
+  if (Exit.isSuccess(exit)) {
+    return c.json(exit.value)
+  }
+
+  const cause = exit.cause
+  if (Cause.isFailType(cause)) {
+    const error = cause.error
     if (error instanceof LastFmAuthError) {
       const isAuthError =
         error.code === 4 || error.code === 14 || error.code === 401 || error.code === 403
       return c.json({ error: error.message }, isAuthError ? 401 : 500)
     }
-    return c.json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500)
   }
+
+  // Log unexpected error and return generic message
+  console.error(Cause.pretty(cause))
+  return c.json({ error: 'Internal Server Error' }, 500)
 })
 
 // 404 for unknown API routes
