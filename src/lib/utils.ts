@@ -39,14 +39,15 @@ export function isPlaceholderImage(url?: string | null): boolean {
 /**
  * Debounces a function call
  */
+// biome-ignore lint/suspicious/noExplicitAny: Generic function needs to accept any arguments
 export function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
   let timeout: ReturnType<typeof setTimeout> | null = null
 
+  // biome-ignore lint/suspicious/noExplicitAny: Context can be anything
   const debounced = function (this: any, ...args: Parameters<T>) {
-    const context = this
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
-      func.apply(context, args)
+      func.apply(this, args)
     }, wait)
   }
 

@@ -1,5 +1,5 @@
-import { debounce } from '@/lib/utils'
 import { type RefObject, useEffect, useState } from 'react'
+import { debounce } from '@/lib/utils'
 
 export interface Dimensions {
   width: number
