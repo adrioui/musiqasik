@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import app from './index'
 
 interface HealthResponse {
@@ -86,7 +86,7 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return error for invalid token format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +94,52 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should handle Last.fm API errors for valid token', async () => {
+      const validToken = 'a'.repeat(32)
+
+      // Spy on global fetch to simulate Last.fm failure
+      // We need to return ok: true first, then the JSON with error
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: 4,
+            message: 'Invalid authentication',
+          }),
+          { status: 200 }, // Last.fm often returns 200 even with error body, but let's check logic
+        ),
+      )
+      // The service checks response.ok first. If we return 403, it throws.
+      // If we return 200 with error body, it parses and checks data.error.
+      // Let's simulate a 200 OK with error body which is common for some APIs,
+      // but let's check LastFmAuthService code:
+      // if (!response.ok) -> Fail
+      // else -> parse -> if (data.error) -> Fail
+
+      // Let's try 200 with error body first (Invalid authentication usually 403 but Last.fm 2.0 often 200)
+      // Actually let's simulate the service logic path:
+
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: validToken }),
+      })
+
+      try {
+        const response = await app.fetch(request, mockEnv)
+
+        // Code 4 is Invalid authentication -> mapped to 401
+        expect(response.status).toBe(401)
+        const body = (await response.json()) as ErrorResponse
+        expect(body.error).toBe('Invalid authentication')
+      } finally {
+        fetchSpy.mockRestore()
+      }
     })
   })
 
