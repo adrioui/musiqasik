@@ -35,3 +35,27 @@ export function isPlaceholderImage(url?: string | null): boolean {
     url.endsWith('/noimage/')
   )
 }
+
+/**
+ * Debounces a function call
+ */
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  const debounced = function (this: any, ...args: Parameters<T>) {
+    const context = this
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func.apply(context, args)
+    }, wait)
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout)
+      timeout = null
+    }
+  }
+
+  return debounced
+}
