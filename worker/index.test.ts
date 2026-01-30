@@ -90,7 +90,7 @@ describe('Worker API Routes', () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'invalid-token' }),
+        body: JSON.stringify({ token: '00000000000000000000000000000000' }),
       })
       const response = await app.fetch(request, mockEnv)
 
@@ -99,6 +99,20 @@ describe('Worker API Routes', () => {
 
       const body = (await response.json()) as ErrorResponse
       expect(body.error).toBeDefined()
+    })
+
+    it('should return 400 when token format is invalid', async () => {
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'invalid-token' }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
     })
   })
 
