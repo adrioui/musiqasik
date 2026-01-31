@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import app from './index'
 
 interface HealthResponse {
@@ -20,6 +20,14 @@ const mockEnv = {
 }
 
 describe('Worker API Routes', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe('GET /api/health', () => {
     it('should return ok status with timestamp', async () => {
       const request = new Request('http://localhost/api/health')
@@ -86,7 +94,33 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return error for invalid token', async () => {
+    it('should return session for valid token', async () => {
+      const validToken = 'a'.repeat(32)
+      const mockSession = {
+        session: {
+          name: 'testuser',
+          key: 'session-key',
+        },
+      }
+
+      // Mock success response from Last.fm
+      vi.mocked(global.fetch).mockResolvedValue(
+        new Response(JSON.stringify(mockSession), { status: 200 }),
+      )
+
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: validToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(200)
+      const body = await response.json()
+      expect(body).toEqual({ sessionKey: 'session-key', username: 'testuser' })
+    })
+
+    it('should return 400 for token with invalid format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +128,37 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
-
+      expect(response.status).toBe(400)
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 for token with invalid characters', async () => {
+      const invalidToken = 'z'.repeat(32) // 'z' is not hex
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: invalidToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should return 400 for token with incorrect length', async () => {
+      const invalidToken = 'a'.repeat(31) // 31 chars
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: invalidToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(400)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token format')
     })
   })
 
