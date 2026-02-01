@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
+import { Slider } from './ui/slider'
 
 interface Track {
   name: string
@@ -16,11 +17,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // Local state for smooth dragging
+  const [isDragging, setIsDragging] = useState(false)
+  const [localValue, setLocalValue] = useState(0)
+
+  // Update local value when player updates (unless dragging)
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalValue(currentTime)
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -29,21 +39,15 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  const handleValueChange = (value: number[]) => {
+    setIsDragging(true)
+    setLocalValue(value[0])
+  }
 
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
+  const handleValueCommit = (value: number[]) => {
+    seekTo(value[0])
+    setIsDragging(false)
+  }
 
   if (!track) {
     return null // Don't render if no track
@@ -73,23 +77,21 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
               </span>
             </h3>
             <div className="text-[10px] font-mono text-muted-foreground whitespace-nowrap hidden sm:block">
-              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(localValue)}</span>
               <span className="opacity-50 mx-1">/</span>
               <span className="opacity-50">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          {/* Progress Slider */}
+          <Slider
+            value={[localValue]}
+            max={duration || 100} // Prevent divide by zero issues visually
+            step={1}
+            onValueChange={handleValueChange}
+            onValueCommit={handleValueCommit}
+            aria-label="Track progress"
+          />
         </div>
 
         {/* Controls */}
