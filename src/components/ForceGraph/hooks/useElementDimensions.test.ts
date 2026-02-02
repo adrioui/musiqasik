@@ -24,7 +24,9 @@ describe('useElementDimensions', () => {
     expect(result.current).toEqual({ width: 1000, height: 800 })
 
     // Simulate resize - update mock
-    containerRef.current.getBoundingClientRect = vi.fn().mockReturnValue({ width: 500, height: 400 })
+    containerRef.current.getBoundingClientRect = vi
+      .fn()
+      .mockReturnValue({ width: 500, height: 400 })
 
     // Trigger resize event
     act(() => {
@@ -58,14 +60,18 @@ describe('useElementDimensions', () => {
     const { result } = renderHook(() => useElementDimensions(containerRef))
 
     // Trigger multiple resize events
-    containerRef.current.getBoundingClientRect = vi.fn().mockReturnValue({ width: 500, height: 400 })
+    containerRef.current.getBoundingClientRect = vi
+      .fn()
+      .mockReturnValue({ width: 500, height: 400 })
     act(() => {
-        window.dispatchEvent(new Event('resize'))
+      window.dispatchEvent(new Event('resize'))
     })
 
-    containerRef.current.getBoundingClientRect = vi.fn().mockReturnValue({ width: 600, height: 500 })
+    containerRef.current.getBoundingClientRect = vi
+      .fn()
+      .mockReturnValue({ width: 600, height: 500 })
     act(() => {
-        window.dispatchEvent(new Event('resize'))
+      window.dispatchEvent(new Event('resize'))
     })
 
     // Advance time
