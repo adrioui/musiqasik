@@ -1,0 +1,1 @@
+## 2024-05-23 - Debouncing Window Resize **Learning:** The `useElementDimensions` hook attached a `resize` listener without debouncing, causing excessive re-renders (and D3 simulations) on every pixel change. **Action:** Implemented a reusable `debounce` utility in `src/lib/utils.ts` and applied it to the resize handler, reducing updates to once every 200ms.

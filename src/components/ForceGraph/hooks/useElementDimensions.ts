@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useState } from 'react'
+import { debounce } from '@/lib/utils'
 
 export interface Dimensions {
   width: number
@@ -19,9 +20,20 @@ export function useElementDimensions(
       }
     }
 
+    // Initial measure
     updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
+
+    // OPTIMIZATION: Debounce resize handler to prevent excessive re-renders during window resize.
+    // This is critical for performance as it triggers expensive D3 graph re-simulations.
+    // Impact: Reduces update frequency from 60fps+ during resize to once every 200ms.
+    const debouncedUpdate = debounce(updateDimensions, 200)
+
+    window.addEventListener('resize', debouncedUpdate)
+
+    return () => {
+      window.removeEventListener('resize', debouncedUpdate)
+      debouncedUpdate.cancel()
+    }
   }, [containerRef])
 
   return dimensions
