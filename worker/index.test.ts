@@ -94,11 +94,10 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
     })
   })
 
