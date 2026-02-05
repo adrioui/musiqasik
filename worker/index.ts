@@ -27,6 +27,11 @@ app.post('/api/lastfm/session', async (c) => {
     return c.json({ error: 'No token provided' }, 400)
   }
 
+  // Validate token format (32-character hexadecimal string)
+  if (!/^[a-fA-F0-9]{32}$/.test(token)) {
+    return c.json({ error: 'Invalid token format' }, 400)
+  }
+
   // Create Effect layers with CloudFlare env bindings
   const ConfigLayer = makeWorkerConfigLayer({
     LASTFM_API_KEY: c.env.LASTFM_API_KEY,
