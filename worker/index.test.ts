@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import app from './index'
 
 interface HealthResponse {
@@ -20,6 +21,10 @@ const mockEnv = {
 }
 
 describe('Worker API Routes', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe('GET /api/health', () => {
     it('should return ok status with timestamp', async () => {
       const request = new Request('http://localhost/api/health')
@@ -72,21 +77,7 @@ describe('Worker API Routes', () => {
       expect(body.error).toBe('No token provided')
     })
 
-    it('should return 400 when body is invalid JSON', async () => {
-      const request = new Request('http://localhost/api/lastfm/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'not json',
-      })
-      const response = await app.fetch(request, mockEnv)
-
-      expect(response.status).toBe(400)
-
-      const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBe('No token provided')
-    })
-
-    it('should return error for invalid token', async () => {
+    it('should return 400 for invalid token format', async () => {
       const request = new Request('http://localhost/api/lastfm/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,11 +85,47 @@ describe('Worker API Routes', () => {
       })
       const response = await app.fetch(request, mockEnv)
 
-      // Should return 500 or 401 depending on the error from Last.fm
-      expect([401, 500]).toContain(response.status)
+      expect(response.status).toBe(400)
 
       const body = (await response.json()) as ErrorResponse
-      expect(body.error).toBeDefined()
+      expect(body.error).toBe('Invalid token format')
+    })
+
+    it('should process valid token successfully', async () => {
+      const mockSession = { session: { key: 'session-key', name: 'user' } }
+      vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(mockSession), { status: 200 }),
+      )
+
+      const validToken = 'a'.repeat(32)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: validToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(200)
+      const body = await response.json()
+      expect(body).toEqual({ sessionKey: 'session-key', username: 'user' })
+    })
+
+    it('should return 401 for upstream auth error', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ error: 4, message: 'Invalid token' }), { status: 200 }),
+      )
+
+      const validToken = 'a'.repeat(32)
+      const request = new Request('http://localhost/api/lastfm/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: validToken }),
+      })
+      const response = await app.fetch(request, mockEnv)
+
+      expect(response.status).toBe(401)
+      const body = (await response.json()) as ErrorResponse
+      expect(body.error).toBe('Invalid token')
     })
   })
 
