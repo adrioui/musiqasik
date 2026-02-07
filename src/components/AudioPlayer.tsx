@@ -45,6 +45,32 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     [duration, seekTo],
   )
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (duration <= 0) return
+
+      switch (event.key) {
+        case 'ArrowRight':
+          event.preventDefault()
+          seekTo(Math.min(duration, currentTime + 5))
+          break
+        case 'ArrowLeft':
+          event.preventDefault()
+          seekTo(Math.max(0, currentTime - 5))
+          break
+        case 'Home':
+          event.preventDefault()
+          seekTo(0)
+          break
+        case 'End':
+          event.preventDefault()
+          seekTo(duration)
+          break
+      }
+    },
+    [duration, currentTime, seekTo],
+  )
+
   if (!track) {
     return null // Don't render if no track
   }
@@ -83,7 +109,15 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
           <div
             ref={progressBarRef}
             onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
+            onKeyDown={handleKeyDown}
+            role="slider"
+            tabIndex={0}
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={currentTime}
+            aria-label="Seek time"
+            aria-valuetext={formatTime(currentTime)}
+            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
           >
             <div
               className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
