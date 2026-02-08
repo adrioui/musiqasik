@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
+import { Slider } from './ui/slider'
 
 interface Track {
   name: string
@@ -16,11 +17,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
+
+  // Local state for slider to handle dragging without jitter
+  const [sliderValue, setSliderValue] = useState([0])
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Sync slider with actual time when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setSliderValue([currentTime])
+    }
+  }, [currentTime, isDragging])
 
   // Format time as M:SS
   const formatTime = (seconds: number) => {
@@ -28,22 +38,6 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
-
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
-    },
-    [duration, seekTo],
-  )
 
   if (!track) {
     return null // Don't render if no track
@@ -73,21 +67,29 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
               </span>
             </h3>
             <div className="text-[10px] font-mono text-muted-foreground whitespace-nowrap hidden sm:block">
-              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(isDragging ? sliderValue[0] : currentTime)}</span>
               <span className="opacity-50 mx-1">/</span>
               <span className="opacity-50">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
+          {/* Accessible Slider */}
+          <div className="w-full py-1">
+            <Slider
+              value={sliderValue}
+              min={0}
+              max={duration > 0 ? duration : 1}
+              step={1}
+              disabled={duration <= 0}
+              onValueChange={(val) => {
+                setIsDragging(true)
+                setSliderValue(val)
+              }}
+              onValueCommit={(val) => {
+                setIsDragging(false)
+                seekTo(val[0])
+              }}
+              aria-label="Track progress"
             />
           </div>
         </div>
