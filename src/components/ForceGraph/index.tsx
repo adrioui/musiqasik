@@ -8,6 +8,7 @@ import { useD3Zoom } from './hooks/useD3Zoom'
 import { useElementDimensions } from './hooks/useElementDimensions'
 import { useGenreColors } from './hooks/useGenreColors'
 import { useGraphData } from './hooks/useGraphData'
+import { useGraphNeighbors } from './hooks/useGraphNeighbors'
 import { useNodeAnimation } from './hooks/useNodeAnimation'
 import type { ForceGraphHandle, ForceGraphProps, SimulationLink, SimulationNode } from './types'
 
@@ -91,25 +92,8 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     onEdgeClickRef.current = onEdgeClick
   }, [onEdgeClick])
 
-  // Neighbor lookup for hover highlighting
-  const getNeighbors = useCallback(
-    (nodeName: string) => {
-      const neighbors = new Set<string>()
-      const key = nodeName.toLowerCase()
-      for (const link of graphLinks) {
-        const sourceName =
-          typeof link.source === 'string' ? link.source : (link.source as SimulationNode).name
-        const targetName =
-          typeof link.target === 'string' ? link.target : (link.target as SimulationNode).name
-        const sourceKey = sourceName.toLowerCase()
-        const targetKey = targetName.toLowerCase()
-        if (sourceKey === key) neighbors.add(targetKey)
-        if (targetKey === key) neighbors.add(sourceKey)
-      }
-      return neighbors
-    },
-    [graphLinks],
-  )
+  // Neighbor lookup for hover highlighting - using O(1) lookup map
+  const { getNeighbors } = useGraphNeighbors(graphLinks)
 
   // Prepare graph data with mutable copies for D3 - memoized to prevent unnecessary recalculations
   const { graphNodes, links } = useMemo(() => {
