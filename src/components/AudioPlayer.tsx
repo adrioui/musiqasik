@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer'
 import { MaterialIcon } from './ui/material-icon'
+import { Slider } from './ui/slider'
 
 interface Track {
   name: string
@@ -16,8 +17,6 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
-  const progressBarRef = useRef<HTMLDivElement>(null)
-
   const { isPlaying, currentTime, duration, togglePlay, seekTo } = useYouTubePlayer({
     videoId: track?.youtubeId ?? null,
   })
@@ -29,18 +28,12 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  // Handle progress bar click
-  const handleProgressClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current || duration <= 0) return
-      const rect = progressBarRef.current.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const percentage = clickX / rect.width
-      const newTime = percentage * duration
-      seekTo(newTime)
+  // Handle seek
+  const handleSeek = useCallback(
+    (value: number[]) => {
+      if (duration > 0) {
+        seekTo(value[0])
+      }
     },
     [duration, seekTo],
   )
@@ -55,7 +48,11 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
         {/* Album Art */}
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-card flex-shrink-0 overflow-hidden shadow-lg relative group">
           {track.albumArt ? (
-            <img src={track.albumArt} alt={track.name} className="w-full h-full object-cover" />
+            <img
+              src={track.albumArt}
+              alt={`Album art for ${track.name}`}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <MaterialIcon name="album" size="lg" className="text-muted-foreground" />
@@ -79,24 +76,22 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
             </div>
           </div>
 
-          {/* Progress Bar - Now clickable */}
-          <div
-            ref={progressBarRef}
-            onClick={handleProgressClick}
-            className="w-full h-1 bg-muted rounded-full overflow-hidden cursor-pointer group"
-          >
-            <div
-              className="h-full bg-primary rounded-full transition-all group-hover:bg-primary/80"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          {/* Progress Bar - Now Accessible Slider */}
+          <Slider
+            value={[currentTime]}
+            max={duration > 0 ? duration : 100}
+            step={1}
+            onValueChange={handleSeek}
+            className="cursor-pointer py-1"
+            aria-label="Seek track"
+          />
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-3 pl-2">
           <button
             className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Previous"
+            aria-label="Previous track"
           >
             <MaterialIcon name="skip_previous" size="md" />
           </button>
@@ -111,7 +106,7 @@ export function AudioPlayer({ track, onFavorite }: AudioPlayerProps) {
 
           <button
             className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Next"
+            aria-label="Next track"
           >
             <MaterialIcon name="skip_next" size="md" />
           </button>
