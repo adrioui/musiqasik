@@ -1,4 +1,4 @@
-import { afterEach, vi } from 'vitest'
+import { afterEach } from 'vitest'
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
